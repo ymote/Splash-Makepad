@@ -28,9 +28,13 @@ makepad's native controls — checkbox, switch, radio, slider, text field — ar
 | Runtime `script_eval!` override of `mod.prelude.widgets.*` | shader **dropped** → widget renders blank ❌ |
 | **Compiled `script_mod!`** — extend the base (`mod.widgets.CheckBox = mod.widgets.CheckBoxFlat{ draw_bg +: {…} }`), then reference into the prelude | shader **kept** ✅ |
 
-The `script_mod!` macro compiles the MPSL at build time; a runtime string never gets compiled. So `splash-widgets` restyles makepad's widgets against **upstream makepad** — **no fork, and no upstream PR required**. (Verified on device: a compiled variant renders; the runtime override renders blank.)
+The `script_mod!` macro compiles the MPSL at build time; a runtime string never gets compiled. So `splash-widgets` restyles makepad's widgets against **upstream makepad** with **no fork** — theming itself needs no upstream change. (Verified on device: a compiled variant renders; the runtime override renders blank.)
 
 Each new theme is just more variants in `splash-widgets` + a `.splash` component library — no makepad fork per theme.
+
+### The one upstream PR
+
+Building + running the `kit-host` against upstream surfaced exactly **one** thing upstream doesn't have: a **`Splash` main-VM-mount option**. Upstream's `Splash` always allocates an *isolate* VM (`alloc_splash_vm_with_network(allow_net)`), but the light theme and a shared heap live on the app's **main** VM. The fix is the small `isolate: false` field this project's fork added to `widgets/src/splash.rs` — upstreaming it lets a trusted, app-generated kit mount on the main VM (correct theme, no isolate-heap animator panics). Until then the kit mounts on an isolate (dark-default theme). That is the *only* upstream change needed; everything else runs against upstream `dev` as-is.
 
 ## Relationship to makepad
 
@@ -49,10 +53,12 @@ cargo test            # builds + tests the portable core (splash-render, splash-
 
 ## Status
 
-- ✅ `splash-render` + `splash-makepad` — portable, tested render pipeline
+- ✅ `splash-render` + `splash-makepad` — portable render pipeline; **compile + test against upstream `makepad-script`** (rev `e1c2164b`), no fork
 - ✅ **Material 3 kit** — `components/material/catalog.splash`: ~35 components (buttons, FABs, cards, chips, nav bar/rail/drawer, app bars, dialog/menu/sheets as **real interactive overlays**, pickers, tabs, badges, toolbars), M3 tokens (colour, type scale + Medium weight, shape, elevation, surface tones), Font-Awesome monochrome icons, and real animation (circular spinner + shape-morph loading indicator)
-- ✅ `splash-widgets` — Material 3 native-control variants (checkbox/switch/radio/slider/text field) + `LoadingMorph`, fork-free
-- ⏳ **Next:** a generic **kit-host app** (loads any kit's `.splash`); align `makepad-widgets`/`makepad-script` revs and verify the Android build against upstream; port the Button **touch-ripple** as a `RippleButton` variant; **iOS** and **liquid-glass** kits
+- ✅ `splash-widgets` — Material 3 native-control variants (checkbox/switch/radio/slider/text field) + `LoadingMorph`, fork-free; **compiles against upstream `makepad-widgets`**
+- ✅ **`apps/kit-host`** — generic app shell that **builds + runs against upstream makepad** (desktop, ~37 MB binary), fork-free, mounting the Material kit via `splash_widgets::widgets_mod`
+- ⏳ **The one upstream PR:** the `Splash` main-VM-mount option (see above) — the single change needed for correct light-theme rendering
+- ⏳ **Next:** that PR (or an isolate-VM theme/heap fix so the mount works isolated); Android build via `cargo-makepad`; Button **touch-ripple** as a `RippleButton` variant; **iOS** + **liquid-glass** kits
 
 ## License
 

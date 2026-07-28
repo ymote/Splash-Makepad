@@ -1,15 +1,12 @@
-# Splash-Makepad — themed component kits for cross-platform apps on the
-# Splash DSL + makepad native-widget renderer.
-#
-# This workspace builds the portable translation core (splash-render +
-# splash-makepad). The themed widget variants (splash-widgets) and the kit apps
-# build against upstream makepad (makepad-widgets) — see README.
+# Splash-Makepad — themed component kits on the Splash DSL + makepad renderer.
 [workspace]
 resolver = "2"
-members = ["crates/splash-render", "crates/splash-makepad"]
-# splash-widgets needs the full upstream-makepad build; wire it into an app
-# workspace rather than the portable core. See README.
-exclude = ["crates/splash-widgets"]
+members = [
+    "crates/splash-render",
+    "crates/splash-makepad",
+    "crates/splash-widgets",
+    "apps/kit-host",
+]
 
 [profile.release]
 opt-level = 3

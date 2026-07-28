@@ -1,0 +1,15 @@
+[package]
+name = "kit-host"
+version = "0.1.0"
+edition = "2021"
+description = "Generic app shell rendering a Splash component kit as native makepad widgets (fork-free, upstream makepad)"
+
+[dependencies]
+makepad-widgets = { git = "https://github.com/makepad/makepad.git", branch = "dev" }
+splash-widgets = { path = "../../crates/splash-widgets" }
+splash-render = { path = "../../crates/splash-render" }
+splash-makepad = { path = "../../crates/splash-makepad" }
+
+[[bin]]
+name = "kit-host"
+path = "src/main.rs"
