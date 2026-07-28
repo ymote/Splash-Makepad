@@ -7,4 +7,4 @@ description = "Backend-agnostic Splash DSL renderer core: makepad-script VM -> U
 [dependencies]
 # The Splash VM only. Renderer-free by construction — no makepad-platform, no
 # draw, no widgets. Backends turn the resulting UiNode tree into their widgets.
-makepad-script = { git = "https://github.com/octos-org/makepad.git", rev = "b6cd8db5113b0cb61c0323e829a013c4aaaeab36" }
+makepad-script = { git = "https://github.com/makepad/makepad.git", branch = "dev" }
