@@ -1,0 +1,825 @@
+// Material-Design-3 component catalog, authored in the Splash DSL and rendered
+// as makepad native widgets. Every dimension, corner, colour and type size is
+// mapped from the material-components-android source (Apache-2.0) M3 tokens:
+// type scale, shape scale, elevation levels, the baseline colour scheme (incl.
+// the 5 surface-container tones), and per-component dp. Emphasis type roles
+// (Title/Label/Body-emphasis) use weight:500 -> the theme's Medium (Roboto) face.
+
+fn argb(a, r, g, b) { return ((a * 256 + r) * 256 + g) * 256 + b }
+// Pick dark (a) or light (b) by the injected st.dark flag.
+fn pick(d, a, b) { if d == 1 { return a } return b }
+let dk = st.dark
+
+// ---- Colour — M3 baseline (dark a / light b) --------------------------------
+let primary       = pick(dk, argb(255, 208, 188, 255), argb(255, 103,  80, 164))
+let on_primary    = pick(dk, argb(255,  56,  30, 114), argb(255, 255, 255, 255))
+let pri_container = pick(dk, argb(255,  79,  55, 139), argb(255, 234, 221, 255))
+let on_pri_cont   = pick(dk, argb(255, 234, 221, 255), argb(255,  33,   0,  93))
+let secondary     = pick(dk, argb(255, 204, 194, 220), argb(255,  98,  91, 113))
+let sec_container = pick(dk, argb(255,  74,  68,  88), argb(255, 232, 222, 248))
+let on_sec_cont   = pick(dk, argb(255, 232, 222, 248), argb(255,  29,  25,  43))
+let tertiary      = pick(dk, argb(255, 239, 184, 200), argb(255, 125,  82,  96))
+let ter_container = pick(dk, argb(255,  99,  59,  72), argb(255, 255, 216, 228))
+let on_ter_cont   = pick(dk, argb(255, 255, 216, 228), argb(255,  49,  17,  29))
+let error         = pick(dk, argb(255, 242, 184, 181), argb(255, 179,  38,  30))
+let err_container = pick(dk, argb(255, 140,  29,  24), argb(255, 249, 222, 220))
+let surface       = pick(dk, argb(255,  20,  18,  24), argb(255, 254, 247, 255))
+let surf_variant  = pick(dk, argb(255,  73,  69,  79), argb(255, 231, 224, 236))
+let on_surface    = pick(dk, argb(255, 230, 224, 233), argb(255,  29,  27,  32))
+let on_surf_var   = pick(dk, argb(255, 202, 196, 208), argb(255,  73,  69,  79))
+let outline       = pick(dk, argb(255, 147, 143, 153), argb(255, 121, 116, 126))
+let outline_var   = pick(dk, argb(255,  73,  69,  79), argb(255, 202, 196, 208))
+// Surface-container tonal steps (M3 elevation-by-tone).
+let surf_lowest   = pick(dk, argb(255,  15,  13,  19), argb(255, 255, 255, 255))
+let surf_low      = pick(dk, argb(255,  29,  27,  32), argb(255, 247, 242, 250))
+let surf_cont     = pick(dk, argb(255,  33,  31,  38), argb(255, 243, 237, 247))
+let surf_high     = pick(dk, argb(255,  43,  41,  48), argb(255, 236, 230, 240))
+let surf_highest  = pick(dk, argb(255,  54,  52,  59), argb(255, 230, 224, 233))
+// Inverse roles (snackbar / tooltip).
+let inverse_surf  = pick(dk, argb(255, 230, 224, 233), argb(255,  50,  47,  53))
+let inverse_on    = pick(dk, argb(255,  50,  47,  53), argb(255, 245, 239, 247))
+let inverse_pri   = pick(dk, argb(255, 103,  80, 164), argb(255, 208, 188, 255))
+let page          = surface
+
+// ---- component helpers -----------------------------------------------------
+// Type sizes are the M3 type-scale sp values; emphasis roles carry weight:500.
+
+// A titled grouping card (surfaceContainerLow, 12dp corner). Title = Title Medium.
+fn section(title, kids) {
+    let c = [ {t: "text", text: title, size: 16, weight: 500, color: on_surface, h: 24} ]
+    for k in kids { c.push(k) }
+    return {t: "column", bg: surf_low, radius: 12, pad: 16, spacing: 12, c: c}
+}
+
+// Common buttons — 40dp tall, full (20dp) corner, 24dp h-pad / 6dp v-pad,
+// label = Label Large (14sp / Medium).
+fn btn(txt, fill, ink) {
+    return {t: "column", bg: fill, radius: 20, h: 40, padx: 24, pady: 6, fitw: 1,
+            alignx: 0.5, aligny: 0.5,
+            c: [ {t: "text", text: txt, size: 14, weight: 500, color: ink} ]}
+}
+fn outlined_btn(txt) {
+    return {t: "column", bg: surface, border: 1, bordercolor: outline,
+            radius: 20, h: 40, padx: 24, pady: 6, fitw: 1, alignx: 0.5, aligny: 0.5,
+            c: [ {t: "text", text: txt, size: 14, weight: 500, color: primary} ]}
+}
+fn text_btn(txt) {
+    return {t: "column", radius: 20, h: 40, padx: 12, pady: 6, fitw: 1,
+            alignx: 0.5, aligny: 0.5,
+            c: [ {t: "text", text: txt, size: 14, weight: 500, color: primary} ]}
+}
+
+// A chip — 32dp tall, 8dp corner, Label Large. Outlined (assist) or filled (selected).
+fn chip(txt) {
+    return {t: "column", bg: surface, border: 1, bordercolor: outline_var,
+            radius: 8, h: 32, padx: 12, pady: 6, fitw: 1, alignx: 0.5, aligny: 0.5,
+            c: [ {t: "text", text: txt, size: 14, weight: 500, color: on_surf_var} ]}
+}
+fn chip_sel(txt) {
+    return {t: "column", bg: sec_container, radius: 8, h: 32, padx: 12, pady: 6, fitw: 1,
+            alignx: 0.5, aligny: 0.5,
+            c: [ {t: "text", text: txt, size: 14, weight: 500, color: on_sec_cont} ]}
+}
+
+// A linear progress track (4dp, 2dp corner): secondaryContainer track + primary fill.
+fn progress(fill_w) {
+    return {t: "column", bg: sec_container, radius: 2, h: 4,
+            c: [ {t: "column", bg: primary, radius: 2, h: 4, w: fill_w} ]}
+}
+
+// A two-line list item (72dp): 40dp leading avatar + Body Large title / Body Medium supporting.
+fn list_item(letter, title, subtitle) {
+    return {t: "row", h: 72, spacing: 16, aligny: 0.5, c: [
+        {t: "column", bg: pri_container, radius: 20, w: 40, h: 40,
+         alignx: 0.5, aligny: 0.5,
+         c: [ {t: "text", text: letter, size: 16, weight: 500, color: on_pri_cont} ]},
+        {t: "column", spacing: 2, c: [
+            {t: "text", text: title, size: 16, color: on_surface, h: 24},
+            {t: "text", text: subtitle, size: 14, color: on_surf_var, h: 20},
+        ]},
+    ]}
+}
+
+fn divider() { return {t: "column", bg: outline_var, h: 1} }
+
+// A bottom-navigation destination: 64x32 active-indicator pill + Label Medium.
+fn nav_item(icon, label, ink, pill) {
+    return {t: "column", fitw: 1, spacing: 4, alignx: 0.5, c: [
+        {t: "column", bg: pill, radius: 16, w: 64, h: 32, alignx: 0.5, aligny: 0.5,
+         c: [ {t: "text", text: icon, icon: 1, size: 20, color: ink} ]},
+        {t: "text", text: label, size: 12, weight: 500, color: ink, h: 16},
+    ]}
+}
+
+// A colour-role swatch.
+fn swatch(c, name) {
+    return {t: "column", fitw: 1, spacing: 4, c: [
+        {t: "column", bg: c, radius: 8, w: 66, h: 48},
+        {t: "text", text: name, size: 11, weight: 500, color: on_surf_var, h: 14},
+    ]}
+}
+
+// A small (top) app bar — 64dp, Title Large title, 24dp icons.
+fn appbar(title) {
+    return {t: "row", bg: surface, h: 64, padx: 4, spacing: 8, aligny: 0.5, c: [
+        {t: "column", w: 48, h: 48, alignx: 0.5, aligny: 0.5, c: [ {t: "text", text: "\u{f0c9}", icon: 1, size: 20, color: on_surface} ]},
+        {t: "text", text: title, size: 22, color: on_surface, fitw: 1},
+        {t: "column", c: []},
+        {t: "column", w: 48, h: 48, alignx: 0.5, aligny: 0.5, c: [ {t: "text", text: "\u{f002}", icon: 1, size: 20, color: on_surface} ]},
+        {t: "column", w: 48, h: 48, alignx: 0.5, aligny: 0.5, c: [ {t: "text", text: "\u{f142}", icon: 1, size: 20, color: on_surface} ]},
+    ]}
+}
+
+// A tab — 48dp, Title Small label, active shows the 3dp primary indicator.
+fn tab_active(txt) {
+    return {t: "column", fitw: 1, spacing: 0, alignx: 0.5, h: 48, aligny: 0.5, c: [
+        {t: "text", text: txt, size: 14, weight: 500, color: primary, h: 24},
+        {t: "column", bg: primary, radius: 2, h: 3, w: 44},
+    ]}
+}
+fn tab_idle(txt) {
+    return {t: "column", fitw: 1, spacing: 0, alignx: 0.5, h: 48, aligny: 0.5, c: [
+        {t: "text", text: txt, size: 14, weight: 500, color: on_surf_var, h: 24},
+        {t: "column", bg: surface, radius: 2, h: 3, w: 44},
+    ]}
+}
+
+// One segment of a segmented button — 40dp, Label Large.
+fn seg_on(txt) {
+    return {t: "column", bg: sec_container, border: 1, bordercolor: outline,
+            h: 40, padx: 12, pady: 6, fitw: 1, alignx: 0.5, aligny: 0.5,
+            c: [ {t: "text", text: "\u{2713} " + txt, size: 14, weight: 500, color: on_sec_cont} ]}
+}
+fn seg_off(txt) {
+    return {t: "column", bg: surface, border: 1, bordercolor: outline,
+            h: 40, padx: 12, pady: 6, fitw: 1, alignx: 0.5, aligny: 0.5,
+            c: [ {t: "text", text: txt, size: 14, weight: 500, color: on_surf_var} ]}
+}
+
+// A search bar (pill) — 56dp, full corner, Body Large, surfaceContainerHigh.
+fn searchbar() {
+    return {t: "row", bg: surf_high, radius: 28, h: 56, padx: 16, spacing: 16, aligny: 0.5, c: [
+        {t: "text", text: "\u{f002}", icon: 1, size: 20, color: on_surf_var, fitw: 1},
+        {t: "text", text: "Search the catalog", size: 16, color: on_surf_var, fitw: 1},
+    ]}
+}
+
+// An icon carrying a small count badge (16dp large badge, Label Small).
+fn badge(icon, count) {
+    return {t: "row", fitw: 1, spacing: 4, c: [
+        {t: "text", text: icon, icon: 1, size: 22, color: on_surface, fitw: 1},
+        {t: "column", bg: error, radius: 8, w: 16, h: 16, alignx: 0.5, aligny: 0.5,
+         c: [ {t: "text", text: count, size: 11, weight: 500, color: on_primary} ]},
+    ]}
+}
+
+// A basic dialog — 28dp corner, 24dp padding, Headline Small title, Body Medium.
+fn dialog() {
+    return {t: "column", bg: surf_high, radius: 28, pad: 24, spacing: 16, w: 320, c: [
+        {t: "text", text: "Reset settings?", size: 24, color: on_surface, h: 32},
+        {t: "text", text: "This will restore default values for every preference in this app.",
+         size: 14, color: on_surf_var, w: 272, h: 44},
+        {t: "row", spacing: 8, aligny: 0.5, c: [
+            {t: "column", c: []},
+            {t: "button", label: "Cancel", tapto: "open:", fitw: 1, h: 40},
+            {t: "button", label: "Reset", tapto: "open:", fitw: 1, h: 40},
+        ]},
+    ]}
+}
+
+// A bottom sheet — 28dp top corner, 32x4 drag handle, surfaceContainerLow.
+fn sheet_row(icon, txt) {
+    return {t: "row", h: 56, spacing: 16, aligny: 0.5, c: [
+        {t: "text", text: icon, icon: 1, size: 20, color: on_surf_var, fitw: 1},
+        {t: "text", text: txt, size: 16, color: on_surface, fitw: 1},
+    ]}
+}
+fn bottom_sheet() {
+    return {t: "column", bg: surf_low, radius: 28, pad: 16, spacing: 8, alignx: 0.5, fillw: 1, c: [
+        {t: "column", bg: outline_var, radius: 2, w: 32, h: 4},
+        sheet_row("\u{f005}", "Add to favourites"),
+        sheet_row("\u{f0e0}", "Share via email"),
+        sheet_row("\u{f044}", "Edit label"),
+        {t: "button", label: "Close", tapto: "open:", fillw: 1, h: 44},
+    ]}
+}
+
+// A date picker (mini month grid) — 28dp corner, 36x40 day cells, full selection.
+fn dhead(t) { return {t: "column", alignx: 0.5, c: [ {t: "text", text: t, size: 14, weight: 500, color: on_surf_var, h: 28} ]} }
+fn dday(t)  { return {t: "column", alignx: 0.5, aligny: 0.5, h: 40, c: [ {t: "text", text: t, size: 14, color: on_surface} ]} }
+fn dsel(t)  { return {t: "column", alignx: 0.5, aligny: 0.5, h: 40, c: [
+                  {t: "column", bg: primary, radius: 18, w: 36, h: 36, alignx: 0.5, aligny: 0.5,
+                   c: [ {t: "text", text: t, size: 14, weight: 500, color: on_primary} ]} ]} }
+fn date_picker() {
+    return {t: "column", bg: surf_high, radius: 28, pad: 16, spacing: 8, c: [
+        {t: "row", aligny: 0.5, c: [
+            {t: "text", text: "March 2026", size: 16, weight: 500, color: on_surface, fitw: 1},
+            {t: "column", c: []},
+            {t: "text", text: "\u{2039}   \u{203A}", size: 18, color: on_surf_var, fitw: 1},
+        ]},
+        {t: "row", c: [ dhead("S"), dhead("M"), dhead("T"), dhead("W"), dhead("T"), dhead("F"), dhead("S") ]},
+        {t: "row", c: [ dday("2"), dday("3"), dday("4"), dday("5"), dday("6"), dday("7"), dday("8") ]},
+        {t: "row", c: [ dday("9"), dday("10"), dsel("11"), dday("12"), dday("13"), dday("14"), dday("15") ]},
+        {t: "row", c: [ dday("16"), dday("17"), dday("18"), dday("19"), dday("20"), dday("21"), dday("22") ]},
+    ]}
+}
+
+// A time picker — 96x80 display fields (8dp corner), 52-wide AM/PM toggle.
+fn time_picker() {
+    return {t: "row", spacing: 12, aligny: 0.5, c: [
+        {t: "column", bg: pri_container, radius: 8, w: 96, h: 80, alignx: 0.5, aligny: 0.5,
+         c: [ {t: "text", text: "10", size: 44, color: on_pri_cont} ]},
+        {t: "text", text: ":", size: 44, color: on_surface, fitw: 1},
+        {t: "column", bg: surf_high, radius: 8, w: 96, h: 80, alignx: 0.5, aligny: 0.5,
+         c: [ {t: "text", text: "30", size: 44, color: on_surface} ]},
+        {t: "column", spacing: 0, c: [
+            {t: "column", bg: sec_container, border: 1, bordercolor: outline, radius: 8, w: 52, h: 40, alignx: 0.5, aligny: 0.5,
+             c: [ {t: "text", text: "AM", size: 14, weight: 500, color: on_sec_cont} ]},
+            {t: "column", bg: surface, border: 1, bordercolor: outline, radius: 8, w: 52, h: 40, alignx: 0.5, aligny: 0.5,
+             c: [ {t: "text", text: "PM", size: 14, color: on_surf_var} ]},
+        ]},
+    ]}
+}
+
+// A plain tooltip — 4dp corner, Body Small, inverse surface.
+fn tooltip() {
+    return {t: "column", bg: inverse_surf, radius: 4, padx: 8, pady: 6, fitw: 1, alignx: 0.5, aligny: 0.5,
+            c: [ {t: "text", text: "Tooltip label", size: 12, color: inverse_on} ]}
+}
+
+// A real, continuously-animated Material circular progress indicator.
+fn ring() {
+    return {t: "loading", bg: primary, w: 44, h: 44}
+}
+
+// A snackbar — 4dp corner, inverse surface, Body Medium, inverse-primary action.
+fn snackbar() {
+    return {t: "row", bg: inverse_surf, radius: 4, h: 48, padx: 16, pady: 14, spacing: 16, aligny: 0.5, c: [
+        {t: "text", text: "Photo added to album", size: 14, color: inverse_on, fitw: 1},
+        {t: "column", c: []},
+        {t: "text", text: "UNDO", size: 14, weight: 500, color: inverse_pri, fitw: 1},
+    ]}
+}
+
+// A dropdown menu — 4dp corner, surfaceContainer, 48dp items.
+fn menu_item(txt) {
+    return {t: "row", h: 48, padx: 12, aligny: 0.5, c: [
+        {t: "text", text: txt, size: 14, color: on_surface} ]}
+}
+fn menu() {
+    return {t: "column", bg: surf_cont, border: 1, bordercolor: outline_var,
+            radius: 4, pad: 8, w: 220, fitw: 1, c: [
+        menu_item("Edit"), menu_item("Duplicate"), menu_item("Share"), menu_item("Delete"),
+    ]}
+}
+
+// A bottom app bar — 80dp, surfaceContainer, trailing 56dp FAB.
+fn bottom_app_bar() {
+    return {t: "row", bg: surf_cont, h: 80, padx: 16, spacing: 22, aligny: 0.5, c: [
+        {t: "text", text: "\u{f0c9}", icon: 1, size: 20, color: on_surf_var, fitw: 1},
+        {t: "text", text: "\u{f005}", icon: 1, size: 20, color: on_surf_var, fitw: 1},
+        {t: "text", text: "\u{f0e0}", icon: 1, size: 20, color: on_surf_var, fitw: 1},
+        {t: "column", c: []},
+        {t: "column", bg: pri_container, radius: 16, w: 56, h: 56, alignx: 0.5, aligny: 0.5,
+         c: [ {t: "text", text: "\u{f067}", icon: 1, size: 22, color: on_pri_cont} ]},
+    ]}
+}
+
+// A navigation rail — 80dp wide, 56dp leading FAB + 56x32 destination indicators.
+fn rail_item(icon, label, ink, pill) {
+    return {t: "column", spacing: 4, alignx: 0.5, c: [
+        {t: "column", bg: pill, radius: 16, w: 56, h: 32, alignx: 0.5, aligny: 0.5,
+         c: [ {t: "text", text: icon, icon: 1, size: 20, color: ink} ]},
+        {t: "text", text: label, size: 12, weight: 500, color: ink, h: 16},
+    ]}
+}
+fn nav_rail() {
+    return {t: "column", bg: surf_cont, radius: 16, pad: 12, spacing: 16, w: 80, alignx: 0.5, c: [
+        {t: "column", bg: pri_container, radius: 16, w: 56, h: 56, alignx: 0.5, aligny: 0.5,
+         c: [ {t: "text", text: "\u{f067}", icon: 1, size: 22, color: on_pri_cont} ]},
+        rail_item("\u{f015}", "Home", on_sec_cont, sec_container),
+        rail_item("\u{f005}", "Saved", on_surf_var, surf_cont),
+        rail_item("\u{f0e0}", "Inbox", on_surf_var, surf_cont),
+    ]}
+}
+
+// A carousel of media items (fixed widths, 16dp corner).
+fn carousel() {
+    return {t: "row", spacing: 8, c: [
+        {t: "column", bg: pri_container, radius: 16, w: 110, h: 120},
+        {t: "column", bg: sec_container, radius: 16, w: 140, h: 120},
+        {t: "column", bg: ter_container, radius: 16, w: 80, h: 120},
+    ]}
+}
+
+// A banner: leading icon, message, trailing actions.
+fn banner() {
+    return {t: "column", bg: surf_cont, radius: 12, pad: 16, spacing: 12, c: [
+        {t: "row", spacing: 12, c: [
+            {t: "text", text: "\u{f071}", icon: 1, size: 20, color: primary, fitw: 1},
+            {t: "text", text: "Your storage is almost full \u{2014} upgrade to keep syncing.",
+             size: 14, color: on_surface, w: 250, h: 40},
+        ]},
+        {t: "row", spacing: 8, aligny: 0.5, c: [
+            {t: "column", c: []}, text_btn("Dismiss"), text_btn("Upgrade"),
+        ]},
+    ]}
+}
+
+// A navigation-drawer destination (56dp, full corner) + the modal drawer.
+fn drawer_item(icon, label, pill, ink) {
+    return {t: "row", bg: pill, radius: 28, h: 56, padx: 16, spacing: 12, aligny: 0.5, c: [
+        {t: "text", text: icon, icon: 1, size: 20, color: ink, fitw: 1},
+        {t: "text", text: label, size: 14, weight: 500, color: ink, fitw: 1},
+    ]}
+}
+fn nav_drawer() {
+    return {t: "column", bg: surf_low, radius: 16, pad: 12, spacing: 4, w: 300, c: [
+        {t: "text", text: "Mail", size: 14, weight: 500, color: on_surf_var, h: 40, padx: 16},
+        drawer_item("\u{f01c}", "Inbox", sec_container, on_sec_cont),
+        drawer_item("\u{f005}", "Starred", surf_low, on_surf_var),
+        drawer_item("\u{f1d8}", "Sent", surf_low, on_surf_var),
+        drawer_item("\u{f15c}", "Drafts", surf_low, on_surf_var),
+        {t: "button", label: "Close", tapto: "open:", fillw: 1, h: 44},
+    ]}
+}
+
+// A side sheet: title bar + supporting text + filter chips.
+fn side_sheet() {
+    return {t: "column", bg: surf_low, radius: 16, pad: 16, spacing: 12, w: 300, c: [
+        {t: "row", aligny: 0.5, c: [
+            {t: "text", text: "Filters", size: 16, weight: 500, color: on_surface, fitw: 1},
+            {t: "column", c: []},
+            {t: "button", label: "\u{f00d}", icon: 1, size: 18, tapto: "open:", fitw: 1, h: 40},
+        ]},
+        {t: "text", text: "Refine results with the options below.", size: 14, color: on_surf_var, w: 260, h: 22},
+        {t: "row", spacing: 8, c: [ chip("Unread"), chip("Starred"), chip_sel("Has files") ]},
+    ]}
+}
+
+// An expanded search view: back + query, divider, result rows (56dp).
+fn search_row(txt) {
+    return {t: "row", h: 56, spacing: 16, aligny: 0.5, c: [
+        {t: "text", text: "\u{f017}", icon: 1, size: 18, color: on_surf_var, fitw: 1},
+        {t: "text", text: txt, size: 16, color: on_surface, fitw: 1},
+    ]}
+}
+fn search_view() {
+    return {t: "column", bg: surf_low, radius: 28, pad: 16, spacing: 8, c: [
+        {t: "row", spacing: 16, aligny: 0.5, h: 56, c: [
+            {t: "text", text: "\u{f060}", icon: 1, size: 20, color: on_surf_var, fitw: 1},
+            {t: "text", text: "project", size: 16, color: on_surface, fitw: 1},
+        ]},
+        {t: "column", bg: outline_var, h: 1},
+        search_row("project plan.pdf"),
+        search_row("project timeline"),
+    ]}
+}
+
+// The real M3 loading indicator: a solid shape that morphs (circle <-> clover)
+// while rotating — the shape-morph animation, distinct from the circular spinner.
+fn loading_indicator() {
+    return {t: "progress", bg: primary, w: 56, h: 56}
+}
+
+// A shape-scale swatch (M3 corner ladder).
+fn shape_sw(r, label) {
+    return {t: "column", fitw: 1, spacing: 4, c: [
+        {t: "column", bg: pri_container, radius: r, w: 60, h: 52},
+        {t: "text", text: label, size: 11, weight: 500, color: on_surf_var, h: 14},
+    ]}
+}
+// A tonal-elevation swatch.
+fn elev_sw(c, label) {
+    return {t: "column", fitw: 1, spacing: 4, c: [
+        {t: "column", bg: c, border: 1, bordercolor: outline_var, radius: 12, w: 60, h: 52},
+        {t: "text", text: label, size: 11, weight: 500, color: on_surf_var, h: 14},
+    ]}
+}
+
+// Material cards — 12dp corner. Elevated (surfaceContainerLow + level-1 shadow),
+// filled (surfaceContainerHighest), outlined (surface + 1dp outline). Card title
+// = Title Medium, supporting = Body Medium.
+fn card_elevated(title, body) {
+    // The shadow view doesn't render children, so layer it behind the content:
+    // a filling RoundedShadowView (bg + drop shadow) with the content on top.
+    return {t: "stack", c: [
+        {t: "column", bg: surf_lowest, elevation: 3, radius: 12, fillh: 1},
+        {t: "column", pad: 16, spacing: 8, c: [
+            {t: "text", text: title, size: 16, weight: 500, color: on_surface, h: 24},
+            {t: "text", text: body, size: 14, color: on_surf_var, w: 300, h: 44},
+            {t: "row", spacing: 8, c: [ {t: "column", c: []}, text_btn("Open") ]},
+        ]},
+    ]}
+}
+fn card_filled(title, body) {
+    return {t: "column", bg: surf_highest, radius: 12, pad: 16, spacing: 8, c: [
+        {t: "text", text: title, size: 16, weight: 500, color: on_surface, h: 24},
+        {t: "text", text: body, size: 14, color: on_surf_var, w: 300, h: 44},
+    ]}
+}
+fn card_outlined(title, body) {
+    return {t: "column", bg: surface, border: 1, bordercolor: outline_var, radius: 12, pad: 16, spacing: 8, c: [
+        {t: "text", text: title, size: 16, weight: 500, color: on_surface, h: 24},
+        {t: "text", text: body, size: 14, color: on_surf_var, w: 300, h: 44},
+    ]}
+}
+
+// ---- navigation ------------------------------------------------------------
+
+// A full-width nav row (Button) that routes to a demo screen on tap.
+fn nav_btn(label, route) {
+    return {t: "button", label: label, tapto: route, fillw: 1, h: 56}
+}
+// A back button that routes to the home screen.
+fn back_btn() {
+    return {t: "button", label: "\u{2039}  Back", tapto: "home", fitw: 1, h: 40}
+}
+// A demo screen shell: back button + Headline Medium title + the family's sections.
+fn demo(title, kids) {
+    let c = [ back_btn(), {t: "text", text: title, size: 28, color: on_surface, h: 40} ]
+    for k in kids { c.push(k) }
+    return {t: "column", spacing: 16, c: c}
+}
+
+// ---- interactive (stateful) helpers ----------------------------------------
+// Read injected state (st.tab/st.seg/st.date/snack) and emit Button taps the
+// host turns into a state change + re-mount, so these demos actually respond.
+
+fn itab(label, val) {
+    if val == st.tab { return {t: "button", label: "\u{25CF} " + label, tapto: "tab:" + val, fillw: 1, h: 48} }
+    return {t: "button", label: label, tapto: "tab:" + val, fillw: 1, h: 48}
+}
+fn tab_body() {
+    if st.tab == "specs" { return {t: "text", text: "Specs \u{00b7} 6.5\" OLED \u{00b7} 128 GB \u{00b7} 5000 mAh", size: 14, color: on_surf_var, w: 330, h: 24} }
+    if st.tab == "related" { return {t: "text", text: "Related \u{00b7} cases \u{00b7} chargers \u{00b7} covers", size: 14, color: on_surf_var, w: 330, h: 24} }
+    return {t: "text", text: "Overview \u{00b7} the active tab's content shows here", size: 14, color: on_surf_var, w: 330, h: 24}
+}
+
+fn iseg(label, val) {
+    if val == st.seg { return {t: "button", label: "\u{2713} " + label, tapto: "seg:" + val, fillw: 1, h: 40} }
+    return {t: "button", label: label, tapto: "seg:" + val, fillw: 1, h: 40}
+}
+
+fn isnackbar() {
+    if st.snack == 1 { return {t: "row", bg: inverse_surf, radius: 4, h: 48, padx: 16, pady: 14, aligny: 0.5, c: [
+        {t: "text", text: "\u{2713}  Photo added to album", size: 14, color: inverse_on, fitw: 1},
+    ]} }
+    return {t: "text", text: "(hidden \u{2014} tap Show)", size: 12, color: on_surf_var, h: 20}
+}
+
+fn iday(d) {
+    if d == st.date { return {t: "button", label: "\u{25CF}" + d, tapto: "date:" + d, fillw: 1, h: 40} }
+    return {t: "button", label: d, tapto: "date:" + d, fillw: 1, h: 40}
+}
+fn idate_picker() {
+    return {t: "column", bg: surf_high, radius: 28, pad: 16, spacing: 8, c: [
+        {t: "text", text: "March 2026 \u{00b7} tap a day", size: 16, weight: 500, color: on_surface, h: 24},
+        {t: "row", c: [ dhead("S"), dhead("M"), dhead("T"), dhead("W"), dhead("T"), dhead("F"), dhead("S") ]},
+        {t: "row", spacing: 2, c: [ iday("2"), iday("3"), iday("4"), iday("5"), iday("6"), iday("7"), iday("8") ]},
+        {t: "row", spacing: 2, c: [ iday("9"), iday("10"), iday("11"), iday("12"), iday("13"), iday("14"), iday("15") ]},
+        {t: "row", spacing: 2, c: [ iday("16"), iday("17"), iday("18"), iday("19"), iday("20"), iday("21"), iday("22") ]},
+    ]}
+}
+
+// ---- screens ---------------------------------------------------------------
+
+fn home_screen() {
+    return {t: "column", spacing: 8, c: [
+        {t: "text", text: "Material Catalog", size: 32, color: on_surface, h: 42},
+        {t: "text", text: "Splash \u{2192} makepad native \u{00b7} tap a family", size: 14, color: on_surf_var, h: 22},
+        {t: "column", h: 6},
+        // Live app state: the buttons drive Rust-side state, re-mounted.
+        {t: "column", bg: surf_low, radius: 12, pad: 16, spacing: 10, c: [
+            {t: "text", text: "Live state \u{00b7} tapped " + st.count + " times", size: 16, weight: 500, color: on_surface, h: 24},
+            {t: "row", spacing: 8, c: [
+                {t: "button", label: "Tap me (+1)", tapto: "act:count", fillw: 1, h: 40},
+                {t: "button", label: "Toggle theme", tapto: "theme:toggle", fillw: 1, h: 40},
+            ]},
+        ]},
+        {t: "column", h: 6},
+        nav_btn("Buttons", "buttons"),
+        nav_btn("Selection controls", "selection"),
+        nav_btn("Text fields & sliders", "text"),
+        nav_btn("Chips", "chips"),
+        nav_btn("Cards & lists", "cards"),
+        nav_btn("Navigation", "nav"),
+        nav_btn("Dialogs & communication", "comms"),
+        nav_btn("Date & time pickers", "pickers"),
+        nav_btn("Progress", "progress"),
+        nav_btn("Typography & color", "type"),
+        nav_btn("Toolbars & motion", "more"),
+    ]}
+}
+
+fn demo_buttons() {
+    return demo("Buttons", [
+        section("Common buttons", [
+            {t: "row", spacing: 8, c: [
+                btn("Filled", primary, on_primary),
+                btn("Tonal", sec_container, on_sec_cont),
+                btn("Elevated", surf_lowest, primary),
+            ]},
+            {t: "row", spacing: 8, c: [ outlined_btn("Outlined"), text_btn("Text") ]},
+        ]),
+        section("Segmented buttons (tap to select)", [
+            {t: "row", spacing: 4, c: [ iseg("Day", "day"), iseg("Week", "week"), iseg("Month", "month") ]},
+            {t: "text", text: "Showing: " + st.seg, size: 12, color: on_surf_var, h: 18},
+        ]),
+        section("Floating action buttons", [
+            {t: "row", spacing: 16, aligny: 0.5, c: [
+                {t: "column", bg: pri_container, radius: 12, w: 40, h: 40, alignx: 0.5, aligny: 0.5,
+                 c: [ {t: "text", text: "\u{f067}", icon: 1, size: 18, color: on_pri_cont} ]},
+                {t: "column", bg: pri_container, radius: 16, w: 56, h: 56, alignx: 0.5, aligny: 0.5,
+                 c: [ {t: "text", text: "\u{f067}", icon: 1, size: 22, color: on_pri_cont} ]},
+                {t: "row", bg: pri_container, radius: 16, h: 56, padx: 20, fitw: 1, spacing: 12, aligny: 0.5,
+                 c: [ {t: "text", text: "\u{f067}", icon: 1, size: 22, color: on_pri_cont},
+                      {t: "text", text: "Extended", size: 16, weight: 500, color: on_pri_cont} ]},
+            ]},
+        ]),
+    ])
+}
+
+fn demo_selection() {
+    return demo("Selection controls", [
+        section("Checkbox, switch, radio", [
+            {t: "checkbox", text: "Checkbox", color: on_surface, h: 34},
+            {t: "toggle", text: "Switch", color: on_surface, h: 40},
+            {t: "radio", text: "Radio option A", color: on_surface, h: 34},
+            {t: "radio", text: "Radio option B", color: on_surface, h: 34},
+        ]),
+    ])
+}
+
+fn demo_text() {
+    return demo("Text fields & sliders", [
+        section("Text fields", [
+            {t: "input", placeholder: "Filled text field", h: 56},
+            {t: "input", placeholder: "Another field", h: 56},
+        ]),
+        section("Search bar", [ searchbar() ]),
+        section("Search view", [ search_view() ]),
+        section("Sliders", [ {t: "slider", text: "Continuous", color: on_surface, h: 44} ]),
+    ])
+}
+
+fn demo_chips() {
+    return demo("Chips", [
+        section("Chips", [
+            {t: "row", spacing: 8, c: [ chip("Assist"), chip("Filter"), chip_sel("Selected") ]},
+            {t: "row", spacing: 8, c: [ chip("Suggestion"), chip("Input \u{00d7}") ]},
+        ]),
+    ])
+}
+
+fn demo_cards() {
+    return demo("Cards & lists", [
+        section("Cards", [
+            card_elevated("Elevated card", "Rests on the surface with a soft drop shadow \u{2014} tap Open."),
+            card_filled("Filled card", "A filled container with no elevation, on the highest surface tone."),
+            card_outlined("Outlined card", "A 1dp outline and no elevation \u{2014} the lowest-emphasis card."),
+        ]),
+        section("Lists", [
+            list_item("A", "Ada Lovelace", "Analytical engine"),
+            divider(),
+            list_item("G", "Grace Hopper", "Compiler pioneer"),
+        ]),
+        section("Carousel", [ carousel() ]),
+    ])
+}
+
+fn demo_nav() {
+    return demo("Navigation", [
+        section("Top app bar", [ appbar("Catalog") ]),
+        section("Bottom app bar", [ bottom_app_bar() ]),
+        section("Navigation bar", [
+            {t: "row", bg: surf_cont, radius: 16, pad: 8, h: 80, c: [
+                nav_item("\u{f015}", "Home", on_sec_cont, sec_container),
+                nav_item("\u{f005}", "Saved", on_surf_var, surf_cont),
+                nav_item("\u{f0e0}", "Inbox", on_surf_var, surf_cont),
+                nav_item("\u{f007}", "Profile", on_surf_var, surf_cont),
+            ]},
+        ]),
+        section("Navigation rail", [ {t: "row", c: [ nav_rail() ]} ]),
+        section("Navigation drawer (tap)", [
+            {t: "button", label: "Open drawer", tapto: "open:drawer", fitw: 1, h: 40},
+        ]),
+        section("Side sheet (tap)", [
+            {t: "button", label: "Open side sheet", tapto: "open:side", fitw: 1, h: 40},
+        ]),
+        section("Tabs (tap to switch)", [
+            {t: "row", spacing: 4, c: [ itab("Overview", "overview"), itab("Specs", "specs"), itab("Related", "related") ]},
+            {t: "column", bg: outline_var, h: 1},
+            tab_body(),
+        ]),
+    ])
+}
+
+fn demo_comms() {
+    return demo("Dialogs & communication", [
+        section("Dialog (tap)", [
+            {t: "button", label: "Show dialog", tapto: "open:dialog", fitw: 1, h: 40},
+        ]),
+        section("Snackbar (show / hide)", [
+            {t: "row", spacing: 8, c: [
+                {t: "button", label: "Show", tapto: "snack:show", fillw: 1, h: 40},
+                {t: "button", label: "Hide", tapto: "snack:hide", fillw: 1, h: 40},
+            ]},
+            isnackbar(),
+        ]),
+        section("Menu (tap)", [
+            {t: "button", label: "Open menu", tapto: "open:menu", fitw: 1, h: 40},
+            imenu(),
+        ]),
+        section("Bottom sheet (tap)", [
+            {t: "button", label: "Show bottom sheet", tapto: "open:sheet", fitw: 1, h: 40},
+        ]),
+        section("Tooltip (tap)", [
+            {t: "button", label: "Toggle tooltip", tapto: "open:tooltip", fitw: 1, h: 40},
+            itooltip(),
+        ]),
+        section("Banner", [ banner() ]),
+        section("Badges", [
+            {t: "row", spacing: 32, aligny: 0.5, c: [
+                badge("\u{f0e0}", "3"), badge("\u{f015}", "12"), badge("\u{f005}", "99+"),
+            ]},
+        ]),
+    ])
+}
+
+fn demo_pickers() {
+    return demo("Date & time pickers", [
+        section("Date picker (tap a day)", [ idate_picker() ]),
+        section("Time picker", [ time_picker() ]),
+    ])
+}
+
+fn demo_progress() {
+    return demo("Progress", [
+        section("Linear", [
+            {t: "text", text: "40%", size: 12, color: on_surf_var, h: 18},
+            progress(150),
+            {t: "text", text: "75%", size: 12, color: on_surf_var, h: 18},
+            progress(280),
+        ]),
+        section("Circular", [
+            {t: "row", spacing: 20, aligny: 0.5, c: [ ring(), ring(), ring() ]},
+        ]),
+        section("Loading indicator", [
+            {t: "row", spacing: 16, aligny: 0.5, c: [
+                loading_indicator(), loading_indicator(), loading_indicator(),
+            ]},
+        ]),
+    ])
+}
+
+fn demo_type() {
+    return demo("Typography & color", [
+        section("Type scale", [
+            {t: "text", text: "Display Small", size: 36, color: on_surface, h: 46},
+            {t: "text", text: "Headline Small", size: 24, color: on_surface, h: 32},
+            {t: "text", text: "Title Large", size: 22, color: on_surface, h: 28},
+            {t: "text", text: "Title Medium", size: 16, weight: 500, color: on_surface, h: 24},
+            {t: "text", text: "Body Large \u{2014} the quick brown fox", size: 16, color: on_surf_var, h: 24},
+            {t: "text", text: "Label Large", size: 14, weight: 500, color: on_surf_var, h: 20},
+        ]),
+        section("Color roles", [
+            {t: "row", spacing: 10, c: [
+                swatch(primary, "Primary"), swatch(secondary, "Secondary"),
+                swatch(tertiary, "Tertiary"), swatch(error, "Error"),
+            ]},
+            {t: "row", spacing: 10, c: [
+                swatch(pri_container, "P. Cont"), swatch(sec_container, "S. Cont"),
+                swatch(ter_container, "T. Cont"), swatch(surf_variant, "Surf Var"),
+            ]},
+        ]),
+        section("Shape scale", [
+            {t: "row", spacing: 8, c: [
+                shape_sw(0, "None"), shape_sw(4, "XS"), shape_sw(8, "S"),
+                shape_sw(12, "M"), shape_sw(16, "L"), shape_sw(28, "XL"),
+            ]},
+        ]),
+        section("Surface tones (elevation)", [
+            {t: "row", spacing: 10, c: [
+                elev_sw(surf_lowest, "Lowest"), elev_sw(surf_low, "Low"),
+                elev_sw(surf_cont, "Cont"), elev_sw(surf_high, "High"),
+                elev_sw(surf_highest, "Highest"),
+            ]},
+        ]),
+    ])
+}
+
+// ---- interactive overlays + new components (st.open = the one open overlay) --
+// Real behaviour, not static mocks: a trigger Button sets st.open; the DSL renders
+// the overlay and a Button inside clears it. The host Splash is height:Fit, so a
+// Fill scrim would collapse — use a fixed tall scrim to cover the viewport.
+
+fn modal_over(content, ay) {
+    return {t: "stack", fillw: 1, c: [
+        {t: "column", bg: argb(150, 0, 0, 0), fillw: 1, h: 820},
+        {t: "column", fillw: 1, h: 820, alignx: 0.5, aligny: ay, pad: 16, c: [ content ]},
+    ]}
+}
+fn modal_edge(content, ax) {
+    return {t: "stack", fillw: 1, c: [
+        {t: "column", bg: argb(150, 0, 0, 0), fillw: 1, h: 820},
+        {t: "row", fillw: 1, h: 820, alignx: ax, aligny: 0.0, c: [ content ]},
+    ]}
+}
+// The root overlay layer — a real modal when st.open names one, else nothing.
+fn overlay() {
+    if st.open == "dialog" { return modal_over(dialog(), 0.5) }
+    if st.open == "sheet"  { return modal_over(bottom_sheet(), 1.0) }
+    if st.open == "drawer" { return modal_edge(nav_drawer(), 0.0) }
+    if st.open == "side"   { return modal_edge(side_sheet(), 1.0) }
+    return {t: "column", c: []}
+}
+
+// Dropdown menus that actually open/close; each item taps to dismiss.
+fn menu_btn(txt) { return {t: "button", label: txt, tapto: "open:", fillw: 1, h: 44} }
+fn imenu() {
+    if st.open != "menu" { return {t: "column", h: 0} }
+    return {t: "column", bg: surf_cont, border: 1, bordercolor: outline_var, radius: 4, pad: 8, w: 220, spacing: 2, c: [
+        menu_btn("Edit"), menu_btn("Duplicate"), menu_btn("Share"), menu_btn("Delete"),
+    ]}
+}
+fn ioverflow() {
+    if st.open != "overflow" { return {t: "column", h: 0} }
+    return {t: "column", alignx: 1.0, c: [
+        {t: "column", bg: surf_cont, border: 1, bordercolor: outline_var, radius: 4, pad: 8, w: 210, spacing: 2, c: [
+            menu_btn("Settings"), menu_btn("Help & feedback"), menu_btn("Sign out"),
+        ]},
+    ]}
+}
+fn itooltip() {
+    if st.open != "tooltip" { return {t: "column", h: 0} }
+    return {t: "row", c: [ tooltip() ]}
+}
+
+// A real (tappable, rippling) icon button — the Button label renders in the icon
+// font via icon:1, and each tap bumps the live counter so the ripple fires.
+fn tool_btn(icon) { return {t: "button", label: icon, icon: 1, size: 20, tapto: "act:count", fitw: 1, h: 48} }
+fn docked_toolbar() {
+    return {t: "row", bg: surf_cont, radius: 16, pad: 8, h: 64, spacing: 4, aligny: 0.5, c: [
+        tool_btn("\u{f0c9}"), tool_btn("\u{f005}"), tool_btn("\u{f0e0}"), tool_btn("\u{f044}"),
+        {t: "column", c: []},
+        tool_btn("\u{f067}"),
+    ]}
+}
+fn floating_toolbar() {
+    return {t: "row", bg: pri_container, radius: 28, pad: 8, fitw: 1, spacing: 4, aligny: 0.5, c: [
+        tool_btn("\u{f068}"), tool_btn("\u{f067}"), tool_btn("\u{f0c1}"),
+    ]}
+}
+
+// Motion — a real container-transform-style expand/collapse (state-driven, so the
+// swap is instant; the re-mount pipeline can't tween).
+fn imotion() {
+    if st.open == "motion" {
+        return {t: "column", bg: pri_container, radius: 16, pad: 16, spacing: 8, c: [
+            {t: "text", text: "Expanded surface", size: 16, weight: 500, color: on_pri_cont, h: 24},
+            {t: "text", text: "The tapped card transformed into this larger surface. Tap collapse to return.", size: 14, color: on_pri_cont, w: 300, h: 44},
+            {t: "button", label: "Collapse", tapto: "open:", fitw: 1, h: 40},
+        ]}
+    }
+    return {t: "row", c: [ {t: "button", label: "Expand card", tapto: "open:motion", fitw: 1, h: 40} ]}
+}
+
+fn demo_more() {
+    return demo("Toolbars & motion", [
+        section("Docked toolbar", [ docked_toolbar() ]),
+        section("Floating toolbar", [ {t: "row", c: [ floating_toolbar() ]} ]),
+        section("Overflow menu (tap)", [
+            {t: "row", spacing: 8, aligny: 0.5, c: [
+                {t: "text", text: "Actions", size: 14, color: on_surface, fitw: 1},
+                {t: "column", c: []},
+                {t: "button", label: "\u{f142}", icon: 1, size: 20, tapto: "open:overflow", fitw: 1, h: 44},
+            ]},
+            ioverflow(),
+        ]),
+        section("Motion \u{00b7} container transform (tap)", [ imotion() ]),
+    ])
+}
+
+// Route the injected `screen` to the matching demo, defaulting to home.
+fn body(s) {
+    if s == "buttons" { return demo_buttons() }
+    if s == "selection" { return demo_selection() }
+    if s == "text" { return demo_text() }
+    if s == "chips" { return demo_chips() }
+    if s == "cards" { return demo_cards() }
+    if s == "nav" { return demo_nav() }
+    if s == "comms" { return demo_comms() }
+    if s == "pickers" { return demo_pickers() }
+    if s == "progress" { return demo_progress() }
+    if s == "type" { return demo_type() }
+    if s == "more" { return demo_more() }
+    return home_screen()
+}
+
+// ---- root ------------------------------------------------------------------
+// The screen, with a real modal overlay stacked on top when st.open is set.
+{t: "stack", fillw: 1, c: [
+    {t: "column", bg: page, pad: 16, spacing: 16, c: [ body(st.route) ]},
+    overlay(),
+]}

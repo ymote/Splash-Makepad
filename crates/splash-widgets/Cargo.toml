@@ -1,0 +1,17 @@
+# splash-widgets — themed native-widget kits (M3, later iOS / liquid-glass) as
+# external script_mod! variants of makepad's widgets. NO makepad fork required.
+#
+# This crate builds against upstream makepad-widgets. It is kept OUT of the
+# workspace's default build (see the root Cargo.toml `exclude`) because it needs
+# the full makepad build + a makepad-script rev that matches splash-render's;
+# wire it into your app's makepad workspace to use it. See ../../README.md.
+[package]
+name = "splash-widgets"
+version = "0.1.0"
+edition = "2021"
+description = "Themed native-widget kits for makepad (M3 / iOS / liquid-glass) as fork-free script_mod! variants"
+
+[dependencies]
+# Upstream makepad — fork-free. The makepad-script rev pulled transitively here
+# must match the one splash-render pins (align both when wiring an app).
+makepad-widgets = { git = "https://github.com/makepad/makepad.git", branch = "dev" }

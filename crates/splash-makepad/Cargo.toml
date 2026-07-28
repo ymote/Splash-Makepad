@@ -1,0 +1,15 @@
+[package]
+name = "splash-makepad"
+version = "0.1.0"
+edition = "2021"
+description = "makepad render backend for Splash: shared UiNode -> makepad UI dialect"
+
+[dependencies]
+# Only the shared render core — the UiNode -> makepad translation is pure and
+# needs no makepad-platform/draw/widgets to build or test. A host app that puts
+# the output on screen pulls in makepad-widgets itself (see the Android app).
+splash-render = { path = "../splash-render" }
+
+[[example]]
+name = "translate"
+path = "examples/translate.rs"
