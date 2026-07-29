@@ -13,7 +13,8 @@
 
 // dir, label, status, route
 //
-// status  2  the screen does the thing — live host data, or it actually moves
+// status  2  the screen responds — live host data, motion, or controls that
+//            change what you see when you tap them
 //         1  drawn, not working — the geometry and tokens are transcribed from
 //            the sample, the behaviour behind them is not
 //         0  a note. No port; it says what the counterpart here is
@@ -23,17 +24,17 @@
 // capability was being counted as done. The split below is an outside review's
 // (gpt-5.6-terra) classification, not mine.
 let fs_samples = [
-    ["material_3_demo", "Material 3 Demo", 1, "material_3_demo"],
-    ["cupertino_gallery", "Cupertino Gallery", 1, "cupertino_gallery"],
-    ["date_planner", "Date Planner", 1, "date_planner"],
-    ["platform_design", "Platform Design", 1, "platform_design"],
+    ["material_3_demo", "Material 3 Demo", 2, "material_3_demo"],
+    ["cupertino_gallery", "Cupertino Gallery", 2, "cupertino_gallery"],
+    ["date_planner", "Date Planner", 2, "date_planner"],
+    ["platform_design", "Platform Design", 2, "platform_design"],
     ["animations", "Animations", 2, "animations"],
-    ["form_app", "Form App", 1, "form_app"],
+    ["form_app", "Form App", 2, "form_app"],
     ["navigation_and_routing", "Navigation and Routing", 2, "navigation_and_routing"],
-    ["compass_app", "Compass App", 1, "compass_app"],
-    ["desktop_photo_search", "Desktop Photo Search", 1, "desktop_photo_search"],
+    ["compass_app", "Compass App", 2, "compass_app"],
+    ["desktop_photo_search", "Desktop Photo Search", 2, "desktop_photo_search"],
     ["dynamic_theme", "Dynamic Theme", 1, "dynamic_theme"],
-    ["testing_app", "Testing App", 1, "testing_app"],
+    ["testing_app", "Testing App", 2, "testing_app"],
     ["add_to_app", "Add to App", 2, "add_to_app"],
     ["analysis_defaults", "Analysis Defaults", 0, "analysis_defaults"],
     ["android_splash_screen", "Android Splash Screen", 0, "android_splash_screen"],
@@ -94,17 +95,18 @@ fn screen_index() {
     return page(m_surface, [
         {t: "column", bg: m_surf_cont, fillw: 1, padx: 16, pady: 16, spacing: 4, c: [
             txt("flutter/samples", 28, 400, m_on_surface),
-            para("All 27 directories have a screen. Three of them work; most "
-                + "are the sample drawn accurately and not wired up; six are "
-                + "notes, not ports.", 14, 400, m_on_surf_var),
+            para("All 27 directories have a screen. Eleven respond — live "
+                + "data, motion, or controls that do something. Ten are drawn "
+                + "and not wired up. Six are notes, not ports.",
+                14, 400, m_on_surf_var),
         ]},
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
             {t: "row", fillw: 1, spacing: 8, c: [
-                fs_count_card("3", "work", m_pri_cont, m_on_pri_cont),
-                fs_count_card("18", "drawn only", m_surf_highest, m_on_surface),
+                fs_count_card("11", "respond", m_pri_cont, m_on_pri_cont),
+                fs_count_card("10", "drawn only", m_surf_highest, m_on_surface),
                 fs_count_card("6", "notes", m_surf_cont, m_on_surf_var),
             ]},
-            m_section("Working — live host data, or it moves", working),
+            m_section("Responds — data, motion, or a control that works", working),
             m_section("Drawn, not wired up", drawn),
             m_section("Notes, not ports", notes),
             {t: "column", fillw: 1, tapto: "theme:toggle",

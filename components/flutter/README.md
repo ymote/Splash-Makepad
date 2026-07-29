@@ -17,6 +17,49 @@
 > animate, the map is a real OpenStreetMap renderer, and the capability screens
 > read live values off the device.
 
+## Controls that are controls
+
+The review's middle column — eighteen screens "drawn only" — was not eighteen
+problems. It was one. A `.splash` screen is evaluated to a tree once per mount,
+nothing survives that, and the only thing a tap could do was change the route.
+So no checkbox could stay checked: there was nowhere to put "checked".
+
+There is now. `state.rs` in both backends holds a key→value store, the DSL reads
+it with `sget(key, default)`, and a tap names an action instead of a route:
+
+```text
+{t: "row", tapto: "set:m3_c1=!",        c: [...]}   // toggle
+{t: "row", tapto: "set:ca_guests=+1",   c: [...]}   // step
+{t: "row", tapto: "set:dps_query=~4",   c: [...]}   // cycle
+{t: "row", tapto: "set:m3_radio=2",     c: [...]}   // pick, for radio groups
+```
+
+Actions ride the same interning as routes, so a control needs no new node
+attribute and both backends get it from the one place a tap already lands.
+
+Eight screens are wired against it — Material 3, Cupertino Gallery, Form App,
+Date Planner, Compass, Platform Design, Photo Search and Testing — and
+`a_control_changes_what_the_screen_renders` holds them to it: render, apply the
+action the control names, render again, and the two must differ. That is the
+test the catalog never had, and it is why eighteen screens could sit in the
+index marked as ports while none of their controls worked.
+
+Three defects fell out of writing it, each invisible before:
+
+- `sget` had to **seed** the store on first read, not just default. `apply`
+  toggles against the current value and cannot know a screen considers a
+  control on by default, so `sget("m3_switch", 1)` toggled from an assumed 0 to
+  1 and rendered identically. The tap worked; the screen could not show it.
+- `a or b` is not an operator in this VM. It parsed, and Testing App counted one
+  favourite instead of three.
+- `txt()` sizes its box from `s.len()`, so a number has no length and the node
+  vanished entirely — the Compass stepper drew its two buttons with nothing
+  between them.
+
+**Known limitation, verified on the phone:** a tap rebuilds the whole tree and
+ArkUI's Scroll is a new node each time, so the view jumps to the top. The
+control is correctly changed; you are just no longer looking at it.
+
 ## What an outside review found
 
 The index used to mark all 27 with a check. That was wrong, and this is the

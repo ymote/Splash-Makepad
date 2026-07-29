@@ -117,10 +117,14 @@ fn screen_platform_design_profile() {
                      "My neighbor hates me"]
     let mood = ["Over the moon", "Basking in sunlight", "Hello fellow Martians",
                 "Into the darkness"]
+    // Two radio groups. Defaults are the entries the sample starts on: index 1
+    // of intensity and index 0 of mood.
     let a = []
-    for o in intensity { a.push(pd_opt_row(o, o == "Dial it to 11")) }
+    let ai = 0
+    for o in intensity { a.push(pd_opt_row2(o, "pd_intensity", ai, 1))  ai = ai + 1 }
     let b = []
-    for o in mood { b.push(pd_opt_row(o, o == "Over the moon")) }
+    let bi = 0
+    for o in mood { b.push(pd_opt_row2(o, "pd_mood", bi, 0))  bi = bi + 1 }
     return pd_mat_page("Profile", "Profile", [
         {t: "column", fillw: 1, spacing: 8, alignx: 0.5, pady: 12, c: [
             {t: "column", w: 88, h: 88, radius: 44, bg: m_surf_highest,
@@ -132,9 +136,18 @@ fn screen_platform_design_profile() {
     ])
 }
 
-fn pd_opt_row(label, selected) {
-    return {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5, c: [
-        {t: "radio", on: pick_if(selected, 1, 0), w: 16, h: 16},
+fn pd_opt_row2(label, group, value, dflt) {
+    return {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5,
+            tapto: act_set(group, value), c: [
+        {t: "radio", on: pick_if(sget(group, dflt) == value, 1, 0), w: 16, h: 16},
+        txt(label, 14, 400, m_on_surface),
+    ]}
+}
+
+fn pd_opt_row(label, group, value) {
+    return {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5,
+            tapto: act_set(group, value), c: [
+        {t: "radio", on: pick_if(sget(group, 0) == value, 1, 0), w: 16, h: 16},
         txt(label, 14, 400, m_on_surface),
     ]}
 }
@@ -143,10 +156,13 @@ fn screen_platform_design_settings() {
     let rows = []
     let i = 0
     for s in pd_settings {
+        // The sample's Settings is a list of switches. They were alternating
+        // by index — a checkerboard that looked like state and was arithmetic.
+        let k = "pd_notify_" + i
         rows.push({t: "row", fillw: 1, fith: 1, pady: 8, spacing: 12,
-                   aligny: 0.5, c: [
+                   aligny: 0.5, tapto: act_toggle(k), c: [
             {t: "column", fillw: 1, fith: 1, c: [ para(s, 14, 400, m_on_surface) ]},
-            {t: "toggle", on: pick_if(i % 2 == 0, 1, 0), fitw: 1},
+            {t: "toggle", on: sget(k, pick_if(i % 2 == 0, 1, 0)), fitw: 1},
         ]})
         i = i + 1
     }

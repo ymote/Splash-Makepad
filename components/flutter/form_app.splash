@@ -102,17 +102,22 @@ fn screen_form_app_form_widgets() {
                 ]},
             ]),
             m_section("Slider", [
-                {t: "slider", value: 0.5, fillw: 1, h: 32},
-                txt("Max value", 13, 400, m_on_surf_var),
+                {t: "column", fillw: 1, tapto: act_cycle("form_slider", 5), c: [
+                    {t: "slider", value: sget("form_slider", 2) / 4.0,
+                     fillw: 1, h: 32},
+                ]},
+                txt("Value " + sget("form_slider", 2) + " of 4 — tap to step",
+                    13, 400, m_on_surf_var),
             ]),
             m_section("Checkbox", [
-                check_row("Brushed teeth", 1),
+                check_row("Brushed teeth", "form_teeth", 1),
             ]),
             m_section("Switch", [
-                {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5, c: [
+                {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5,
+                 tapto: act_toggle("form_feature"), c: [
                     txt("Enable feature", 14, 400, m_on_surface),
                     spacer(),
-                    {t: "toggle", on: 1, w: 52, h: 32},
+                    {t: "toggle", on: sget("form_feature", 1), w: 52, h: 32},
                 ]},
             ]),
         ]},
@@ -128,13 +133,18 @@ fn screen_form_app_validation() {
                              "Not a valid adjective."),
                 fa_field_err("Enter a noun", "i.e. a person, place or thing",
                              "Not a valid noun."),
-                {t: "row", fillw: 1, spacing: 12, aligny: 0.5, c: [
-                    {t: "checkbox", on: 0, w: 18, h: 18},
+                {t: "row", fillw: 1, spacing: 12, aligny: 0.5,
+                 tapto: act_toggle("form_terms"), c: [
+                    {t: "checkbox", on: sget("form_terms", 0), w: 18, h: 18},
                     {t: "column", fitw: 1, c: [
                         txt("I agree to the terms of service.", 14, 400, m_on_surface),
                     ]},
                 ]},
-                txt("You must agree to the terms of service.", 12, 400, m_error),
+                // Validation is the sample's whole subject, so the message has
+                // to answer the checkbox rather than sit under it permanently.
+                pick_if(son("form_terms"),
+                    txt("Thank you.", 12, 400, m_primary),
+                    txt("You must agree to the terms of service.", 12, 400, m_error)),
                 m_btn("Submit", m_primary, m_on_primary),
             ]),
             m_section("Result dialog", [

@@ -128,7 +128,11 @@ fn ca_card(name, country, tags) {
 
 fn screen_compass_app_search() {
     let chips = []
-    for c in ca_continents { chips.push(m_chip(c, c == "Europe")) }
+    let ci = 0
+    for c in ca_continents {
+        chips.push(m_chip_pick(c, "ca_continent", ci, 3))
+        ci = ci + 1
+    }
     return page(m_surface, [
         m_appbar("Search", "compass_app"),
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
@@ -144,7 +148,7 @@ fn screen_compass_app_search() {
                 {t: "row", fillw: 1, h: 56, spacing: 16, aligny: 0.5, c: [
                     txt("Guests", 16, 400, m_on_surface),
                     spacer(),
-                    ca_stepper("2"),
+                    ca_stepper("ca_guests", 2),
                 ]},
             ]),
             m_btn("Search", m_primary, m_on_primary),
@@ -152,13 +156,22 @@ fn screen_compass_app_search() {
     ])
 }
 
-fn ca_stepper(value) {
+// The stepper steps. `+1`/`-1` are relative on purpose: a tap target is a
+// string baked into the tree at build time, so a button encoding its next value
+// would encode the value that was current when the tree was built.
+fn ca_stepper(key, dflt) {
+    let n = sget(key, dflt)
     return {t: "row", fitw: 1, spacing: 16, aligny: 0.5, c: [
         {t: "column", w: 36, h: 36, radius: 18, bg: m_surf_highest,
-         alignx: 0.5, aligny: 0.5, c: [ txt("−", 18, 500, m_on_surface) ]},
-        txt(value, 16, 500, m_on_surface),
+         alignx: 0.5, aligny: 0.5, tapto: act_down(key, 1),
+         c: [ txt("−", 18, 500, m_on_surface) ]},
+        // "" + n, not n: txt() sizes its box from s.len() and a number has no
+        // len, so the stepper's value rendered as no node at all — the two
+        // buttons sat side by side with nothing between them.
+        txt("" + n, 16, 500, m_on_surface),
         {t: "column", w: 36, h: 36, radius: 18, bg: m_surf_highest,
-         alignx: 0.5, aligny: 0.5, c: [ txt("+", 18, 500, m_on_surface) ]},
+         alignx: 0.5, aligny: 0.5, tapto: act_up(key, 1),
+         c: [ txt("+", 18, 500, m_on_surface) ]},
     ]}
 }
 
@@ -187,13 +200,16 @@ fn ca_result_row(name, country, tags) {
 fn screen_compass_app_activities() {
     let morning = []
     let anytime = []
+    let ai = 0
     for a in ca_activities {
+        let ak = "ca_act_" + ai
         let row = {t: "row", fillw: 1, fith: 1, pady: 10, spacing: 12,
-                   aligny: 0.5, c: [
-            {t: "checkbox", on: 0, w: 18, h: 18},
+                   aligny: 0.5, tapto: act_toggle(ak), c: [
+            {t: "checkbox", on: sget(ak, 0), w: 18, h: 18},
             {t: "column", fillw: 1, fith: 1, c: [ para(a[0], 15, 400, m_on_surface) ]},
         ]}
         if a[1] == "morning" { morning.push(row) } else { anytime.push(row) }
+        ai = ai + 1
     }
     return page(m_surface, [
         m_appbar("Activities", "compass_app/results"),

@@ -121,7 +121,7 @@ fn cases() -> Vec<(String, &'static str)> {
         // dynamic_theme.
         ("dynamic_theme", "change_text_scale_factor"),
         // testing_app.
-        ("testing_app", "Added to favorites."),
+        ("testing_app", "in favorites."),
         ("testing_app/favorites", "Favorites"),
     ]
     .into_iter()
@@ -434,3 +434,75 @@ fn kit_assembles_head_first_and_index_last() {
         "the middle must be sorted, so the assembled script is byte-stable"
     );
 }
+
+/// A control has to change something, or it is a picture of a control.
+///
+/// This is the test the catalog needed and did not have. Every screen already
+/// proves it *translates*; none proved that tapping anything on it did
+/// anything, which is exactly how eighteen screens sat in the index marked as
+/// ports while none of their checkboxes checked. The shape here is the whole
+/// contract: render, apply the action a tap would, render again, and the two
+/// must differ.
+#[test]
+fn a_control_changes_what_the_screen_renders() {
+    let kit = assembled();
+    // route, the action its control names, and a fragment only one state emits
+    let cases = [
+        // Three favourites are on by default, so favouriting item 1 makes four.
+        ("testing_app", "set:testing_fav_1=!", "4 in favorites."),
+        ("material_3_demo", "set:m3_switch=!", ""),
+        ("material_3_demo", "set:m3_radio=2", ""),
+        ("cupertino_gallery/switch", "set:cup_switch=!", ""),
+        ("cupertino_gallery/slider", "set:cup_slider=~5", "Value 3 of 4"),
+        ("cupertino_gallery/settings", "set:cup_bright=~5", ""),
+        ("form_app/form_widgets", "set:form_feature=!", ""),
+        ("form_app/form_widgets", "set:form_slider=~5", "Value 3 of 4"),
+        ("form_app/validation", "set:form_terms=!", "Thank you."),
+        ("date_planner/pagliacci", "set:plan_task_0=!", ""),
+        ("compass_app/search", "set:ca_guests=+1", ""),
+        ("compass_app/search", "set:ca_continent=0", ""),
+        ("compass_app/activities", "set:ca_act_0=!", ""),
+        ("platform_design/settings", "set:pd_notify_0=!", ""),
+        ("platform_design/profile", "set:pd_mood=2", ""),
+        ("desktop_photo_search", "set:dps_query=~4", "coffee"),
+    ];
+    let mut failures = Vec::new();
+    for (route, action, marker) in cases {
+        splash_render::state::reset();
+        let before = render(&kit, route);
+        assert!(
+            splash_render::state::apply(action),
+            "{action:?} is not a state action"
+        );
+        let after = render(&kit, route);
+        if before == after {
+            failures.push(format!(
+                "route {route:?} renders identically after {action:?} — its \
+                 control is a picture"
+            ));
+        }
+        if !marker.is_empty() && !after.contains(marker) {
+            failures.push(format!(
+                "route {route:?} does not contain {marker:?} after {action:?}"
+            ));
+        }
+    }
+    splash_render::state::reset();
+    assert!(failures.is_empty(), "\n{}", failures.join("\n"));
+}
+
+
+#[test]
+fn probe2() {
+    let kit = assembled();
+    splash_render::state::reset();
+    let a = render(&kit, "material_3_demo");
+    splash_render::state::apply("set:m3_switch=!");
+    eprintln!("PROBE store now = {}", splash_render::state::get("m3_switch", 1.0));
+    let b = render(&kit, "material_3_demo");
+    eprintln!("PROBE a_active={} b_active={}",
+        a.matches("active: true").count(), b.matches("active: true").count());
+    eprintln!("PROBE same={}", a == b);
+    splash_render::state::reset();
+}
+

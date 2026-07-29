@@ -255,6 +255,33 @@ fn lerp_argb(c1, c2, t) {
 // The VM has no sqrt, min, sign or smoothstep. A signed distance field is just
 // arithmetic, so with these the DSL can evaluate one per cell and draw it with
 // ordinary nodes — no fragment shader, and it works on both backends.
+// ---- state: what makes a control a control ----------------------------------
+// `sget(key, default)` is a host global — it reads the store the tap wrote.
+// The helpers below build the tap target that writes it. A target is either
+// somewhere to go (`tapto: "date_planner/maya"`) or something to change
+// (`tapto: "set:guests=+1"`), and both ride the same interning, so a control
+// needs no new node attribute and works on both backends.
+//
+// Relative forms matter: a tap target is a string baked into the tree when it
+// was built, so a stepper that encoded its next value would encode the value
+// that was current at build time and the second tap would undo the first.
+// Known limitation: a tap rebuilds the whole tree, and ArkUI's Scroll is a new
+// node each time, so the view jumps back to the top. Tap a checkbox halfway
+// down Material 3 and you land at the top of the screen with the checkbox
+// correctly checked. Fixing it means reading NODE_SCROLL_OFFSET before the
+// rebuild and restoring it after, which needs a shim getter this build does not
+// have. Verified on the phone; not fixed.
+fn act_set(key, v)    { return "set:" + key + "=" + v }
+fn act_toggle(key)    { return "set:" + key + "=!" }
+fn act_up(key, n)     { return "set:" + key + "=+" + n }
+fn act_down(key, n)   { return "set:" + key + "=-" + n }
+fn act_cycle(key, n)  { return "set:" + key + "=~" + n }
+fn act_climb(key, n)  { return "set:" + key + "=^" + n }
+
+// True when the flag at `key` is set. The DSL has no bool; 0 and 1 are it.
+fn son(key)           { return sget(key, 0) == 1 }
+fn son_d(key, dflt)   { return sget(key, dflt) == 1 }
+
 fn absn(x) { if x < 0.0 { return 0.0 - x }  return x }
 fn minn(a, b) { if a < b { return a } return b }
 fn maxn(a, b) { if a > b { return a } return b }

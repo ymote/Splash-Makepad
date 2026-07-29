@@ -80,19 +80,25 @@ fn screen_material_3_demo() {
 
     // Switches, checkboxes, radios — real native makepad controls.
     let switches = {t: "row", fillw: 1, spacing: 16, aligny: 0.5, c: [
-        {t: "toggle", on: 1, w: 52, h: 32}, {t: "toggle", on: 0, w: 52, h: 32},
+        {t: "column", fitw: 1, fith: 1, tapto: act_toggle("m3_switch"), c: [
+            {t: "toggle", on: sget("m3_switch", 1), w: 52, h: 32}]},
+        {t: "column", fitw: 1, fith: 1, tapto: act_toggle("m3_switch2"), c: [
+            {t: "toggle", on: sget("m3_switch2", 0), w: 52, h: 32}]},
     ]}
     let checks = {t: "column", fillw: 1, spacing: 4, c: [
-        check_row("Option 1", 1), check_row("Option 2", 1),
-        check_row("Option 3", 0), check_row("Option 4", 0),
+        check_row("Option 1", "m3_c1", 1), check_row("Option 2", "m3_c2", 1),
+        check_row("Option 3", "m3_c3", 0), check_row("Option 4", "m3_c4", 0),
     ]}
     let radios = {t: "column", fillw: 1, spacing: 4, c: [
-        radio_row("Option 1", 1), radio_row("Option 2", 0), radio_row("Option 3", 0),
+        radio_row("Option 1", "m3_radio", 0), radio_row("Option 2", "m3_radio", 1),
+        radio_row("Option 3", "m3_radio", 2),
     ]}
 
     // Chips — assist / filter (selected) / input.
     let chips = {t: "row", fillw: 1, spacing: 8, c: [
-        m_chip("Assist", 0), m_chip("Filter", 1), m_chip("Input", 0),
+        m_chip_flag("Assist", "m3_chip_a", 0),
+        m_chip_flag("Filter", "m3_chip_f", 1),
+        m_chip_flag("Input", "m3_chip_i", 0),
     ]}
 
     // Progress indicators — the animated spinner and the M3 shape-morph.
@@ -225,18 +231,42 @@ fn elev_card(level, dp, overlay) {
 
 // ---- small shared component rows -------------------------------------------
 
-fn check_row(label, on) {
-    return {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5, c: [
-        {t: "checkbox", on: on, w: 18, h: 18},
+// The shared control rows. Each takes a state key, so tapping the row is what
+// makes the control a control — `on:` used to be a literal and these were
+// pictures of checkboxes.
+//
+// The whole row is the target, not the box. Flutter's CheckboxListTile and
+// SwitchListTile behave that way, and a 18x18 box is well under the 48dp
+// minimum a finger needs.
+fn check_row(label, key, dflt) {
+    return {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5,
+            tapto: act_toggle(key), c: [
+        {t: "checkbox", on: sget(key, dflt), w: 18, h: 18},
         txt(label, 14, 400, m_on_surface),
     ]}
 }
 
-fn radio_row(label, on) {
-    return {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5, c: [
-        {t: "radio", on: on, w: 16, h: 16},
+// A radio is a checkbox that cannot uncheck itself: tapping sets the *group* to
+// this value, and every other row in the group goes off because it is reading
+// the same key.
+fn radio_row(label, group, value) {
+    return {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5,
+            tapto: act_set(group, value), c: [
+        {t: "radio", on: pick_if(sget(group, 0) == value, 1, 0), w: 16, h: 16},
         txt(label, 14, 400, m_on_surface),
     ]}
+}
+
+// A filter chip that filters. `m_chip(label, selected)` stays for the places
+// that draw a specimen rather than offer a choice.
+fn m_chip_pick(label, key, value, dflt) {
+    return {t: "column", fitw: 1, fith: 1, tapto: act_set(key, value),
+            c: [ m_chip(label, sget(key, dflt) == value) ]}
+}
+
+fn m_chip_flag(label, key, dflt) {
+    return {t: "column", fitw: 1, fith: 1, tapto: act_toggle(key),
+            c: [ m_chip(label, son_d(key, dflt)) ]}
 }
 
 fn m_chip(label, selected) {

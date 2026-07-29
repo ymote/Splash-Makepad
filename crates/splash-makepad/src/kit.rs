@@ -128,4 +128,22 @@ pub fn register_stub_capabilities(vm: &mut splash_render::makepad_script::Script
         },
     );
     vm.set_injected_global(id!(invoke), f);
+
+    // State reads the same way it does on ArkUI, from the same store shape.
+    // The kit is one file; a control that checks on the phone checks here too.
+    let g = splash_render::add_global_fn(
+        vm,
+        &[
+            (id!(key), splash_render::makepad_script::ScriptValue::NIL),
+            (id!(dflt), splash_render::makepad_script::ScriptValue::NIL),
+        ],
+        |vm, a| {
+            let key = splash_render::string_prop(vm, a, id!(key)).unwrap_or_default();
+            let dflt = splash_render::num_prop(vm, a, id!(dflt)).unwrap_or(0.0);
+            splash_render::makepad_script::ScriptValue::from_f64(
+                splash_render::state::get_or_seed(&key, dflt),
+            )
+        },
+    );
+    vm.set_injected_global(id!(sget), g);
 }

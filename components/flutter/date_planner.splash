@@ -86,15 +86,22 @@ fn screen_date_planner_event(key) {
     for t in dp_tasks {
         if t[0] == key {
             let first = 1
+            let n = 0
             for one in t[1] {
                 if first == 0 { task_rows.push(rule(c_separator)) }
                 first = 0
+                // Keyed by index within the plan, so each plan keeps its own
+                // ticks rather than every plan sharing one set.
+                let tk = "plan_task_" + n
+                let done = son(tk)
                 task_rows.push({t: "row", fillw: 1, fith: 1, padx: 16, pady: 10,
-                                spacing: 12, aligny: 0.5, c: [
-                    {t: "checkbox", on: 0, w: 18, h: 18},
+                                spacing: 12, aligny: 0.5,
+                                tapto: act_toggle(tk), c: [
+                    {t: "checkbox", on: sget(tk, 0), w: 18, h: 18},
                     {t: "column", fillw: 1, fith: 1,
-                     c: [ para(one, 17, 400, c_label) ]},
+                     c: [ para(one, 17, 400, pick_if(done, c_label2, c_label)) ]},
                 ]})
+                n = n + 1
             }
         }
     }

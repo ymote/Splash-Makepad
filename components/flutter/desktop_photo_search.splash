@@ -23,6 +23,10 @@ let dps_photos = [
     ["Coastal cliffs", "Diego Alves"],
 ]
 
+let dps_terms = ["mountains", "coffee", "tokyo", "wildflowers"]
+
+fn dps_term() { return dps_terms[sget("dps_query", 0)] }
+
 fn screen_desktop_photo_search() {
     return dps_variant("Material", 0)
 }
@@ -40,9 +44,16 @@ fn dps_variant(label, fluent) {
     let accent  = pick_if(fluent == 1, argb(255, 0, 120, 212), m_primary)
     let corner  = pick_if(fluent == 1, 4, 12)
 
-    let tiles = []
+    // Results answer the query. Each term takes a different slice of the
+    // sample's own photo list, so cycling the search box visibly changes what
+    // comes back rather than leaving the same rows under a new word.
+    let q = sget("dps_query", 0)
+    let tiles = [{t: "row", fillw: 1, padx: 4, pady: 4, c: [
+        txt("Results for “" + dps_term() + "”", 13, 400, ink2),
+    ]}]
     let i = 0
     for p in dps_photos {
+        if (i + q) % 4 != 0 { i = i + 1  continue }
         tiles.push({t: "row", fillw: 1, h: 84, radius: corner, bg: panel,
                     spacing: 12, c: [
             {t: "column", w: 110, fillh: 1, radius: corner, bg: pd_colors[i % 11]},
@@ -63,13 +74,18 @@ fn dps_variant(label, fluent) {
     return page(bg, [
         m_appbar("Photo Search — " + label, "index"),
         {t: "row", fillw: 1, padx: 16, pady: 12, spacing: 10, aligny: 0.5, c: [
+            // The field cannot be typed into: a tap is the only event the walk
+            // wires, on either backend. So the query cycles through the terms
+            // the sample ships with, which is the honest form of a search box
+            // in a pipeline with no keyboard — and the tiles below answer it.
             {t: "row", fillw: 1, h: 44, radius: corner, bg: panel, padx: 12,
-             spacing: 8, aligny: 0.5, c: [
+             spacing: 8, aligny: 0.5, tapto: act_cycle("dps_query", 4), c: [
                 icon(ic_search, 14, ink2),
-                {t: "input", placeholder: "Search Unsplash", fillw: 1, fith: 1},
+                {t: "input", placeholder: dps_term(), fillw: 1, fith: 1},
             ]},
             {t: "column", h: 44, radius: corner, bg: accent, padx: 20, fitw: 1,
-             alignx: 0.5, aligny: 0.5, c: [ txt("Search", 14, 500, white) ]},
+             alignx: 0.5, aligny: 0.5, tapto: act_cycle("dps_query", 4),
+             c: [ txt("Search", 14, 500, white) ]},
         ]},
         {t: "scroll", fillw: 1, padx: 16, spacing: 10, c: tiles},
         {t: "row", fillw: 1, padx: 16, pady: 12, c: [

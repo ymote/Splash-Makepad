@@ -14,6 +14,7 @@
 
 mod eval;
 mod node;
+pub mod state;
 
 pub use eval::{add_global_fn, build, num_prop, prop, string_prop};
 pub use node::{Attrs, NodeKind, UiNode};
