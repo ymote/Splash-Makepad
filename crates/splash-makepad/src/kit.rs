@@ -109,3 +109,23 @@ pub fn with_state_at(route: &str, dark: bool, t: f64, kit: &str) -> String {
         u8::from(dark)
     )
 }
+
+/// Register the capability surface the kit expects, as a stub.
+///
+/// `platform_channels` and `pedometer` call `invoke(tool)`. On Splash-OH the
+/// bridge installs the real registry; this backend has no capabilities at all,
+/// and an unregistered global evaluates to nil — which rendered those screens
+/// with their answers silently blank. Answering in words is the honest form.
+pub fn register_stub_capabilities(vm: &mut splash_render::makepad_script::ScriptVm) {
+    use splash_render::makepad_script::makepad_live_id::*;
+    let f = splash_render::add_global_fn(
+        vm,
+        &[(id!(tool), splash_render::makepad_script::ScriptValue::NIL)],
+        |vm, a| {
+            let tool = splash_render::string_prop(vm, a, id!(tool)).unwrap_or_default();
+            let msg = format!("unavailable on the makepad backend ({tool})");
+            vm.bx.heap.new_string_from_str(&msg)
+        },
+    );
+    vm.set_injected_global(id!(invoke), f);
+}

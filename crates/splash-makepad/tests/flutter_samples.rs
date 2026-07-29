@@ -26,7 +26,7 @@ fn assembled() -> String {
 /// Translate one route, or panic with the route name attached.
 fn render(kit: &str, route: &str) -> String {
     let src = kit::with_state(route, false, kit);
-    let tree = splash_render::build(&src, |_vm| {})
+    let tree = splash_render::build(&src, kit::register_stub_capabilities)
         .unwrap_or_else(|| panic!("route {route:?} evaluated to nil"));
     assert!(
         tree.count() > 3,
@@ -151,7 +151,7 @@ fn cases() -> Vec<(String, &'static str)> {
         ("google_maps", "OpenStreetMap vector tiles"),
         ("ios_app_clip", "entitlements"),
         ("pedometer", "Health Connect"),
-        ("platform_channels", "BasicMessageChannel"),
+        ("platform_channels", "MethodChannel"),
         ("platform_view_swift", "UIViewController"),
         ("simple_sdf", "Sdf2d"),
         ("simple_shader", "MPSL"),
@@ -348,7 +348,7 @@ fn every_animation_demo_moves_and_is_its_own() {
     let kit = assembled();
     let frame = |demo: &str, t: f64| {
         let src = kit::with_state_at(&format!("animations/{demo}"), false, t, &kit);
-        let tree = splash_render::build(&src, |_vm| {})
+        let tree = splash_render::build(&src, kit::register_stub_capabilities)
             .unwrap_or_else(|| panic!("animations/{demo} at t={t} evaluated to nil"));
         to_makepad_ui(&tree)
     };

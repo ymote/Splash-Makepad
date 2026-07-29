@@ -158,7 +158,7 @@ impl App {
         };
         let full =
             splash_makepad::kit::with_state_at(route, self.dark, self.clock, &src);
-        if let Some(node) = splash_render::build(&full, |_vm| {}) {
+        if let Some(node) = splash_render::build(&full, splash_makepad::kit::register_stub_capabilities) {
             let ui = splash_makepad::to_makepad_ui(&node);
             self.ui.widget(cx, ids!(host)).set_text(cx, &ui);
         }

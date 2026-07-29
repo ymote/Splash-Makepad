@@ -1,14 +1,50 @@
 // pedometer — flutter/samples/pedometer
-fn screen_pedometer() {
-    return na_screen("pedometer",
-        "FFIgen and JNIgen: generating Dart bindings for Android Health Connect "
-        + "and reading step counts through them, as a plugin plus example app.",
-        [
-            "Of its ~123k lines, ~91k are generated bindings and ~32k more are the Health Connect wrapper — the app itself is under 400 lines.",
-            "The generated-bindings story has a direct Rust analogue (bindgen), but it is a build-time concern with nothing to draw.",
-            "Reading step data needs a platform sensor API; the render pipeline has no capability surface at all.",
-            "Splash-OH is where that half lives in this project — sensors, location and the rest of its 45 native capabilities.",
-        ],
-        "Not portable. The UI is a step counter; the sample is a binding generator.")
+//
+// This was a "no analogue" screen too. The FFIgen/JNIgen half of the sample —
+// generating Dart bindings for Android Health Connect — genuinely has no
+// counterpart here beyond "bindgen exists". But the *app* is a step counter
+// reading a platform sensor, and Splash-OH has a sensor stack: `sensor::list`,
+// `sensor::sample`, `sensor::stream`, and a commit about doing no work on the
+// sensor service's thread.
+//
+// So the UI ports, against real hardware.
+
+fn pd_row(label, answer) {
+    return {t: "column", fillw: 1, fith: 1, bg: m_surf_lowest, radius: 8,
+            pad: 12, spacing: 4, c: [
+        txt(label, 13, 500, m_primary),
+        para(answer, 12, 400, m_on_surf_var),
+    ]}
 }
 
+fn screen_pedometer() {
+    return page(m_surface, [
+        m_appbar("Pedometer", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("Steps", [
+                {t: "column", fillw: 1, alignx: 0.5, pady: 8, spacing: 4, c: [
+                    icon(ic_walk, 34, m_primary),
+                    para(invoke("sensor.steps"), 16, 500, m_on_surface),
+                ]},
+                para("Read from the device's step sensor through the same "
+                     + "capability bridge platform_channels uses. A device "
+                     + "without that sensor answers with the error rather than "
+                     + "a number.", 13, 400, m_on_surf_var),
+            ]),
+            m_section("What the sensor stack reports", [
+                pd_row("sensor.list", invoke("sensor.list")),
+                pd_row("sensor.accelerometer", invoke("sensor.accelerometer")),
+            ]),
+            m_section("What does not port", [
+                para("The sample is mostly its bindings: ~91k of its ~123k lines "
+                     + "are FFIgen/JNIgen output for Android Health Connect, and "
+                     + "~32k more are the wrapper. Rust's analogue is bindgen, "
+                     + "which is a build-time concern with nothing to draw.",
+                     13, 400, m_on_surf_var),
+                para("Health Connect itself has no counterpart — this reads a "
+                     + "raw sensor, not an aggregated health record.",
+                     13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}
