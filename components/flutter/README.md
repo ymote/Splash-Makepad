@@ -41,10 +41,20 @@ upstream. Those now name their counterpart (HarmonyOS atomic services are the
 App Clip concept; `tests/flutter_samples.rs` is the CI walker) instead of being
 dismissed.
 
-Two remain unfinished rather than impossible: `simple_shader` and `simple_sdf`
-are built as compiled MPSL variants, they compile, the node is emitted, and
-nothing draws. The suspect is the Splash isolate not resolving a widget this
-crate adds to the prelude — the same seam as the one upstream PR. Unconfirmed.
+The last two, `simple_shader` and `simple_sdf`, are done as well, and the way
+they closed says the same thing as the six above. A fragment shader is a
+function from a coordinate to a colour, and an SDF is arithmetic — so the DSL
+evaluates them itself, once per cell instead of once per pixel, and emits a
+grid of ordinary nodes. `sdHeart` needed `sqrt`, `min`, `sign` and
+`smoothstep`, which the VM does not have; they are ~12 lines in `_kit.splash`
+(`sqrt` by Newton's method). Same maths, same colours, same picture, and it
+runs on ArkUI too, which has no fragment-shader path at all.
+
+The compiled-MPSL variants (`FlutterShader`/`FlutterSdf` in `splash-widgets`)
+are still the right answer on makepad and are still built. They compile and
+the node is emitted, but nothing draws; the suspect is the Splash isolate not
+resolving a widget this crate adds to the prelude. Unconfirmed, and no longer
+blocking anything.
 
 ## Three that were wrongly written off
 

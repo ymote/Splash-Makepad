@@ -1,13 +1,73 @@
 // simple_shader — flutter/samples/simple_shader
 //
-// Not "no analogue" — the counterpart is strong — but not finished either.
+// The sample's fragment shader, evaluated in the DSL and drawn with ordinary
+// native nodes.
+//
+// A fragment shader is a function from a coordinate to a colour. The DSL has
+// arithmetic, so it can run that function itself — once per cell instead of
+// once per pixel — and emit a grid of coloured nodes. Coarser than the GPU
+// doing it, and identical in kind: same maths, same colours, same picture.
+//
+// This is why the sample is no longer parked. The compiled-MPSL route
+// (`FlutterShader` in splash-widgets) is still there and is the right answer on
+// makepad, but it does not resolve in the Splash isolate yet. This works today,
+// on both backends, and is verified on the phone.
+//
+// simple.frag: color = mix(mix(sky, blue, p*2), mix(blue, navy, p*2-1),
+// step(0.5, p)) where p = (st.x + st.y) / 2.
+
+let sh_n = 18
+
+fn sh_cell(ix, iy) {
+    let sky  = argb(255, 2, 125, 253)
+    let blue = argb(255, 5, 83, 177)
+    let navy = argb(255, 4, 43, 89)
+    let x = (ix + 0.5) / sh_n
+    let y = (iy + 0.5) / sh_n
+    let p = (x + y) / 2.0
+    if p < 0.5 { return lerp_argb(sky, blue, p * 2.0) }
+    return lerp_argb(blue, navy, p * 2.0 - 1.0)
+}
+
+fn sh_grid() {
+    let rows = []
+    let j = 0
+    while j < sh_n {
+        let cells = []
+        let i = 0
+        while i < sh_n { cells.push({t: "column", fillw: 1, fillh: 1, bg: sh_cell(i, j)})  i = i + 1 }
+        rows.push({t: "row", fillw: 1, fillh: 1, c: cells})
+        j = j + 1
+    }
+    // Weighted rows inside a fixed-height column, not `h: 16` each — a fixed
+    // row height rounds to a whole physical pixel and the leftover fraction
+    // accumulates into a seam. See simple_sdf.splash.
+    return {t: "column", fillw: 1, h: 288, radius: 12, bg: sh_cell(sh_n / 2, sh_n / 2), c: rows}
+}
 
 fn screen_simple_shader() {
-    return counterpart_screen("Simple Shader",
-        "A GLSL fragment shader declared in pubspec.yaml, loaded at runtime and painted across a box \u2014 here a diagonal gradient through Flutter's sky, blue and navy.",
-        "makepad draws every one of its widgets with MPSL and ships a first-class Sdf2d API, so signed distance fields are not an exotic addition here — they are how the toolkit works. FlutterShader is the sample's own GLSL transcribed into MPSL and compiled into splash-widgets, and `{t:\"shader\"}` is a real node kind the translator emits.",
-        ["The widget compiles, the node is emitted, and nothing draws. No shader error is logged.",
-         "Two hypotheses were tested and both were wrong: that the emitted draw_bg override was clobbering the pixel shader, and that GLSL's single-argument vector constructors were failing to compile. Removing both changed nothing.",
-         "The remaining suspect is the isolate VM a mounted Splash allocates — a widget this crate adds to the prelude may not resolve there, which is the same seam as the repo's one upstream PR. Unconfirmed.",
-         "On the ArkUI backend there is no fragment-shader path at all, so this screen can only ever be a makepad one."])
+    return page(m_surface, [
+        m_appbar("Simple Shader", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            sh_grid(),
+            m_section("What this is", [
+                para("simple.frag, evaluated in the DSL: sky to blue to navy "
+                     + "across (st.x + st.y) / 2, with the step at 0.5. A "
+                     + "fragment shader is a function from a coordinate to a "
+                     + "colour, and the DSL can run that function — once per "
+                     + "cell rather than once per pixel.",
+                     13, 400, m_on_surf_var),
+            ]),
+            m_section("What the GPU would still do better", [
+                para("Per-pixel instead of per-cell, and for free. This grid is "
+                     + "18x18 native nodes; the shader is one draw call.",
+                     13, 400, m_on_surf_var),
+                para("The compiled-MPSL route is built (FlutterShader in "
+                     + "splash-widgets) and is the right answer on makepad, but "
+                     + "it does not resolve in the Splash isolate yet. ArkUI has "
+                     + "no fragment-shader path at all, so this is the form that "
+                     + "works on both.", 13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
 }

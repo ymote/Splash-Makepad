@@ -251,6 +251,29 @@ fn lerp_argb(c1, c2, t) {
                 floorn(lerp(chan(c1, 1),        chan(c2, 1),        t)))
 }
 
+// ---- the arithmetic a distance function needs -------------------------------
+// The VM has no sqrt, min, sign or smoothstep. A signed distance field is just
+// arithmetic, so with these the DSL can evaluate one per cell and draw it with
+// ordinary nodes — no fragment shader, and it works on both backends.
+fn absn(x) { if x < 0.0 { return 0.0 - x }  return x }
+fn minn(a, b) { if a < b { return a } return b }
+fn maxn(a, b) { if a > b { return a } return b }
+fn signn(x) { if x < 0.0 { return 0.0 - 1.0 }  if x > 0.0 { return 1.0 }  return 0.0 }
+fn sqrtn(x) {
+    if x <= 0.0 { return 0.0 }
+    let mut g = x
+    if g > 1.0 { g = x / 2.0 } else { g = 1.0 }
+    let mut i = 0
+    while i < 20 { g = (g + x / g) / 2.0  i = i + 1 }
+    return g
+}
+fn smoothstepn(e0, e1, x) {
+    let mut t = (x - e0) / (e1 - e0)
+    if t < 0.0 { t = 0.0 }
+    if t > 1.0 { t = 1.0 }
+    return t * t * (3.0 - 2.0 * t)
+}
+
 fn gap(px) { return {t: "column", h: px} }
 
 fn spacer() { return {t: "column", fillw: 1, h: 1} }

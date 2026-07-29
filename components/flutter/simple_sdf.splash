@@ -1,13 +1,83 @@
 // simple_sdf — flutter/samples/simple_sdf
 //
-// Not "no analogue" — the counterpart is strong — but not finished either.
+// sdHeart, evaluated in the DSL and drawn with native nodes.
+//
+// A signed distance field is arithmetic — fold on x, branch on p.y + p.x > 1,
+// take the distance to the lobe or the cusp, sign it — and the DSL has
+// arithmetic once it has sqrt, min and sign (see `_kit.splash`). So the field
+// is computed here per cell and coloured exactly as the sample colours it:
+// mix(pink, black, smoothstep(0.01, 0.02, d)).
+//
+// makepad would draw this per-pixel with Sdf2d, and that route is built; it
+// does not resolve in the Splash isolate yet. This one runs on both backends.
+
+let sdf_n = 22
+
+fn sd_heart(px, py) {
+    let x = absn(px)
+    if py + x > 1.0 {
+        let ax = x - 0.25
+        let ay = py - 0.75
+        return sqrtn(ax * ax + ay * ay) - 1.41421356 / 4.0
+    }
+    let bx = x
+    let by = py - 1.0
+    let d1 = bx * bx + by * by
+    let m = maxn(x + py, 0.0) * 0.5
+    let cx = x - m
+    let cy = py - m
+    let d2 = cx * cx + cy * cy
+    return sqrtn(minn(d1, d2)) * signn(x - py)
+}
+
+fn sd_cell(ix, iy) {
+    let pink = argb(255, 255, 105, 180)
+    let black = argb(255, 0, 0, 0)
+    // st = (uv - 0.5) * 2 ; st.y -= 0.5 ; st.y *= -1
+    let sx = ((ix + 0.5) / sdf_n - 0.5) * 2.0
+    let sy = 0.0 - (((iy + 0.5) / sdf_n - 0.5) * 2.0 - 0.5)
+    let d = sd_heart(sx, sy)
+    return lerp_argb(pink, black, smoothstepn(0.01, 0.02, d))
+}
+
+fn sd_grid() {
+    let rows = []
+    let j = 0
+    while j < sdf_n {
+        let cells = []
+        let i = 0
+        while i < sdf_n { cells.push({t: "column", fillw: 1, fillh: 1, bg: sd_cell(i, j)})  i = i + 1 }
+        rows.push({t: "row", fillw: 1, fillh: 1, c: cells})
+        j = j + 1
+    }
+    // 264 = 22 rows of 12dp, and 12dp is a whole number of physical pixels at
+    // this display's density. Weight alone is not enough: a row height that
+    // lands mid-pixel rounds, and the leftover fraction accumulates into a
+    // visible seam every few rows. The width needs no such care — the cells
+    // share one row and ArkUI absorbs the remainder there.
+    return {t: "column", fillw: 1, h: 264, radius: 12, bg: argb(255, 0, 0, 0), c: rows}
+}
 
 fn screen_simple_sdf() {
-    return counterpart_screen("Simple SDF",
-        "Drawing signed distance functions with the FragmentShader API \u2014 sdHeart, folded on x, pink against black, smoothstepped over the zero crossing.",
-        "makepad draws every one of its widgets with MPSL and ships a first-class Sdf2d API, so signed distance fields are not an exotic addition here — they are how the toolkit works. FlutterSdf is the sample's own GLSL transcribed into MPSL and compiled into splash-widgets, and `{t:\"sdf\"}` is a real node kind the translator emits.",
-        ["The widget compiles, the node is emitted, and nothing draws. No shader error is logged.",
-         "Two hypotheses were tested and both were wrong: that the emitted draw_bg override was clobbering the pixel shader, and that GLSL's single-argument vector constructors were failing to compile. Removing both changed nothing.",
-         "The remaining suspect is the isolate VM a mounted Splash allocates — a widget this crate adds to the prelude may not resolve there, which is the same seam as the repo's one upstream PR. Unconfirmed.",
-         "On the ArkUI backend there is no fragment-shader path at all, so this screen can only ever be a makepad one."])
+    return page(m_surface, [
+        m_appbar("Simple SDF", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            sd_grid(),
+            m_section("What this is", [
+                para("sdHeart from the sample's GLSL, evaluated per cell: fold "
+                     + "on x, branch on p.y + p.x > 1, take the distance to the "
+                     + "lobe or to the cusp, and sign it. Coloured the way the "
+                     + "sample colours it, mix(pink, black, smoothstep(0.01, "
+                     + "0.02, d)).", 13, 400, m_on_surf_var),
+                para("The VM has no sqrt, min or sign, so those are in the kit — "
+                     + "sqrt by Newton's method.", 13, 400, m_on_surf_var),
+            ]),
+            m_section("What the GPU would still do better", [
+                para("Per-pixel instead of per-cell. makepad draws its own "
+                     + "widgets this way with Sdf2d, and FlutterSdf is compiled "
+                     + "and waiting; it does not resolve in the Splash isolate "
+                     + "yet.", 13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
 }

@@ -11,7 +11,7 @@
 //      rebuilding the full route string from the same data the screen uses and
 //      comparing for equality — see the `for` loops below.
 
-// dir, label, status, route      status: 1 ported, 0 documented
+// dir, label, status, route      status: 1 ported (all 27 now are)
 let fs_samples = [
     ["material_3_demo", "Material 3 Demo", 1, "material_3_demo"],
     ["cupertino_gallery", "Cupertino Gallery", 1, "cupertino_gallery"],
@@ -35,8 +35,8 @@ let fs_samples = [
     ["pedometer", "Pedometer", 1, "pedometer"],
     ["platform_channels", "Platform Channels", 1, "platform_channels"],
     ["platform_view_swift", "Platform View Swift", 1, "platform_view_swift"],
-    ["simple_sdf", "Simple SDF", 0, "simple_sdf"],
-    ["simple_shader", "Simple Shader", 0, "simple_shader"],
+    ["simple_sdf", "Simple SDF", 1, "simple_sdf"],
+    ["simple_shader", "Simple Shader", 1, "simple_shader"],
     ["tool", "tool", 1, "tool"],
     ["veggieseasons", "Veggie Seasons", 1, "veggieseasons"],
     ["web_embedding", "Web Embedding", 1, "web_embedding"],
@@ -76,17 +76,11 @@ fn screen_index() {
             {t: "row", fillw: 1, spacing: 8, c: [
                 {t: "column", fillw: 1, radius: 12, bg: m_pri_cont, pad: 12,
                  spacing: 2, c: [
-                    txt("25", 28, 500, m_on_pri_cont),
-                    txt("ported", 12, 400, m_on_pri_cont),
-                ]},
-                {t: "column", fillw: 1, radius: 12, bg: m_surf_highest, pad: 12,
-                 spacing: 2, c: [
-                    txt("2", 28, 500, m_on_surface),
-                    txt("in progress", 12, 400, m_on_surf_var),
+                    txt("27", 28, 500, m_on_pri_cont),
+                    txt("of 27 directories", 12, 400, m_on_pri_cont),
                 ]},
             ]},
-            m_section("Ported", ported),
-            m_section("Platform counterparts", documented),
+            m_section("Every sample", ported),
             {t: "column", fillw: 1, tapto: "theme:toggle",
              c: [ m_btn_outlined("Toggle light / dark") ]},
         ]},

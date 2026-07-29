@@ -369,7 +369,6 @@ fn clamp01(x) {
     if x > 1.0 { return 1.0 }
     return x
 }
-fn absn(x) { if x < 0.0 { return 0.0 - x }  return x }
 
 fn an_bar(t) {
     return {t: "column", fillw: 1, h: 8, radius: 4, bg: m_sec_cont, c: [

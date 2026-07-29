@@ -139,8 +139,8 @@ fn cases() -> Vec<(String, &'static str)> {
         v.push((format!("animations/{key}"), "What it demonstrates"));
     }
 
-    // The sixteen directories with no analogue. Each must reach its own note,
-    // not the index — so assert on its verdict, not the shared banner.
+    // The directories that once carried a "no analogue" banner. Each must
+    // reach its own screen, not the index — so assert on its own verdict.
     for (route, marker) in [
         ("add_to_app", "This screen is the embed"),
         ("analysis_defaults", "shared lints"),
@@ -153,8 +153,8 @@ fn cases() -> Vec<(String, &'static str)> {
         ("pedometer", "Health Connect"),
         ("platform_channels", "MethodChannel"),
         ("platform_view_swift", "surface.state"),
-        ("simple_sdf", "Sdf2d"),
-        ("simple_shader", "Sdf2d"),
+        ("simple_sdf", "sdHeart"),
+        ("simple_shader", "simple.frag"),
         ("tool", "flutter_samples.rs"),
         ("veggieseasons", "flutter/demos"),
         ("web_embedding", "one tree"),
