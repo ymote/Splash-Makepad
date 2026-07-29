@@ -1,0 +1,486 @@
+// _kit.splash — shared tokens and helpers for the flutter/samples ports.
+//
+// Concatenated FIRST, ahead of every per-sample file, so each sample can call
+// these helpers. Nothing here is sample-specific.
+//
+// Two palettes live side by side because flutter/samples does the same: the
+// Material samples (material_3_demo, form_app, animations, …) are M3, and the
+// Cupertino ones (cupertino_gallery, date_planner, platform_design) are iOS.
+// Values are the real ones — M3 baseline tokens and Apple's system colours —
+// not approximations.
+
+fn argb(a, r, g, b) { return ((a * 256 + r) * 256 + g) * 256 + b }
+// Pick dark (a) or light (b) by the injected st.dark flag.
+fn pick(d, a, b) { if d == 1 { return a } return b }
+// Same, for a boolean condition (a comparison result rather than an int flag).
+fn pick_if(cond, a, b) { if cond { return a } return b }
+let dk = st.dark
+
+// ---- Material 3 baseline ---------------------------------------------------
+let m_primary      = pick(dk, argb(255, 208, 188, 255), argb(255, 103,  80, 164))
+let m_on_primary   = pick(dk, argb(255,  56,  30, 114), argb(255, 255, 255, 255))
+let m_pri_cont     = pick(dk, argb(255,  79,  55, 139), argb(255, 234, 221, 255))
+let m_on_pri_cont  = pick(dk, argb(255, 234, 221, 255), argb(255,  33,   0,  93))
+let m_secondary    = pick(dk, argb(255, 204, 194, 220), argb(255,  98,  91, 113))
+let m_sec_cont     = pick(dk, argb(255,  74,  68,  88), argb(255, 232, 222, 248))
+let m_on_sec_cont  = pick(dk, argb(255, 232, 222, 248), argb(255,  29,  25,  43))
+let m_tertiary     = pick(dk, argb(255, 239, 184, 200), argb(255, 125,  82,  96))
+let m_ter_cont     = pick(dk, argb(255,  99,  59,  72), argb(255, 255, 216, 228))
+let m_on_ter_cont  = pick(dk, argb(255, 255, 216, 228), argb(255,  49,  17,  29))
+let m_error        = pick(dk, argb(255, 242, 184, 181), argb(255, 179,  38,  30))
+let m_err_cont     = pick(dk, argb(255, 140,  29,  24), argb(255, 249, 222, 220))
+let m_surface      = pick(dk, argb(255,  20,  18,  24), argb(255, 254, 247, 255))
+let m_surf_var     = pick(dk, argb(255,  73,  69,  79), argb(255, 231, 224, 236))
+let m_on_surface   = pick(dk, argb(255, 230, 224, 233), argb(255,  29,  27,  32))
+let m_on_surf_var  = pick(dk, argb(255, 202, 196, 208), argb(255,  73,  69,  79))
+let m_outline      = pick(dk, argb(255, 147, 143, 153), argb(255, 121, 116, 126))
+let m_outline_var  = pick(dk, argb(255,  73,  69,  79), argb(255, 202, 196, 208))
+let m_surf_lowest  = pick(dk, argb(255,  15,  13,  19), argb(255, 255, 255, 255))
+let m_surf_low     = pick(dk, argb(255,  29,  27,  32), argb(255, 247, 242, 250))
+let m_surf_cont    = pick(dk, argb(255,  33,  31,  38), argb(255, 243, 237, 247))
+let m_surf_high    = pick(dk, argb(255,  43,  41,  48), argb(255, 236, 230, 240))
+let m_surf_highest = pick(dk, argb(255,  54,  52,  59), argb(255, 230, 224, 233))
+let m_inv_surf     = pick(dk, argb(255, 230, 224, 233), argb(255,  50,  47,  53))
+let m_inv_on       = pick(dk, argb(255,  50,  47,  53), argb(255, 245, 239, 247))
+
+// ---- Cupertino / iOS system colours ----------------------------------------
+// Apple's systemX colours, light and dark variants.
+let c_bg           = pick(dk, argb(255,   0,   0,   0), argb(255, 242, 242, 247))
+let c_grouped      = pick(dk, argb(255,  28,  28,  30), argb(255, 255, 255, 255))
+let c_label        = pick(dk, argb(255, 255, 255, 255), argb(255,   0,   0,   0))
+let c_label2       = pick(dk, argb(255, 152, 152, 159), argb(255, 138, 138, 142))
+let c_separator    = pick(dk, argb(255,  56,  56,  58), argb(255, 198, 198, 200))
+let c_fill         = pick(dk, argb(255,  44,  44,  46), argb(255, 232, 232, 234))
+let c_blue         = pick(dk, argb(255,  10, 132, 255), argb(255,   0, 122, 255))
+let c_green        = pick(dk, argb(255,  48, 209,  88), argb(255,  52, 199,  89))
+let c_indigo       = pick(dk, argb(255,  94,  92, 230), argb(255,  88,  86, 214))
+let c_orange       = pick(dk, argb(255, 255, 159,  10), argb(255, 255, 149,   0))
+let c_red          = pick(dk, argb(255, 255,  69,  58), argb(255, 255,  59,  48))
+let c_yellow       = pick(dk, argb(255, 255, 214,  10), argb(255, 255, 204,   0))
+let c_purple       = pick(dk, argb(255, 191,  90, 242), argb(255, 175,  82, 222))
+let c_cyan         = pick(dk, argb(255, 100, 210, 255), argb(255,  50, 173, 230))
+let c_mint         = pick(dk, argb(255, 102, 212, 207), argb(255,   0, 199, 190))
+let c_gray         = pick(dk, argb(255, 142, 142, 147), argb(255, 142, 142, 147))
+
+let white = argb(255, 255, 255, 255)
+let black = argb(255,   0,   0,   0)
+let clear = argb(  0,   0,   0,   0)
+
+// ---- Font Awesome codepoints (the theme's icon face) ------------------------
+let ic_back    = "\u{f053}"
+let ic_fwd     = "\u{f054}"
+let ic_home    = "\u{f015}"
+let ic_list    = "\u{f03a}"
+let ic_gear    = "\u{f013}"
+let ic_search  = "\u{f002}"
+let ic_heart   = "\u{f004}"
+let ic_star    = "\u{f005}"
+let ic_book    = "\u{f02d}"
+let ic_user    = "\u{f007}"
+let ic_music   = "\u{f001}"
+let ic_news    = "\u{f1ea}"
+let ic_gift    = "\u{f06b}"
+let ic_flask   = "\u{f0c3}"
+let ic_leaf    = "\u{f06c}"
+let ic_game    = "\u{f11b}"
+let ic_hammer  = "\u{f6e3}"
+let ic_snow    = "\u{f2dc}"
+let ic_plus    = "\u{f067}"
+let ic_check   = "\u{f00c}"
+let ic_image   = "\u{f03e}"
+let ic_bolt    = "\u{f0e7}"
+let ic_map     = "\u{f279}"
+let ic_phone   = "\u{f3cd}"
+let ic_cube    = "\u{f1b2}"
+let ic_code    = "\u{f121}"
+let ic_flask2  = "\u{f0c3}"
+let ic_ban     = "\u{f05e}"
+let ic_wrench  = "\u{f0ad}"
+let ic_globe   = "\u{f0ac}"
+let ic_layer   = "\u{f5fd}"
+let ic_paint   = "\u{f1fc}"
+let ic_shoe    = "\u{f54b}"
+let ic_bell    = "\u{f0f3}"
+let ic_clock   = "\u{f017}"
+let ic_cal     = "\u{f133}"
+let ic_case    = "\u{f0b1}"
+let ic_pin     = "\u{f3c5}"
+let ic_play    = "\u{f04b}"
+let ic_walk    = "\u{f554}"
+let ic_droid   = "\u{f17b}"
+let ic_apple   = "\u{f179}"
+let ic_swift   = "\u{f81a}"
+let ic_file    = "\u{f15b}"
+let ic_flag    = "\u{f024}"
+let ic_compass = "\u{f14e}"
+
+// ---- generic building blocks -----------------------------------------------
+
+// A single line of text.
+//
+// Carries no height, for the same reason `para` carries none: makepad clips a
+// Label to its box, and a hand-picked height even slightly under the font's line
+// box shears the descenders off — at 28sp in a 36px box the "p" in "samples"
+// lost its tail. `fith` makes the Label report the height its own glyphs need.
+// Vertical spacing belongs to the parent's `spacing`/`pad`, not to padded-out
+// text boxes.
+fn txt(s, size, weight, color) {
+    return {t: "text", text: s, size: size, weight: weight, color: color,
+            fith: 1}
+}
+
+// A paragraph that wraps.
+//
+// A makepad Label only wraps when it has a width to wrap inside; with none it
+// lays out on one line and runs off the edge, so `fillw` gives it the parent's
+// width. It takes no height on purpose: how many lines the text breaks into
+// depends on the width it lands at, which the author cannot know, and every
+// fixed height guessed here clipped the last line on a 1080px phone. `fith`
+// makes the Label measure its own wrapped text instead.
+fn para(s, size, weight, color) {
+    return {t: "text", text: s, size: size, weight: weight, color: color,
+            fillw: 1, fith: 1}
+}
+
+// A glyph from the theme's Font-Awesome face. Same self-measuring rule as `txt`.
+fn icon(cp, size, color) {
+    return {t: "text", text: cp, icon: 1, size: size, color: color,
+            fitw: 1, fith: 1}
+}
+
+// ---- animation -------------------------------------------------------------
+//
+// `st.t` is seconds since the host started. The DSL has no tween, curve or
+// controller, and a tree is evaluated once per mount — so the only way anything
+// moves is for the host to re-mount against a changing clock and for the screen
+// to compute its own values from it. These are the curves Flutter's
+// `AnimationController`/`Curves` would otherwise supply.
+
+// Fractional part, i.e. a 0..1 sawtooth of the given period.
+fn phase(period) {
+    let x = st.t / period
+    return x - floorn(x)
+}
+fn floorn(x) {
+    let i = x - (x % 1.0)
+    if x < 0.0 && (x % 1.0) != 0.0 { return i - 1.0 }
+    return i
+}
+// 0 -> 1 -> 0, the shape Curves.easeInOut gives a repeating controller.
+fn pingpong(period) {
+    let p = phase(period)
+    if p < 0.5 { return p * 2.0 }
+    return (1.0 - p) * 2.0
+}
+// Linear interpolation, Flutter's Tween<double>.
+fn lerp(a, b, t) { return a + (b - a) * t }
+// Cubic ease-in-out, the default Curves.easeInOut shape.
+fn ease(t) {
+    if t < 0.5 { return 4.0 * t * t * t }
+    let f = 0.0 - 2.0 * t + 2.0
+    return 1.0 - (f * f * f) / 2.0
+}
+// The rest of the Curves the animation sample actually names.
+fn ease_in_cubic(t) { return t * t * t }
+fn ease_out_cubic(t) { let f = 1.0 - t  return 1.0 - f * f * f }
+fn ease_in_expo(t) {
+    if t <= 0.0 { return 0.0 }
+    return pow2(10.0 * t - 10.0)
+}
+fn ease_out_expo(t) {
+    if t >= 1.0 { return 1.0 }
+    return 1.0 - pow2(0.0 - 10.0 * t)
+}
+// 2^x for the exponential curves, by squaring — the VM has no pow.
+fn pow2(x) {
+    let r = 1.0
+    let n = floorn(x)
+    let i = 0
+    while i < n { r = r * 2.0  i = i + 1 }
+    while i > n { r = r / 2.0  i = i - 1 }
+    let f = x - n
+    // linear inside the octave is close enough at these sizes
+    return r * (1.0 + f)
+}
+// Curves.bounceOut, transcribed from Flutter's own piecewise definition.
+fn bounce_out(t) {
+    if t < 0.363636 { return 7.5625 * t * t }
+    if t < 0.727272 {
+        let u = t - 0.545454
+        return 7.5625 * u * u + 0.75
+    }
+    if t < 0.909090 {
+        let u = t - 0.818181
+        return 7.5625 * u * u + 0.9375
+    }
+    let u = t - 0.954545
+    return 7.5625 * u * u + 0.984375
+}
+fn bounce_in(t) { return 1.0 - bounce_out(1.0 - t) }
+// A damped spring settling on 1.0 — the shape SpringDescription gives.
+fn spring(t) {
+    if t >= 1.0 { return 1.0 }
+    let decay = 1.0 - t
+    return 1.0 - decay * decay * cos_approx(t * 18.0)
+}
+// Cosine by its series; the VM has no trig.
+fn cos_approx(x) {
+    let tau = 6.2831853
+    let n = floorn(x / tau)
+    let a = x - n * tau
+    if a > 3.1415927 { a = tau - a }
+    let a2 = a * a
+    return 1.0 - a2 / 2.0 + (a2 * a2) / 24.0 - (a2 * a2 * a2) / 720.0
+}
+// Scale a colour's alpha — the DSL's stand-in for opacity, since neither a
+// makepad View nor the translator carries one. Text and fills both take it.
+fn fade(color, alpha) {
+    let a = floorn(chan(color, 16777216) * alpha)
+    return argb(a, chan(color, 65536), chan(color, 256), chan(color, 1))
+}
+// Interpolate a colour channelwise — Flutter's ColorTween.
+// Every step here has to be floored. `/` in this VM is float division, so
+// `(c / 65536) % 256` yields a fraction, argb() then builds a non-integer colour
+// word, and the cast to u32 lands on garbage — which is why the animated
+// container rendered flat white instead of a blend.
+fn chan(c, shift) { return floorn(floorn(c / shift) % 256) }
+fn lerp_argb(c1, c2, t) {
+    return argb(floorn(lerp(chan(c1, 16777216), chan(c2, 16777216), t)),
+                floorn(lerp(chan(c1, 65536),    chan(c2, 65536),    t)),
+                floorn(lerp(chan(c1, 256),      chan(c2, 256),      t)),
+                floorn(lerp(chan(c1, 1),        chan(c2, 1),        t)))
+}
+
+fn gap(px) { return {t: "column", h: px} }
+
+fn spacer() { return {t: "column", fillw: 1, h: 1} }
+
+// A horizontal rule.
+fn rule(color) { return {t: "column", h: 1, bg: color, fillw: 1} }
+
+// A page root: full width, background painted, content stacked down.
+//
+// Deliberately does NOT set `fillh`. The host mounts the kit into
+// `Splash{ height: Fit }`, so a root asking for `height: Fill` resolves against
+// a Fit parent and collapses to nothing — every screen renders blank. The
+// enclosing ScrollYView in the host provides the scrolling instead. Same reason
+// the scroll bodies below are width-fill and height-fit.
+fn page(bg_color, kids) {
+    // The routing signal has to live INSIDE the mounted tree.
+    //
+    // Upstream's `Splash` mounts on an isolate VM, and makepad injects `ui` into
+    // that VM resolved against *the splash's own view root* (see
+    // `inject_splash_ui_handle` in widgets/src/widget_async.rs, which returns
+    // early for the main VM). So a `tapto` handler's `ui.nav_signal` can only
+    // ever see widgets inside the mounted subtree — the host's own nav_signal
+    // Label, a sibling of the Splash widget, is invisible to it. Every tap was
+    // silently dropped until this label moved in here. The host's widget search
+    // does descend into the mounted tree, so it still reads it.
+    //
+    // When the `isolate: false` upstream PR lands this stays correct; it just
+    // stops being load-bearing.
+    let c = [ {t: "text", id: "nav_signal", text: "", size: 1, h: 1, color: bg_color} ]
+    for k in kids { c.push(k) }
+    return {t: "column", bg: bg_color, fillw: 1, c: c}
+}
+
+// ---- Material chrome --------------------------------------------------------
+
+// An M3 top app bar with a back chevron routed to `back_route`.
+// Fit height with a wrapping title: a fixed 64px bar clipped the longer titles
+// ("Photo Search — Material") to their first line and cut the rest off.
+fn m_appbar(title, back_route) {
+    return {t: "row", bg: m_surf_cont, fillw: 1, h: 56, padx: 8,
+            spacing: 8, aligny: 0.5, c: [
+        {t: "column", w: 48, h: 48, radius: 24, alignx: 0.5, aligny: 0.5,
+         tapto: back_route, c: [ icon(ic_back, 16, m_on_surface) ]},
+        {t: "column", fillw: 1, fith: 1, c: [ para(title, 22, 400, m_on_surface) ]},
+    ]}
+}
+
+// A titled grouping card (surfaceContainerLow, 12dp corner) — M3 Title Medium.
+// The title wraps: several are long enough to run off a phone on one line.
+fn m_section(title, kids) {
+    let c = [ para(title, 16, 500, m_on_surface) ]
+    for k in kids { c.push(k) }
+    return {t: "column", bg: m_surf_low, radius: 12, pad: 16, spacing: 12, c: c}
+}
+
+// M3 common buttons — 40dp tall, full corner, 24dp/6dp insets, Label Large.
+fn m_btn(label, fill, ink) {
+    return {t: "column", bg: fill, radius: 20, h: 40, padx: 24, fitw: 1,
+            alignx: 0.5, aligny: 0.5, c: [ txt(label, 14, 500, ink) ]}
+}
+// A full-width filled button — the sample's primary call to action, which
+// `m_btn` (content-sized, for button rows) renders as a small chip.
+fn m_btn_wide(label, fill, ink) {
+    return {t: "column", bg: fill, radius: 20, h: 40, padx: 24,
+            fillw: 1, alignx: 0.5, aligny: 0.5,
+            c: [ txt(label, 14, 500, ink) ]}
+}
+
+fn m_btn_outlined(label) {
+    return {t: "column", bg: m_surface, border: 1, bordercolor: m_outline, radius: 20,
+            h: 40, padx: 24, fitw: 1, alignx: 0.5, aligny: 0.5,
+            c: [ txt(label, 14, 500, m_primary) ]}
+}
+fn m_btn_text(label) {
+    return {t: "column", radius: 20, h: 40, padx: 12, pady: 8, fitw: 1,
+            alignx: 0.5, aligny: 0.5, c: [ txt(label, 14, 500, m_primary) ]}
+}
+
+// A tappable full-width M3 list row with a trailing chevron.
+fn m_navrow(label, route) {
+    return {t: "row", fillw: 1, h: 56, padx: 16, bg: m_surface, tapto: route, c: [
+        txt(label, 16, 400, m_on_surface),
+        spacer(),
+        icon(ic_fwd, 12, m_on_surf_var),
+    ]}
+}
+
+// An M3 card with elevation.
+fn m_card(elev, kids) {
+    return {t: "column", bg: m_surf_low, radius: 12, elevation: elev, pad: 16,
+            spacing: 8, c: kids}
+}
+
+// ---- Cupertino chrome -------------------------------------------------------
+
+// An iOS nav bar: back chevron + title, hairline separator underneath.
+fn c_navbar(title, back_route) {
+    return {t: "column", fillw: 1, c: [
+        {t: "row", bg: c_grouped, fillw: 1, h: 44, padx: 16,
+         spacing: 6, aligny: 0.5, c: [
+            {t: "row", fitw: 1, h: 44, padx: 4, spacing: 4, aligny: 0.5,
+             tapto: back_route, c: [
+                icon(ic_back, 15, c_blue),
+                txt("Back", 17, 400, c_blue),
+            ]},
+            // The title wraps rather than truncating — "Sliding Segmented
+            // Control" does not fit a phone width on one line.
+            {t: "column", fillw: 1, fith: 1, alignx: 0.5,
+             c: [ para(title, 17, 500, c_label) ]},
+            {t: "column", w: 56, h: 1},
+        ]},
+        rule(c_separator),
+    ]}
+}
+
+// An iOS large-title header (CupertinoSliverNavigationBar collapsed state).
+fn c_largetitle(title) {
+    return {t: "column", bg: c_grouped, fillw: 1, padx: 16, pady: 8, c: [
+        txt(title, 34, 500, c_label),
+    ]}
+}
+
+// A grouped-list section: uppercase header + rounded white card of rows.
+fn c_group(header, rows) {
+    let kids = []
+    if header != "" {
+        kids.push({t: "column", padx: 16, pady: 6, c: [
+            txt(header, 13, 400, c_label2),
+        ]})
+    }
+    kids.push({t: "column", bg: c_grouped, radius: 10, fillw: 1, c: rows})
+    // _kMarginTop = 22 (cupertino/list_section.dart:18).
+    return {t: "column", fillw: 1, pady: 22, c: kids}
+}
+
+// One row inside a grouped list, with an optional trailing chevron.
+fn c_row(label, trailing, chev, route) {
+    let right = []
+    if trailing != "" { right.push(txt(trailing, 17, 400, c_label2)) }
+    if chev == 1 { right.push(icon(ic_fwd, 13, c_label2)) }
+    let c = [ txt(label, 17, 400, c_label), spacer() ]
+    for r in right { c.push(r) }
+    return {t: "row", fillw: 1, h: 44, padx: 16, spacing: 8, tapto: route, c: c}
+}
+
+// A row led by a rounded colour tile carrying a glyph — date_planner's event row.
+// Height is Fit with vertical padding rather than a fixed 56: a fixed row height
+// clipped the second line off every subtitle once the labels measured their own
+// glyphs. Same rule as the text helpers — let the content say how tall it is.
+fn c_iconrow(glyph, tint, title, subtitle, route) {
+    let text_col = [ txt(title, 16, 400, c_label) ]
+    if subtitle != "" { text_col.push(txt(subtitle, 14, 400, c_label2)) }
+    return {t: "row", fillw: 1, fith: 1, padx: 16, pady: 12, spacing: 12,
+            aligny: 0.5, tapto: route, c: [
+        {t: "column", w: 30, h: 30, radius: 7, bg: tint, alignx: 0.5, aligny: 0.5,
+         c: [ icon(glyph, 14, white) ]},
+        {t: "column", fillw: 1, fith: 1, spacing: 3, c: text_col},
+        icon(ic_fwd, 13, c_label2),
+    ]}
+}
+
+// ---- an iOS picker wheel, drawn ---------------------------------------------
+//
+// makepad ships no date, time or value picker — `widgets/src` has DropDown and
+// PopupMenu and nothing wheel-shaped — so `{t:"datepicker"}` and friends fall
+// through the translator's match to a bare `View` and render as an empty white
+// box. The DSL also has no attribute for a picker's items, so there is nothing
+// to hand a native widget even if one existed.
+//
+// These screens therefore draw the wheel out of the primitives that do work: a
+// column of values with the selection band behind the middle row and the
+// neighbours dimmed. It is a picture of a picker, not a picker — it does not
+// spin — and the Cupertino Gallery pages say so.
+fn c_wheel(cols, sel_index) {
+    let lanes = []
+    for col in cols {
+        let rows = []
+        let i = 0
+        for v in col {
+            let d = i - sel_index
+            let shade = pick_if(d == 0, c_label, c_label2)
+            rows.push({t: "column", fillw: 1, h: 34, alignx: 0.5, aligny: 0.5,
+                       c: [ txt(v, 18, 400, shade) ]})
+            i = i + 1
+        }
+        lanes.push({t: "column", fillw: 1, c: rows})
+    }
+    return {t: "stack", fillw: 1, h: 180, c: [
+        // The selection band sits behind the middle lane row.
+        {t: "column", fillw: 1, h: 180, aligny: 0.5, c: [
+            {t: "column", fillw: 1, h: 34, radius: 8, bg: c_fill},
+        ]},
+        {t: "row", fillw: 1, h: 180, aligny: 0.5, c: lanes},
+    ]}
+}
+
+// ---- the "no analogue" screen ----------------------------------------------
+//
+// Roughly half of flutter/samples exists to demonstrate Flutter's *platform
+// integration* — embedding into a host app, plugins, FFI, GLSL shaders, build
+// tooling. Those have no Splash+makepad counterpart to draw, so rather than
+// invent a fake UI for them, each gets this screen: what the sample teaches,
+// and precisely why it does not port.
+
+fn na_screen(title, what, why, verdict) {
+    let bullets = []
+    for w in why {
+        // The bullet text column must FILL the remaining width, not FIT it —
+        // a Fit column hugs the unwrapped line and the sentence runs off screen.
+        // aligny 0 keeps the dash on the first line; a row centres by default,
+        // which floated it to the middle of a three-line sentence.
+        bullets.push({t: "row", fillw: 1, fith: 1, spacing: 8, aligny: 0.0, c: [
+            txt("—", 14, 400, m_on_surf_var),
+            {t: "column", fillw: 1, fith: 1, c: [ para(w, 14, 400, m_on_surf_var) ]},
+        ]})
+    }
+    return page(m_surface, [
+        m_appbar(title, "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            {t: "row", bg: m_err_cont, radius: 8, fillw: 1, padx: 12, pady: 8,
+             spacing: 8, c: [
+                icon(ic_ban, 14, m_error),
+                txt("No Splash+makepad analogue", 14, 500, m_error),
+            ]},
+            m_section("What the Flutter sample demonstrates", [
+                para(what, 14, 400, m_on_surf_var),
+            ]),
+            m_section("Why it does not port", bullets),
+            m_section("Verdict", [ para(verdict, 14, 400, m_on_surf_var) ]),
+        ]},
+    ])
+}
+

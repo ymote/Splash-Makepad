@@ -1,0 +1,14 @@
+// simple_sdf — flutter/samples/simple_sdf
+fn screen_simple_sdf() {
+    return na_screen("simple_sdf",
+        "Drawing signed distance functions with Flutter's FragmentShader API — "
+        + "a GLSL fragment shader loaded from an asset and painted by a "
+        + "CustomPainter.",
+        [
+            "makepad is the one place this is nearly the opposite of impossible: its widgets are drawn by MPSL shaders, and Sdf2d is a first-class SDF drawing API.",
+            "But it is unreachable from here. The Splash DSL has no shader node — NodeKind has 23 kinds and none of them carry source.",
+            "The translator emits a widget dialect string; a shader must be compiled at build time by script_mod!, which a runtime string never reaches. That is the same constraint this repo's fork-free theming is built on.",
+        ],
+        "Not portable via the DSL — but the capability is right there in makepad. An `sdf` node whose shader body compiles through splash-widgets is the obvious way in.")
+}
+

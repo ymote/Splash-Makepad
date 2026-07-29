@@ -1,0 +1,120 @@
+// date_planner — flutter/samples/date_planner
+//
+// A Cupertino event planner: a large-title list grouped into the four Period
+// buckets (Next 7 Days / Next 30 Days / Future / Past), each row a coloured
+// rounded glyph tile plus title, tapping through to an event detail with its
+// task checklist.
+//
+// All nine events from buildSampleData() are here with their real titles,
+// ColorOptions tints, symbols and task lists; each sits in the bucket its
+// FromNow.roundedHours offset puts it in.
+
+// title, tint, glyph, when, bucket, route-key
+let dp_events = [
+    ["Pagliacci", c_yellow, ic_snow, "in 22 hours", "d7", "pagliacci"],
+    ["Camping Trip", c_green, ic_leaf, "in 1 day", "d7", "camping"],
+    ["Game Night", c_cyan, ic_game, "in 2 days", "d7", "game_night"],
+    ["Doctor's Appointment", c_indigo, ic_flask, "in 4 days", "d7", "doctor"],
+    ["Sayulita Trip", c_orange, ic_case, "in 19 days", "d30", "sayulita"],
+    ["Maya's Birthday", c_red, ic_gift, "in 30 days", "d30", "maya"],
+    ["First Day of School", c_label, ic_hammer, "in 1 year", "future", "school"],
+    ["Book Launch", c_purple, ic_book, "in 2 years", "future", "book_launch"],
+    ["WWDC", c_gray, ic_globe, "June 7, 2021", "past", "wwdc"],
+]
+
+let dp_tasks = [
+    ["pagliacci", ["Buy new tux", "Get tickets",
+                   "Pick up Carmen at the airport and bring her to the show"]],
+    ["camping", ["Find a sleeping bag", "Bug spray", "Paper towels",
+                 "Food for 4 meals", "Straw hat"]],
+    ["game_night", ["Find a board game to bring", "Bring a desert to share"]],
+    ["doctor", ["Bring medical ID", "Record heart rate data"]],
+    ["sayulita", ["Buy plane tickets", "Get a new bathing suit", "Find a hotel room"]],
+    ["maya", ["Guava kombucha", "Paper cups and plates", "Cheese plate",
+              "Party poppers"]],
+    ["school", ["Notebooks", "Pencils", "Binder", "First day of school outfit"]],
+    ["book_launch", ["Finish first draft", "Send draft to editor",
+                     "Final read-through"]],
+    ["wwdc", ["Watch Keynote", "Watch What's new in SwiftUI",
+              "Go to DT developer labs", "Learn about Create ML"]],
+]
+
+fn dp_bucket(bucket_key, header) {
+    let rows = []
+    let first = 1
+    for e in dp_events {
+        if e[4] == bucket_key {
+            if first == 0 { rows.push(rule(c_separator)) }
+            first = 0
+            rows.push(c_iconrow(e[2], e[1], e[0], e[3], "date_planner/" + e[5]))
+        }
+    }
+    if first == 1 { return {t: "column", h: 0} }
+    return c_group(header, rows)
+}
+
+fn screen_date_planner() {
+    return page(c_bg, [
+        {t: "row", bg: c_grouped, fillw: 1, h: 44, padx: 12, aligny: 0.5, c: [
+            {t: "row", fitw: 1, h: 44, padx: 4, spacing: 4, aligny: 0.5,
+             tapto: "index", c: [
+                icon(ic_back, 15, c_blue), txt("Samples", 17, 400, c_blue),
+            ]},
+            spacer(),
+            icon(ic_plus, 16, c_blue),
+        ]},
+        c_largetitle("Date Planner"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 20, c: [
+            dp_bucket("d7", "NEXT 7 DAYS"),
+            dp_bucket("d30", "NEXT 30 DAYS"),
+            dp_bucket("future", "FUTURE"),
+            dp_bucket("past", "PAST"),
+        ]},
+    ])
+}
+
+// The event detail: symbol, title, date, then the Tasks checklist.
+fn screen_date_planner_event(key) {
+    let title = ""
+    let tint = c_gray
+    let glyph = ic_cal
+    let when = ""
+    for e in dp_events {
+        if e[5] == key { title = e[0]; tint = e[1]; glyph = e[2]; when = e[3] }
+    }
+    let task_rows = []
+    for t in dp_tasks {
+        if t[0] == key {
+            let first = 1
+            for one in t[1] {
+                if first == 0 { task_rows.push(rule(c_separator)) }
+                first = 0
+                task_rows.push({t: "row", fillw: 1, fith: 1, padx: 16, pady: 10,
+                                spacing: 12, aligny: 0.5, c: [
+                    {t: "checkbox", on: 0, w: 18, h: 18},
+                    {t: "column", fillw: 1, fith: 1,
+                     c: [ para(one, 17, 400, c_label) ]},
+                ]})
+            }
+        }
+    }
+    task_rows.push(rule(c_separator))
+    task_rows.push({t: "row", fillw: 1, h: 44, padx: 16, spacing: 10, aligny: 0.5, c: [
+        icon(ic_plus, 14, c_blue),
+        txt("Add task", 17, 400, c_blue),
+    ]})
+
+    return page(c_bg, [
+        c_navbar("Date Planner", "date_planner"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 20, c: [
+            {t: "column", fillw: 1, spacing: 10, alignx: 0.5, c: [
+                {t: "column", w: 64, h: 64, radius: 15, bg: tint,
+                 alignx: 0.5, aligny: 0.5, c: [ icon(glyph, 30, white) ]},
+                para(title, 28, 500, c_label),
+                txt(when, 15, 400, c_label2),
+            ]},
+            c_group("TASKS", task_rows),
+        ]},
+    ])
+}
+

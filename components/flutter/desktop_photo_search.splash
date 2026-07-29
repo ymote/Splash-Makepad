@@ -1,0 +1,81 @@
+// desktop_photo_search — flutter/samples/desktop_photo_search
+//
+// A desktop Unsplash search, shipped twice from one model layer: once with
+// Material widgets and once with fluent_ui. Both variants are here, because
+// building the same app against two widget sets is the sample's whole point —
+// and it is the same point this repo's themed kits make.
+//
+// The desktop split-pane shape ports: a search field, a result list, a detail
+// pane with the photo's author and a download action.
+//
+// What does not port: the search itself. It is an HTTPS call to the Unsplash
+// API keyed by an access token, deserialised through built_value, held in a
+// ChangeNotifier and rendered as network images. The pipeline has no HTTP
+// client and no async, and `src` on an image node would need a loader the host
+// does not install. The tiles below are placeholders, not photos.
+
+let dps_photos = [
+    ["Mountain sunrise", "Ana Beltrán"],
+    ["Harbour at dusk", "Tomás Ruiz"],
+    ["Desert road", "Priya Nair"],
+    ["Pine forest", "Karl Mensah"],
+    ["City rooftops", "Lena Fischer"],
+    ["Coastal cliffs", "Diego Alves"],
+]
+
+fn screen_desktop_photo_search() {
+    return dps_variant("Material", 0)
+}
+
+fn screen_desktop_photo_search_fluent() {
+    return dps_variant("fluent_ui", 1)
+}
+
+fn dps_variant(label, fluent) {
+    // fluent_ui's surface is cooler and flatter than M3's.
+    let bg      = pick_if(fluent == 1, pick(dk, argb(255, 32, 32, 32), argb(255, 243, 243, 243)), m_surface)
+    let panel   = pick_if(fluent == 1, pick(dk, argb(255, 44, 44, 44), argb(255, 255, 255, 255)), m_surf_low)
+    let ink     = pick_if(fluent == 1, pick(dk, white, argb(255, 26, 26, 26)), m_on_surface)
+    let ink2    = pick_if(fluent == 1, pick(dk, argb(255, 170, 170, 170), argb(255, 96, 96, 96)), m_on_surf_var)
+    let accent  = pick_if(fluent == 1, argb(255, 0, 120, 212), m_primary)
+    let corner  = pick_if(fluent == 1, 4, 12)
+
+    let tiles = []
+    let i = 0
+    for p in dps_photos {
+        tiles.push({t: "row", fillw: 1, h: 84, radius: corner, bg: panel,
+                    spacing: 12, c: [
+            {t: "column", w: 110, fillh: 1, radius: corner, bg: pd_colors[i % 11]},
+            {t: "column", fitw: 1, pady: 12, spacing: 4, c: [
+                txt(p[0], 15, 500, ink),
+                txt("by " + p[1], 12, 400, ink2),
+            ]},
+            spacer(),
+            {t: "column", padx: 12, aligny: 0.5, c: [ icon(ic_file, 14, ink2) ]},
+        ]})
+        i = i + 1
+    }
+
+    let other = pick_if(fluent == 1, "desktop_photo_search", "desktop_photo_search/fluent")
+    let other_label = pick_if(fluent == 1, "Show the Material variant",
+                                           "Show the fluent_ui variant")
+
+    return page(bg, [
+        m_appbar("Photo Search — " + label, "index"),
+        {t: "row", fillw: 1, padx: 16, pady: 12, spacing: 10, aligny: 0.5, c: [
+            {t: "row", fillw: 1, h: 44, radius: corner, bg: panel, padx: 12,
+             spacing: 8, aligny: 0.5, c: [
+                icon(ic_search, 14, ink2),
+                {t: "input", placeholder: "Search Unsplash", fillw: 1, fith: 1},
+            ]},
+            {t: "column", h: 44, radius: corner, bg: accent, padx: 20, fitw: 1,
+             alignx: 0.5, aligny: 0.5, c: [ txt("Search", 14, 500, white) ]},
+        ]},
+        {t: "scroll", fillw: 1, padx: 16, spacing: 10, c: tiles},
+        {t: "row", fillw: 1, padx: 16, pady: 12, c: [
+            {t: "column", fillw: 1, tapto: other,
+             c: [ m_btn_outlined(other_label) ]},
+        ]},
+    ])
+}
+

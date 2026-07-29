@@ -1,0 +1,13 @@
+// asset_transformation — flutter/samples/asset_transformation
+fn screen_asset_transformation() {
+    return na_screen("asset_transformation",
+        "Flutter's build-time asset transformation: a Dart package declared in "
+        + "pubspec.yaml rewrites an asset (here, SVG to PNG) as it is bundled.",
+        [
+            "It is a build-system feature — the whole demonstration is the `assets:` section of pubspec.yaml plus a transformer package.",
+            "Cargo has no asset pipeline of its own; the equivalent would be a build.rs step, which is a build concern rather than a rendered screen.",
+            "The sample's UI is three images proving the transform ran.",
+        ],
+        "Not portable as UI. The analogue is a build script, and this repo's build.rs already does the one transformation it needs — concatenating these .splash files.")
+}
+

@@ -1,0 +1,250 @@
+// material_3_demo — flutter/samples/material_3_demo
+//
+// The Flutter sample is a four-screen Material 3 showcase behind a
+// NavigationBar (NavigationRail above 450dp): Components, Color, Typography,
+// Elevation. Ported here as four sub-routes; the bottom bar re-routes.
+//
+// Sizes are the real M3 tokens the Flutter sample renders: the 15 type-scale
+// roles at their sp values, and the six elevation levels with the dp and
+// surface-tint overlay percentages from elevation_screen.dart.
+
+fn m3_tabbar(active) {
+    let items = [
+        ["Components", ic_cube,  "material_3_demo"],
+        ["Color",      ic_paint, "material_3_demo/color"],
+        ["Typography", ic_code,  "material_3_demo/typography"],
+        ["Elevation",  ic_layer, "material_3_demo/elevation"],
+    ]
+    let cells = []
+    for it in items {
+        let sel = it[0] == active
+        let pill_bg = pick_if(sel, m_sec_cont, clear)
+        let ink = pick_if(sel, m_on_sec_cont, m_on_surf_var)
+        cells.push({t: "column", fillw: 1, h: 80, spacing: 4, alignx: 0.5, aligny: 0.5,
+                    tapto: it[2], c: [
+            {t: "column", w: 64, h: 32, radius: 16, bg: pill_bg, alignx: 0.5, aligny: 0.5,
+             c: [ icon(it[1], 15, ink) ]},
+            txt(it[0], 12, 500, ink),
+        ]})
+    }
+    return {t: "column", fillw: 1, bg: m_surf_cont, c: [
+        rule(m_outline_var),
+        {t: "row", fillw: 1, h: 80, c: cells},
+    ]}
+}
+
+fn m3_page(active, body_kids) {
+    let kids = [ m_appbar("Material 3", "index") ]
+    kids.push({t: "scroll", fillw: 1, pad: 16, spacing: 16, c: body_kids})
+    kids.push(m3_tabbar(active))
+    return page(m_surface, kids)
+}
+
+// ---- Components -------------------------------------------------------------
+
+fn screen_material_3_demo() {
+    // Common buttons — the five M3 variants, in the sample's order.
+    let buttons = {t: "row", fillw: 1, spacing: 8, c: [
+        m_btn("Elevated", m_surf_low, m_primary),
+        m_btn("Filled", m_primary, m_on_primary),
+        m_btn("Tonal", m_sec_cont, m_on_sec_cont),
+    ]}
+    let buttons2 = {t: "row", fillw: 1, spacing: 8, c: [
+        m_btn_outlined("Outlined"),
+        m_btn_text("Text"),
+    ]}
+
+    // Floating action buttons — small (40), regular (56), extended.
+    let fabs = {t: "row", fillw: 1, spacing: 12, aligny: 0.5, c: [
+        {t: "column", w: 40, h: 40, radius: 12, bg: m_pri_cont, elevation: 6,
+         alignx: 0.5, aligny: 0.5, c: [ icon(ic_plus, 14, m_on_pri_cont) ]},
+        {t: "column", w: 56, h: 56, radius: 16, bg: m_pri_cont, elevation: 6,
+         alignx: 0.5, aligny: 0.5, c: [ icon(ic_plus, 18, m_on_pri_cont) ]},
+        {t: "row", h: 56, radius: 16, bg: m_pri_cont, elevation: 6, padx: 16,
+         fitw: 1, spacing: 8, aligny: 0.5, c: [
+            icon(ic_plus, 15, m_on_pri_cont),
+            txt("Create", 14, 500, m_on_pri_cont),
+        ]},
+    ]}
+
+    // Cards — elevated / filled / outlined.
+    let cards = {t: "row", fillw: 1, spacing: 12, c: [
+        {t: "column", fillw: 1, h: 88, radius: 12, bg: m_surf_lowest, elevation: 1,
+         pad: 12, c: [ txt("Elevated", 14, 400, m_on_surface) ]},
+        {t: "column", fillw: 1, h: 88, radius: 12, bg: m_surf_highest,
+         pad: 12, c: [ txt("Filled", 14, 400, m_on_surface) ]},
+        {t: "column", fillw: 1, h: 88, radius: 12, bg: m_surface, border: 1,
+         bordercolor: m_outline_var, pad: 12,
+         c: [ txt("Outlined", 14, 400, m_on_surface) ]},
+    ]}
+
+    // Switches, checkboxes, radios — real native makepad controls.
+    let switches = {t: "row", fillw: 1, spacing: 16, aligny: 0.5, c: [
+        {t: "toggle", on: 1, w: 52, h: 32}, {t: "toggle", on: 0, w: 52, h: 32},
+    ]}
+    let checks = {t: "column", fillw: 1, spacing: 4, c: [
+        check_row("Option 1", 1), check_row("Option 2", 1),
+        check_row("Option 3", 0), check_row("Option 4", 0),
+    ]}
+    let radios = {t: "column", fillw: 1, spacing: 4, c: [
+        radio_row("Option 1", 1), radio_row("Option 2", 0), radio_row("Option 3", 0),
+    ]}
+
+    // Chips — assist / filter (selected) / input.
+    let chips = {t: "row", fillw: 1, spacing: 8, c: [
+        m_chip("Assist", 0), m_chip("Filter", 1), m_chip("Input", 0),
+    ]}
+
+    // Progress indicators — the animated spinner and the M3 shape-morph.
+    let progress = {t: "row", fillw: 1, spacing: 20, aligny: 0.5, c: [
+        {t: "loading", w: 40, h: 40, bg: m_primary},
+        {t: "progress", w: 40, h: 40, bg: m_primary},
+        {t: "column", fillw: 1, h: 4, radius: 2, bg: m_sec_cont, c: [
+            {t: "column", w: 140, h: 4, radius: 2, bg: m_primary},
+        ]},
+    ]}
+
+    // Text fields — filled and outlined.
+    let fields = {t: "column", fillw: 1, spacing: 12, c: [
+        {t: "column", fillw: 1, h: 56, radius: 4, bg: m_surf_highest, padx: 16,
+         aligny: 0.5, c: [ {t: "input", placeholder: "Filled", fillw: 1, fith: 1} ]},
+        {t: "column", fillw: 1, h: 56, radius: 4, bg: m_surface, border: 1,
+         bordercolor: m_outline, padx: 16, aligny: 0.5,
+         c: [ {t: "input", placeholder: "Outlined", fillw: 1, fith: 1} ]},
+    ]}
+
+    // Dialog — drawn inline as the sample's AlertDialog content.
+    let dialog = {t: "column", fillw: 1, radius: 28, bg: m_surf_high, pad: 24,
+                  spacing: 16, elevation: 6, c: [
+        txt("What is a dialog?", 24, 400, m_on_surface),
+        para("A dialog is a type of modal window that appears in front of app content.",
+             14, 400, m_on_surf_var),
+        {t: "row", fillw: 1, spacing: 8, alignx: 1.0, c: [
+            m_btn_text("Dismiss"), m_btn_text("Okay"),
+        ]},
+    ]}
+
+    return m3_page("Components", [
+        m_section("Common buttons", [ buttons, buttons2 ]),
+        m_section("Floating action buttons", [ fabs ]),
+        m_section("Cards", [ cards ]),
+        m_section("Text fields", [ fields ]),
+        m_section("Chips", [ chips ]),
+        m_section("Switches", [ switches ]),
+        m_section("Checkboxes", [ checks ]),
+        m_section("Radio buttons", [ radios ]),
+        m_section("Progress indicators", [ progress ]),
+        m_section("Dialog", [ dialog ]),
+        m_section("Dividers", [ rule(m_outline_var) ]),
+    ])
+}
+
+// ---- Color ------------------------------------------------------------------
+// The sample's ColorPalettesScreen: each key colour with its on-/container
+// pairing, drawn as the M3 role swatches.
+
+fn screen_material_3_demo_color() {
+    let rows = [
+        ["Primary",   m_primary,   m_on_primary,  "Primary Container", m_pri_cont, m_on_pri_cont],
+        ["Secondary", m_secondary, m_surface,     "Secondary Container", m_sec_cont, m_on_sec_cont],
+        ["Tertiary",  m_tertiary,  m_surface,     "Tertiary Container", m_ter_cont, m_on_ter_cont],
+        ["Error",     m_error,     m_surface,     "Error Container", m_err_cont, m_error],
+    ]
+    let out = []
+    for r in rows {
+        out.push({t: "row", fillw: 1, h: 64, radius: 8, c: [
+            {t: "column", fillw: 1, fillh: 1, bg: r[1], pad: 10, aligny: 1.0,
+             c: [ para(r[0], 12, 500, r[2]) ]},
+            {t: "column", fillw: 1, fillh: 1, bg: r[4], pad: 10, aligny: 1.0,
+             c: [ para(r[3], 12, 500, r[5]) ]},
+        ]})
+    }
+    let surfaces = []
+    let stones = [
+        ["Surface", m_surface], ["Surf Container Lowest", m_surf_lowest],
+        ["Surf Container Low", m_surf_low], ["Surf Container", m_surf_cont],
+        ["Surf Container High", m_surf_high], ["Surf Container Highest", m_surf_highest],
+    ]
+    for s in stones {
+        surfaces.push({t: "row", fillw: 1, h: 40, radius: 6, bg: s[1], padx: 12,
+                       border: 1, bordercolor: m_outline_var, aligny: 0.5,
+                       c: [ txt(s[0], 12, 500, m_on_surface) ]})
+    }
+    return m3_page("Color", [
+        m_section("Key colors", out),
+        m_section("Surface tones", surfaces),
+    ])
+}
+
+// ---- Typography -------------------------------------------------------------
+// The 15 M3 type-scale roles at their real sp sizes.
+
+fn screen_material_3_demo_typography() {
+    let scale = [
+        ["Display Large", 57], ["Display Medium", 45], ["Display Small", 36],
+        ["Headline Large", 32], ["Headline Medium", 28], ["Headline Small", 24],
+        ["Title Large", 22], ["Title Medium", 16], ["Title Small", 14],
+        ["Label Large", 14], ["Label Medium", 12], ["Label Small", 11],
+        ["Body Large", 16], ["Body Medium", 14], ["Body Small", 12],
+    ]
+    let rows = []
+    for s in scale {
+        rows.push({t: "column", fillw: 1, spacing: 2, c: [
+            para(s[0], s[1], 400, m_on_surface),
+            txt(s[1] + "sp", 11, 400, m_on_surf_var),
+        ]})
+    }
+    return m3_page("Typography", [ m_section("Type scale", rows) ])
+}
+
+// ---- Elevation --------------------------------------------------------------
+// Levels 0-5 with the sample's dp and surface-tint overlay percentages.
+
+fn screen_material_3_demo_elevation() {
+    let levels = [
+        [0, 0, 0], [1, 1, 5], [2, 3, 8], [3, 6, 11], [4, 8, 12], [5, 12, 14],
+    ]
+    let cards = []
+    for lv in levels { cards.push(elev_card(lv[0], lv[1], lv[2])) }
+    return m3_page("Elevation", [
+        m_section("Surface tint color and shadow color", cards),
+    ])
+}
+
+fn elev_card(level, dp, overlay) {
+    return {t: "row", fillw: 1, h: 72, radius: 12, bg: m_surf_low, elevation: dp,
+            padx: 16, spacing: 12, aligny: 0.5, c: [
+        {t: "column", fitw: 1, c: [
+            txt("Level " + level, 14, 500, m_on_surface),
+            txt(dp + " dp", 12, 400, m_on_surf_var),
+        ]},
+        spacer(),
+        txt(overlay + "%", 12, 400, m_on_surf_var),
+    ]}
+}
+
+// ---- small shared component rows -------------------------------------------
+
+fn check_row(label, on) {
+    return {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5, c: [
+        {t: "checkbox", on: on, w: 18, h: 18},
+        txt(label, 14, 400, m_on_surface),
+    ]}
+}
+
+fn radio_row(label, on) {
+    return {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5, c: [
+        {t: "radio", on: on, w: 16, h: 16},
+        txt(label, 14, 400, m_on_surface),
+    ]}
+}
+
+fn m_chip(label, selected) {
+    let bg = pick_if(selected, m_sec_cont, m_surface)
+    let ink = pick_if(selected, m_on_sec_cont, m_on_surf_var)
+    let bd = pick_if(selected, 0, 1)
+    return {t: "column", bg: bg, border: bd, bordercolor: m_outline_var, radius: 8,
+            h: 32, pad: 8, fitw: 1, alignx: 0.5, aligny: 0.5,
+            c: [ txt(label, 14, 500, ink) ]}
+}
+

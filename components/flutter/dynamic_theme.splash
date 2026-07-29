@@ -1,0 +1,86 @@
+// dynamic_theme — flutter/samples/dynamic_theme
+//
+// "Flutter + GenAI": a Gemini chat where the model calls three declared
+// functions to restyle the running app — change_theme_color (a 6-char hex),
+// change_theme_mode (light/dark/system) and change_text_scale_factor.
+//
+// The chat surface ports, and so does the *effect*: the host already carries a
+// dark flag, and re-mounting with it flipped restyles every screen — which is
+// exactly what change_theme_mode does. The route below toggles it for real.
+//
+// What does not port is the model call. google_generative_ai needs an HTTPS
+// client and a streaming response; the render pipeline has neither, so the
+// transcript is a fixed exchange showing the three tool calls the sample
+// declares.
+
+let dt_messages = [
+    [1, "Make the theme purple"],
+    [0, "change_theme_color({ hex: \"6750A4\" }) → theme color updated"],
+    [1, "Now switch to dark mode"],
+    [0, "change_theme_mode({ mode: \"dark\" }) → theme mode updated"],
+    [1, "Bump the text size a bit"],
+    [0, "change_text_scale_factor({ scale: 1.3 }) → text scale updated"],
+]
+
+fn screen_dynamic_theme() {
+    let bubbles = []
+    for m in dt_messages {
+        let mine = m[0] == 1
+        // The bubble must FILL its share of the row: a `fillw` paragraph inside
+        // a `fitw` column is degenerate — Fill resolving against Fit collapsed
+        // every bubble to a one-pixel sliver. A fixed-width gutter on the
+        // opposite side gives the incoming/outgoing offset instead.
+        let bubble = {t: "column", fillw: 1, fith: 1, radius: 16, pad: 12,
+                      bg: pick_if(mine, m_pri_cont, m_surf_highest), c: [
+            para(m[1], 14, 400, pick_if(mine, m_on_pri_cont, m_on_surface)),
+        ]}
+        let gutter = {t: "column", w: 56, h: 1}
+        let cells = []
+        if mine { cells.push(gutter); cells.push(bubble) }
+        else { cells.push(bubble); cells.push(gutter) }
+        bubbles.push({t: "row", fillw: 1, fith: 1, c: cells})
+    }
+    return page(m_surface, [
+        m_appbar("Flutter + GenAI", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("API key", [
+                {t: "row", fillw: 1, h: 56, radius: 4, bg: m_surf_highest,
+                 padx: 16, spacing: 8, aligny: 0.5, c: [
+                    {t: "input", placeholder: "Enter your API key", fillw: 1, fith: 1},
+                ]},
+                m_btn("Submit", m_primary, m_on_primary),
+            ]),
+            m_section("Transcript", bubbles),
+            m_section("Declared functions", [
+                dt_fn("change_theme_color", "hex — 6 characters, e.g. FF00EE"),
+                dt_fn("change_theme_mode", "mode — light | dark | system"),
+                dt_fn("change_text_scale_factor", "scale — 1.0 is 14px, 2.0 is 48px"),
+            ]),
+            m_section("This one is real", [
+                para("change_theme_mode is the one tool call that works here: the "
+                    + "host carries the dark flag and every screen re-reads it on "
+                    + "mount.", 13, 400, m_on_surf_var),
+                {t: "column", fillw: 1, tapto: "theme:toggle",
+                 c: [ m_btn("Toggle theme mode", m_sec_cont, m_on_sec_cont) ]},
+            ]),
+        ]},
+        // The prompt bar.
+        {t: "row", fillw: 1, bg: m_surf_cont, padx: 16, pady: 12, spacing: 10,
+         aligny: 0.5, c: [
+            {t: "column", fillw: 1, h: 48, radius: 24, bg: m_surf_highest,
+             padx: 16, aligny: 0.5,
+             c: [ {t: "input", placeholder: "Ask Gemini…", fillw: 1, fith: 1} ]},
+            {t: "column", w: 48, h: 48, radius: 24, bg: m_primary,
+             alignx: 0.5, aligny: 0.5, c: [ icon(ic_bolt, 16, m_on_primary) ]},
+        ]},
+    ])
+}
+
+fn dt_fn(name, arg) {
+    return {t: "column", fillw: 1, radius: 8, bg: m_surface, border: 1,
+            bordercolor: m_outline_var, pad: 12, spacing: 2, c: [
+        txt(name, 14, 500, m_primary),
+        txt(arg, 12, 400, m_on_surf_var),
+    ]}
+}
+

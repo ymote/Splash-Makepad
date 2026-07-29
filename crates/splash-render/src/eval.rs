@@ -86,6 +86,11 @@ fn walk(vm: &mut ScriptVm, value: ScriptValue, depth: usize) -> Option<UiNode> {
         aligny: f32_prop(vm, value, id!(aligny)),
         on: int_prop(vm, value, id!(on)),
         tap: int_prop(vm, value, id!(tap)),
+        lat: num_prop(vm, value, id!(lat)),
+        lon: num_prop(vm, value, id!(lon)),
+        zoom: num_prop(vm, value, id!(zoom)),
+        tilt: num_prop(vm, value, id!(tilt)),
+        rotation: num_prop(vm, value, id!(rotation)),
     };
 
     // `c` is a ScriptArray, NOT an object with a vec — arrays are their own heap

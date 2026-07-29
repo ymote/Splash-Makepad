@@ -2,3 +2,6 @@
 Cargo.lock
 **/*.rs.bk
 .DS_Store
+
+# Visual-QA screenshots (regenerate with tools/visual-qa.sh)
+tools/qa-shots/

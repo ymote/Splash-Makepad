@@ -1,0 +1,12 @@
+// simple_shader — flutter/samples/simple_shader
+fn screen_simple_shader() {
+    return na_screen("simple_shader",
+        "The minimal Flutter fragment-shader sample: a GLSL shader declared in "
+        + "pubspec.yaml, loaded at runtime and painted across a box.",
+        [
+            "Same constraint as simple_sdf: makepad has MPSL and paints every widget with it, but no DSL node carries shader source.",
+            "Shaders compile at build time here. script_mod! compiles MPSL when the crate is built; a runtime string is never compiled, and a widget given one renders blank — verified on device by this repo's theming work.",
+        ],
+        "Not portable via the DSL. Reaching it means a compiled shader variant in splash-widgets that a DSL node selects by name.")
+}
+

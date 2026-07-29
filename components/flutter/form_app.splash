@@ -1,0 +1,151 @@
+// form_app — flutter/samples/form_app
+//
+// Four form demos behind an index: Sign in with HTTP, Autofill, Form widgets,
+// Validation. All four screens are here with the sample's real field labels,
+// hints and validation messages.
+//
+// What does not port: the *behaviour*. TextEditingController, FormState,
+// validators and the mock HTTP client all need per-field state and a submit
+// path the static renderer has no vocabulary for, so the error strings are
+// shown in place rather than triggered.
+
+let fa_demos = [
+    ["Sign in with HTTP", "signin_http"],
+    ["Autofill", "autofill"],
+    ["Form widgets", "form_widgets"],
+    ["Validation", "validation"],
+]
+
+fn screen_form_app() {
+    let rows = []
+    for d in fa_demos { rows.push(m_navrow(d[0], "form_app/" + d[1])) }
+    return page(m_surface, [
+        m_appbar("Form Samples", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16,
+         c: [ m_section("Demos", rows) ]},
+    ])
+}
+
+// An M3 outlined text field with a floating label.
+fn fa_field(label, hint) {
+    return {t: "column", fillw: 1, spacing: 4, c: [
+        txt(label, 12, 400, m_primary),
+        {t: "column", fillw: 1, h: 56, radius: 4, bg: m_surface, border: 1,
+         bordercolor: m_outline, padx: 16, aligny: 0.5,
+         c: [ {t: "input", placeholder: hint, fillw: 1, fith: 1} ]},
+    ]}
+}
+
+// The same field in its error state, with the sample's real message.
+fn fa_field_err(label, hint, err) {
+    return {t: "column", fillw: 1, spacing: 4, c: [
+        txt(label, 12, 400, m_error),
+        {t: "column", fillw: 1, h: 56, radius: 4, bg: m_surface, border: 2,
+         bordercolor: m_error, padx: 16, aligny: 0.5,
+         c: [ {t: "input", placeholder: hint, fillw: 1, fith: 1} ]},
+        txt(err, 12, 400, m_error),
+    ]}
+}
+
+fn screen_form_app_signin_http() {
+    return page(m_surface, [
+        m_appbar("Sign in with HTTP", "form_app"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("Credentials", [
+                fa_field("Username", "Enter your username"),
+                fa_field("Password", "Enter your password"),
+                m_btn("Sign in", m_primary, m_on_primary),
+            ]),
+            m_section("Not ported", [
+                para("The submit posts to a mock http.Client and swaps the button "
+                    + "for a progress indicator while it is in flight. There is no "
+                    + "async or HTTP in the render pipeline, so the button is inert.", 13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}
+
+fn screen_form_app_autofill() {
+    return page(m_surface, [
+        m_appbar("Autofill", "form_app"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("AutofillGroup", [
+                fa_field("Name", "Enter your name"),
+                fa_field("Phone number", "Enter your phone number"),
+                fa_field("Email", "Enter your email address"),
+                fa_field("Street address", "Enter your street address"),
+                m_btn("Submit", m_primary, m_on_primary),
+            ]),
+            m_section("Not ported", [
+                para("Autofill hints are a platform-keyboard contract. makepad's "
+                    + "TextInput exposes no autofill hint, so the grouping is "
+                    + "presentational here.", 13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}
+
+fn screen_form_app_form_widgets() {
+    return page(m_surface, [
+        m_appbar("Form widgets", "form_app"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("Fields", [
+                fa_field("Title", "Enter a title..."),
+                fa_field("Description", "Enter a description..."),
+            ]),
+            m_section("Date", [
+                {t: "row", fillw: 1, h: 48, spacing: 12, aligny: 0.5, c: [
+                    txt("Date", 16, 400, m_on_surface),
+                    spacer(),
+                    txt("Jan 1, 2024", 14, 400, m_on_surf_var),
+                    m_btn_outlined("Edit"),
+                ]},
+            ]),
+            m_section("Slider", [
+                {t: "slider", value: 0.5, fillw: 1, h: 32},
+                txt("Max value", 13, 400, m_on_surf_var),
+            ]),
+            m_section("Checkbox", [
+                check_row("Brushed teeth", 1),
+            ]),
+            m_section("Switch", [
+                {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5, c: [
+                    txt("Enable feature", 14, 400, m_on_surface),
+                    spacer(),
+                    {t: "toggle", on: 1, w: 52, h: 32},
+                ]},
+            ]),
+        ]},
+    ])
+}
+
+fn screen_form_app_validation() {
+    return page(m_surface, [
+        m_appbar("📖 Story Generator", "form_app"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("Inputs", [
+                fa_field_err("Enter an adjective", "e.g. quick, beautiful, interesting",
+                             "Not a valid adjective."),
+                fa_field_err("Enter a noun", "i.e. a person, place or thing",
+                             "Not a valid noun."),
+                {t: "row", fillw: 1, spacing: 12, aligny: 0.5, c: [
+                    {t: "checkbox", on: 0, w: 18, h: 18},
+                    {t: "column", fitw: 1, c: [
+                        txt("I agree to the terms of service.", 14, 400, m_on_surface),
+                    ]},
+                ]},
+                txt("You must agree to the terms of service.", 12, 400, m_error),
+                m_btn("Submit", m_primary, m_on_primary),
+            ]),
+            m_section("Result dialog", [
+                {t: "column", fillw: 1, radius: 28, bg: m_surf_high, pad: 24,
+                 spacing: 12, elevation: 3, c: [
+                    txt("Your story", 22, 400, m_on_surface),
+                    txt("The quick developer saw a mountain", 14, 400, m_on_surf_var),
+                    {t: "row", fillw: 1, alignx: 1.0, c: [ m_btn_text("Done") ]},
+                ]},
+            ]),
+        ]},
+    ])
+}
+

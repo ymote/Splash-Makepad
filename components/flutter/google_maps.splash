@@ -1,0 +1,66 @@
+// google_maps — flutter/samples/google_maps
+//
+// This used to be a "no Splash+makepad analogue" screen, on the grounds that a
+// GoogleMap is a platform view with no widget tree behind it. That was wrong
+// about *this* stack: makepad ships a full OpenStreetMap vector-tile renderer
+// (`widgets/src/map`, ~12k lines — tiles, labels, icons, overlays, styling)
+// with rotation and **tilt**, so a map here is a widget, not a platform
+// surface. The sample is portable after all.
+//
+// The sample is small and exact (`google_maps/lib/main.dart`): an AppBar titled
+// "Sydney" over a GoogleMap whose initial camera is `LatLng(-33.86, 151.20)` at
+// `zoom: 11.0`, carrying one marker at the same point with the info window
+// "Sydney".
+
+let syd_lat = 0.0 - 33.86
+let syd_lon = 151.20
+
+fn gm_map(zoom, tilt, rotation) {
+    return {t: "map", fillw: 1, h: 260, radius: 12,
+            lat: syd_lat, lon: syd_lon, zoom: zoom, tilt: tilt, rotation: rotation}
+}
+
+fn screen_google_maps() {
+    return page(m_surface, [
+        m_appbar("Sydney", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            // The sample's own camera: Sydney at zoom 11, flat.
+            m_section("initialCameraPosition", [
+                para("LatLng(-33.86, 151.20), zoom 11 — the sample's camera, "
+                     + "rendered from OpenStreetMap vector tiles.",
+                     13, 400, m_on_surf_var),
+                {t: "stack", fillw: 1, fith: 1, c: [
+                    gm_map(11.0, 0.0, 0.0),
+                    // The marker, drawn over the centre rather than anchored.
+                    {t: "column", fillw: 1, h: 260, alignx: 0.5, aligny: 0.5,
+                     c: [ icon(ic_pin, 28, m_error) ]},
+                ]},
+                {t: "row", fillw: 1, bg: m_surf_lowest, radius: 8, padx: 12,
+                 pady: 8, spacing: 8, aligny: 0.5, c: [
+                    icon(ic_pin, 14, m_error),
+                    {t: "column", fillw: 1, fith: 1, c: [
+                        txt("Sydney", 14, 500, m_on_surface),
+                        txt("Marker + InfoWindow", 12, 400, m_on_surf_var),
+                    ]},
+                ]},
+            ]),
+            // Tilt and bearing, straight off the same widget.
+            m_section("2.5D — tilt and bearing", [
+                para("The same place at zoom 15 with a 55 degree tilt and a 30 "
+                     + "degree bearing. MapView carries both; this is the "
+                     + "renderer's own, not a plugin.", 13, 400, m_on_surf_var),
+                gm_map(15.0, 55.0, 30.0),
+            ]),
+            m_section("What is still missing", [
+                para("Markers are overlay types on MapView (MapMarker, MapPuck, "
+                     + "MapRouteOverlay) but no DSL node carries one, so the pin "
+                     + "above is painted over the map rather than anchored to "
+                     + "the coordinate — it will not stay put as the camera "
+                     + "moves.", 13, 400, m_on_surf_var),
+                para("The sample needs an API key and network access. This one "
+                     + "needs neither: the tiles are OpenStreetMap.",
+                     13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}

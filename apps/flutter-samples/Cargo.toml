@@ -1,0 +1,15 @@
+[package]
+name = "flutter-samples"
+version = "0.1.0"
+edition = "2021"
+description = "The flutter/samples catalog rendered as native makepad widgets from the Splash DSL"
+
+[dependencies]
+makepad-widgets = { git = "https://github.com/makepad/makepad.git", branch = "dev" }
+splash-widgets = { path = "../../crates/splash-widgets" }
+splash-render = { path = "../../crates/splash-render" }
+splash-makepad = { path = "../../crates/splash-makepad" }
+
+[[bin]]
+name = "flutter-samples"
+path = "src/main.rs"

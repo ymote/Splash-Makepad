@@ -1,0 +1,13 @@
+// analysis_defaults — flutter/samples/analysis_defaults
+// Not a sample: the shared analysis_options.yaml every other sample includes.
+fn screen_analysis_defaults() {
+    return na_screen("analysis_defaults",
+        "The shared analysis_options.yaml that every other sample in the repo "
+        + "includes, so lint rules are set once for the whole repository.",
+        [
+            "It is repository infrastructure, not an app — there is nothing to render.",
+            "The Rust equivalent already exists here and is not a screen: the workspace lints, rustfmt.toml and clippy in CI.",
+        ],
+        "Nothing to port. Listed so the directory mapping stays one-to-one.")
+}
+

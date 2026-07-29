@@ -1,0 +1,13 @@
+// docs — flutter/samples/docs
+// Not a sample: the repo's own documentation.
+fn screen_docs() {
+    return na_screen("docs",
+        "The repository's own documentation — contribution notes and the "
+        + "architecture write-ups that accompany compass_app.",
+        [
+            "It is prose, not an app.",
+            "The equivalent here is this repo's README plus the header comment at the top of every file in components/flutter/.",
+        ],
+        "Nothing to render. Listed so the directory mapping stays one-to-one.")
+}
+

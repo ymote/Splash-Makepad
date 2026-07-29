@@ -1,0 +1,17 @@
+// add_to_app — flutter/samples/add_to_app
+// Android and iOS host projects that import a Flutter module (fullscreen,
+// prebuilt_module, multiple_flutters, books, android_view, plugin).
+fn screen_add_to_app() {
+    return na_screen("add_to_app",
+        "Six Android/iOS host apps that embed a Flutter module — full-screen, "
+        + "prebuilt AAR/framework, multiple simultaneous engines, and a shared "
+        + "engine cached across activities.",
+        [
+            "The sample is mostly Kotlin, Swift and Gradle/CocoaPods wiring — the Dart is incidental.",
+            "There is no Splash equivalent of FlutterEngine, FlutterActivity or an engine cache to embed.",
+            "makepad owns its window and event loop; it is not a view you drop into a host activity.",
+            "Splash-OH is the closest thing this project has to add-to-app, and it inverts the relationship: ArkTS hands Rust one NodeContent and Rust drives the tree from there.",
+        ],
+        "Not portable. The sibling Splash-OH repo already answers the question this sample asks, from the other direction.")
+}
+

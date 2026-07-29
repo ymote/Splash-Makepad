@@ -1,0 +1,13 @@
+// ios_app_clip — flutter/samples/ios_app_clip
+fn screen_ios_app_clip() {
+    return na_screen("ios_app_clip",
+        "Producing an iOS App Clip target that is rendered by Flutter, including "
+        + "a plugin call, under the App Clip size budget.",
+        [
+            "An App Clip is an Xcode target with its own entitlements, bundle ID and App Store association — configuration, not UI.",
+            "The Dart in the sample is a few lines; everything that matters is the Xcode project.",
+            "There is no iOS target in this repo, and makepad's iOS packaging has no App Clip concept.",
+        ],
+        "Not portable. The sample is an Xcode target definition wearing a thin Flutter screen.")
+}
+

@@ -1,0 +1,390 @@
+// animations — flutter/samples/animations
+//
+// The Flutter sample is a go_router index of 20 animation demos split into
+// Basics and Misc, each pushing a self-contained screen.
+//
+// The index and all 20 titles port exactly. The demos themselves do not: the
+// Splash DSL has no animation vocabulary — no tweens, curves, controllers or
+// implicit transitions — so each demo screen shows a still frame of what it
+// animates plus a note naming the missing primitive. Two of the twenty *are*
+// live, because makepad's own widgets animate them in their shaders: the
+// circular spinner and the M3 shape-morph indicator.
+
+let an_basics = [
+    ["AnimatedContainer", "animated_container", "A container tweens size, colour and corner radius on each tap."],
+    ["PageRouteBuilder", "page_route", "A custom route transition drives a Tween across a page push."],
+    ["Animation Controller", "controller", "A raw AnimationController drives a value from 0 to 1 and back."],
+    ["Tweens", "tweens", "A Tween maps the controller's 0..1 onto a range of values."],
+    ["AnimatedBuilder", "animated_builder", "AnimatedBuilder rebuilds only the subtree that depends on the value."],
+    ["Custom Tween", "custom_tween", "A Tween subclass interpolates a non-numeric type."],
+    ["Tween Sequences", "tween_sequence", "TweenSequence chains weighted tweens into one timeline."],
+    ["Fade Transition", "fade_transition", "FadeTransition drives opacity from an animation."],
+]
+
+let an_misc = [
+    ["Expandable Card", "expand_card", "A card grows to fill the screen when tapped."],
+    ["Carousel", "carousel", "A page-view carousel with a scaled, parallaxed centre item."],
+    ["Focus Image", "focus_image", "An image scales up under a long-press and settles back."],
+    ["Card Swipe", "card_swipe", "Cards are dismissed with a horizontal drag and a fling."],
+    ["Flutter Animate", "flutter_animate", "The flutter_animate package composes effects in a chain."],
+    ["Repeating Animation", "repeating", "A controller repeats forever, driving a pulsing scale."],
+    ["Spring Physics", "spring", "A physics simulation springs a card back to centre."],
+    ["AnimatedList", "animated_list", "Rows animate in and out as the backing list changes."],
+    ["AnimatedPositioned", "animated_positioned", "A Positioned child tweens to new offsets inside a Stack."],
+    ["AnimatedSwitcher", "animated_switcher", "One child cross-fades to another as the key changes."],
+    ["Hero Animation", "hero", "A Hero flies its child between two routes."],
+    ["Curved Animation", "curved", "A CurvedAnimation reshapes the controller's linear ramp."],
+]
+
+fn an_group(header, items) {
+    let rows = []
+    for it in items { rows.push(m_navrow(it[0], "animations/" + it[1])) }
+    return m_section(header, rows)
+}
+
+fn screen_animations() {
+    return page(m_surface, [
+        m_appbar("Animation Samples", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            an_group("Basics", an_basics),
+            an_group("Misc", an_misc),
+        ]},
+    ])
+}
+
+// One demo screen. These now actually move.
+//
+// `st.t` is a clock the host advances while an animations route is on screen;
+// the tree is recomputed against it every frame. That is the only animation
+// this design admits — there is no tween, curve or controller in the DSL — so
+// the curves live in `_kit.splash` and each demo computes its own frame.
+fn screen_animations_demo(key) {
+    let title = ""
+    let blurb = ""
+    for it in an_basics { if it[1] == key { title = it[0]; blurb = it[2] } }
+    for it in an_misc { if it[1] == key { title = it[0]; blurb = it[2] } }
+
+    let stage = an_stage(key)
+    return page(m_surface, [
+        m_appbar(title, "animations"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("What it demonstrates", [
+                para(blurb, 14, 400, m_on_surf_var),
+            ]),
+            {t: "column", bg: m_surf_low, radius: 12, pad: 24, spacing: 16,
+             fillw: 1, alignx: 0.5, c: stage},
+        ]},
+    ])
+}
+
+// A live frame for each demo, computed from the clock.
+//
+// One branch per demo, with the sample's own duration and values — 400ms for
+// AnimatedContainer, 800ms and deepPurple->deepOrange for AnimatedBuilder, 3s
+// for the typewriter and the rainbow, 2s and radius 100->0 for the repeat, 4s
+// for the curve comparison. Nothing is shared between them; each is the effect
+// its own demo file describes.
+
+// The lorem the TypewriterTween types out, in chunks so it can be revealed
+// progressively — the VM has no substring.
+let an_typed = ["Lorem ", "ipsum ", "dolor ", "sit ", "amet, ", "consectetur ",
+                "adipiscing ", "elit, ", "sed ", "do ", "eiusmod ", "tempor ",
+                "incididunt ", "ut ", "labore ", "et ", "dolore ", "magna."]
+
+// TweenSequence's rainbow, equal weights (misc/tween_sequence.dart).
+let an_rainbow = [argb(255,244,67,54), argb(255,255,152,0), argb(255,255,235,59),
+                  argb(255,76,175,80), argb(255,33,150,243), argb(255,63,81,181),
+                  argb(255,156,39,176)]
+
+fn an_stage(key) {
+    // --- Basics ---------------------------------------------------------
+    // AnimatedContainer, 400ms: size, colour and corner together.
+    if key == "animated_container" {
+        let t = ease(pingpong(0.8))
+        return [
+            {t: "column", w: lerp(72.0, 160.0, t), h: lerp(72.0, 160.0, t),
+             radius: lerp(8.0, 60.0, t), bg: lerp_argb(m_pri_cont, m_ter_cont, t)},
+            an_caption("size, colour and corner tweened together (400ms)"),
+        ]
+    }
+    // PageRouteBuilder: Tween<Offset> from (0,1) to zero with Curves.ease —
+    // a page sliding up over the one below.
+    if key == "page_route" {
+        let t = ease(pingpong(2.0))
+        return [
+            {t: "column", fillw: 1, h: 200, radius: 12, bg: m_surf_highest,
+             pady: lerp(150.0, 0.0, t), c: [
+                {t: "column", fillw: 1, h: 200, radius: 12, bg: m_pri_cont,
+                 alignx: 0.5, aligny: 0.5,
+                 c: [ txt("Page 2", 16, 500, m_on_pri_cont) ]},
+            ]},
+            an_caption("Offset(0,1) -> Offset.zero, Curves.ease"),
+        ]
+    }
+    // AnimationController, 1s: the raw 0..1 value.
+    if key == "controller" {
+        let t = pingpong(1.0)
+        return [ an_bar(t), an_caption("controller.value " + roundn(t, 2)) ]
+    }
+    // Tweens, 1s: Tween(begin: 0, end: 1000000) counting up.
+    if key == "tweens" {
+        let t = pingpong(1.0)
+        return [
+            txt("$" + floorn(lerp(0.0, 1000000.0, t)), 34, 500, m_primary),
+            an_bar(t),
+            an_caption("Tween(begin: 0.0, end: 1000000)"),
+        ]
+    }
+    // AnimatedBuilder, 800ms: ColorTween deepPurple -> deepOrange.
+    if key == "animated_builder" {
+        let t = pingpong(1.6)
+        let deep_purple = argb(255, 103, 58, 183)
+        let deep_orange = argb(255, 255, 87, 34)
+        return [
+            {t: "column", w: 120, h: 120, radius: 12,
+             bg: lerp_argb(deep_purple, deep_orange, t)},
+            an_caption("ColorTween(deepPurple -> deepOrange), 800ms"),
+        ]
+    }
+    // Custom Tween, 3s: a TypewriterTween over a String.
+    if key == "custom_tween" {
+        let t = pingpong(3.0)
+        let n = floorn(t * 18.0)
+        let out = ""
+        let i = 0
+        for w in an_typed { if i < n { out = out + w }  i = i + 1 }
+        return [
+            {t: "column", fillw: 1, h: 96, c: [ para(out, 16, 400, m_on_surface) ]},
+            an_caption("TypewriterTween — Tween<String>.lerp"),
+        ]
+    }
+    // TweenSequence, 3s: through the seven colours at equal weight.
+    if key == "tween_sequence" {
+        let t = phase(3.0)
+        let seg = floorn(t * 7.0)
+        let f = t * 7.0 - seg
+        let a = an_rainbow[seg % 7]
+        let b = an_rainbow[(seg + 1) % 7]
+        return [
+            {t: "column", w: 140, h: 140, radius: 70, bg: lerp_argb(a, b, f)},
+            an_caption("seven weighted items, 3s"),
+        ]
+    }
+    // FadeTransition, 500ms, Curves.easeIn: opacity 1 -> 0.
+    if key == "fade_transition" {
+        let t = ease_in_cubic(pingpong(1.0))
+        let o = 1.0 - t
+        return [
+            {t: "column", w: 120, h: 120, radius: 12, bg: fade(m_primary, o)},
+            an_caption("opacity " + roundn(o, 2) + ", Curves.easeIn"),
+        ]
+    }
+
+    // --- Misc -----------------------------------------------------------
+    // Expandable card, 300ms, Curves.easeInOutCubic.
+    if key == "expand_card" {
+        let t = pingpong(1.2)
+        let e = 0.0
+        if t < 0.5 { e = ease_in_cubic(t * 2.0) / 2.0 }
+        else { e = 0.5 + ease_out_cubic((t - 0.5) * 2.0) / 2.0 }
+        return [
+            {t: "column", w: lerp(140.0, 320.0, e), h: lerp(90.0, 220.0, e),
+             radius: 12, bg: m_surf_highest, pad: 12,
+             c: [ txt("Card", 14, 500, m_on_surface) ]},
+            an_caption("Curves.easeInOutCubic, 300ms"),
+        ]
+    }
+    // Carousel: the centre item scaled up, the neighbours down, easeOut.
+    if key == "carousel" {
+        let t = pingpong(2.4)
+        let cells = []
+        let i = 0
+        while i < 3 {
+            let d = i - 1.0
+            let near = 1.0 - absn(d - (t - 0.5) * 2.0) / 2.0
+            if near < 0.0 { near = 0.0 }
+            let sz = lerp(64.0, 132.0, ease_out_cubic(near))
+            cells.push({t: "column", w: sz, h: sz, radius: 10,
+                        bg: fade(m_pri_cont, 0.35 + near * 0.65)})
+            i = i + 1
+        }
+        return [
+            {t: "row", fillw: 1, spacing: 8, aligny: 0.5, alignx: 0.5, c: cells},
+            an_caption("centre item scaled, Curves.easeOut"),
+        ]
+    }
+    // Focus image: RelativeRect -> fill under a long press, Curves.ease.
+    if key == "focus_image" {
+        let t = ease(pingpong(2.0))
+        return [
+            {t: "column", fillw: 1, h: 220, bg: m_surf_highest, radius: 12,
+             pad: lerp(56.0, 0.0, t), c: [
+                {t: "column", fillw: 1, fillh: 1, radius: lerp(10.0, 0.0, t),
+                 bg: m_ter_cont, alignx: 0.5, aligny: 0.5,
+                 c: [ icon(ic_image, 26, m_on_ter_cont) ]},
+            ]},
+            an_caption("RelativeRect -> RelativeRect.fill, Curves.ease"),
+        ]
+    }
+    // Card swipe: the card leaves to the right, then springs back.
+    if key == "card_swipe" {
+        let p = phase(2.6)
+        let off = 0.0
+        let o = 1.0
+        if p < 0.6 { off = ease_in_cubic(p / 0.6) * 260.0  o = 1.0 - p / 0.6 }
+        else { off = 0.0  o = 1.0 }
+        return [
+            {t: "row", fillw: 1, h: 150, padx: off, c: [
+                {t: "column", fillw: 1, fillh: 1, radius: 12,
+                 bg: fade(m_pri_cont, o)},
+            ]},
+            an_caption("dismiss to Offset(1,0), then spring back"),
+        ]
+    }
+    // flutter_animate: a staggered chain — fade, then slide, then scale.
+    if key == "flutter_animate" {
+        let p = phase(3.0)
+        let f = clamp01(p / 0.33)
+        let sl = clamp01((p - 0.33) / 0.33)
+        let sc = clamp01((p - 0.66) / 0.34)
+        let d = lerp(90.0, 140.0, ease_out_cubic(sc))
+        return [
+            {t: "row", fillw: 1, h: 150, padx: lerp(0.0, 120.0, ease(sl)),
+             aligny: 0.5, c: [
+                {t: "column", w: d, h: d, radius: 12,
+                 bg: fade(m_primary, f)},
+            ]},
+            an_caption("fade -> slide -> scale, chained"),
+        ]
+    }
+    // Repeating animation, 2s: BorderRadius 100 -> 0.
+    if key == "repeating" {
+        let t = pingpong(2.0)
+        return [
+            {t: "column", w: 140, h: 140, radius: lerp(100.0, 0.0, t),
+             bg: m_primary},
+            an_caption("BorderRadius 100 -> 0, repeat(reverse: true)"),
+        ]
+    }
+    // Spring physics: released off-centre, oscillating back.
+    if key == "spring" {
+        let p = phase(2.4)
+        let x = (1.0 - spring(p)) * 150.0
+        return [
+            {t: "row", fillw: 1, h: 150, padx: absn(x), aligny: 0.5, c: [
+                {t: "column", w: 90, h: 90, radius: 12, bg: m_ter_cont},
+            ]},
+            an_caption("SpringDescription, settling on centre"),
+        ]
+    }
+    // AnimatedList, 300ms in / 600ms out.
+    if key == "animated_list" {
+        let n = 2 + floorn(pingpong(3.0) * 3.0)
+        let rows = []
+        let i = 0
+        while i < n {
+            rows.push({t: "row", fillw: 1, h: 40, bg: m_surf_highest, radius: 8,
+                       padx: 12, aligny: 0.5,
+                       c: [ txt("Item " + i, 14, 400, m_on_surface) ]})
+            i = i + 1
+        }
+        return [ {t: "column", fillw: 1, spacing: 8, c: rows},
+                 an_caption("insert 300ms / remove 600ms") ]
+    }
+    // AnimatedPositioned, 1s: between two corners of the stack.
+    if key == "animated_positioned" {
+        let t = ease(pingpong(1.0))
+        return [
+            {t: "column", fillw: 1, h: 190, bg: m_surf_highest, radius: 12,
+             pady: lerp(8.0, 110.0, t), padx: lerp(8.0, 210.0, t), c: [
+                {t: "column", w: 70, h: 70, radius: 10, bg: m_primary},
+            ]},
+            an_caption("Positioned tweened inside a Stack, 1s"),
+        ]
+    }
+    // AnimatedSwitcher, 1s: one child scales out as the next scales in.
+    if key == "animated_switcher" {
+        let p = phase(2.0)
+        let first = p < 0.5
+        let local = p * 2.0
+        if !first { local = (p - 0.5) * 2.0 }
+        let sc = 0.0
+        if local < 0.5 { sc = 1.0 - local * 2.0 } else { sc = (local - 0.5) * 2.0 }
+        let d = lerp(40.0, 130.0, sc)
+        let col = pick_if(first, m_pri_cont, m_ter_cont)
+        let ink = pick_if(first, m_on_pri_cont, m_on_ter_cont)
+        return [
+            {t: "column", fillw: 1, h: 150, alignx: 0.5, aligny: 0.5, c: [
+                {t: "column", w: d, h: d, radius: 12, bg: col, alignx: 0.5,
+                 aligny: 0.5, c: [ txt(pick_if(first, "1", "2"), 22, 500, ink) ]},
+            ]},
+            an_caption("ScaleTransition between children, 1s"),
+        ]
+    }
+    // Hero: the thumbnail flies and grows into the detail image.
+    if key == "hero" {
+        let t = ease(pingpong(2.0))
+        let d = lerp(50.0, 200.0, t)
+        return [
+            {t: "row", fillw: 1, h: 220, padx: lerp(0.0, 60.0, t), aligny: 0.5, c: [
+                {t: "column", w: d, h: d, radius: lerp(25.0, 12.0, t),
+                 bg: m_pri_cont, alignx: 0.5, aligny: 0.5,
+                 c: [ icon(ic_image, lerp(16.0, 40.0, t), m_on_pri_cont) ]},
+            ]},
+            an_caption("Hero flight, 50 -> 200"),
+        ]
+    }
+    // CurvedAnimation, 4s: the same ramp under six named curves.
+    if key == "curved" {
+        let t = pingpong(4.0)
+        return [
+            an_curve_row("linear", t),
+            an_curve_row("easeInCubic", ease_in_cubic(t)),
+            an_curve_row("easeOutCubic", ease_out_cubic(t)),
+            an_curve_row("easeInExpo", ease_in_expo(t)),
+            an_curve_row("easeOutExpo", ease_out_expo(t)),
+            an_curve_row("bounceOut", bounce_out(t)),
+        ]
+    }
+
+    // The two makepad widgets that animate in their own shader.
+    return [
+        {t: "row", spacing: 24, fitw: 1, aligny: 0.5, c: [
+            {t: "loading", w: 48, h: 48, bg: m_primary},
+            {t: "progress", w: 48, h: 48, bg: m_primary},
+        ]},
+        an_caption("makepad's own shader drives these off draw time"),
+    ]
+}
+
+fn an_curve_row(name, v) {
+    return {t: "column", fillw: 1, spacing: 4, c: [
+        txt(name, 12, 500, m_on_surf_var),
+        an_bar(clamp01(v)),
+    ]}
+}
+
+fn clamp01(x) {
+    if x < 0.0 { return 0.0 }
+    if x > 1.0 { return 1.0 }
+    return x
+}
+fn absn(x) { if x < 0.0 { return 0.0 - x }  return x }
+
+fn an_bar(t) {
+    return {t: "column", fillw: 1, h: 8, radius: 4, bg: m_sec_cont, c: [
+        {t: "column", w: lerp(4.0, 300.0, t), h: 8, radius: 4, bg: m_primary},
+    ]}
+}
+
+fn an_caption(s) {
+    return {t: "column", fillw: 1, alignx: 0.5,
+            c: [ para(s, 13, 400, m_on_surf_var) ]}
+}
+
+fn roundn(x, places) {
+    let m = 1.0
+    let i = 0
+    while i < places { m = m * 10.0; i = i + 1 }
+    return floorn(x * m + 0.5) / m
+}

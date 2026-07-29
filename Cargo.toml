@@ -6,6 +6,7 @@ members = [
     "crates/splash-makepad",
     "crates/splash-widgets",
     "apps/kit-host",
+    "apps/flutter-samples",
 ]
 
 [profile.release]

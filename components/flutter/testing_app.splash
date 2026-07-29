@@ -1,0 +1,66 @@
+// testing_app — flutter/samples/testing_app
+//
+// A deliberately tiny favourites app (a 20-row list, a favourites screen, a
+// snackbar on toggle) that exists as a fixture for the sample's unit, widget
+// and integration tests.
+//
+// The UI ports in full. The reason the sample exists does not: its value is
+// the `test/` and `integration_test/` directories — testWidgets, WidgetTester,
+// pumpAndSettle, Key-based finders. There is no widget-test harness for the
+// Splash pipeline, and the translated output is a makepad dialect string, so
+// the closest analogue is asserting on that string — which is what
+// `tests/flutter_samples.rs` in this repo does for every screen.
+
+fn screen_testing_app() {
+    let rows = []
+    let i = 1
+    while i <= 12 {
+        let fav = 0
+        if i == 2 { fav = 1 }
+        if i == 5 { fav = 1 }
+        if i == 9 { fav = 1 }
+        rows.push({t: "column", fillw: 1, c: [
+            {t: "row", fillw: 1, h: 56, padx: 16, spacing: 12, aligny: 0.5, c: [
+                txt("Item " + i, 16, 400, m_on_surface),
+                spacer(),
+                icon(ic_heart, 15, pick_if(fav == 1, m_error, m_on_surf_var)),
+            ]},
+            rule(m_outline_var),
+        ]})
+        i = i + 1
+    }
+    return page(m_surface, [
+        m_appbar("Testing Sample", "index"),
+        {t: "row", fillw: 1, padx: 16, pady: 8, c: [
+            spacer(),
+            {t: "row", h: 40, radius: 20, bg: m_pri_cont, padx: 16, fitw: 1,
+             spacing: 8, aligny: 0.5, tapto: "testing_app/favorites", c: [
+                icon(ic_heart, 13, m_on_pri_cont),
+                txt("Favorites", 14, 500, m_on_pri_cont),
+            ]},
+        ]},
+        {t: "scroll", fillw: 1, c: rows},
+        // The SnackBar the sample shows on each toggle.
+        {t: "row", bg: m_inv_surf, radius: 4, fillw: 1, h: 48, padx: 16,
+         aligny: 0.5, c: [ txt("Added to favorites.", 14, 400, m_inv_on) ]},
+    ])
+}
+
+fn screen_testing_app_favorites() {
+    let rows = []
+    for n in ["Item 2", "Item 5", "Item 9"] {
+        rows.push({t: "column", fillw: 1, c: [
+            {t: "row", fillw: 1, h: 56, padx: 16, spacing: 12, aligny: 0.5, c: [
+                txt(n, 16, 400, m_on_surface),
+                spacer(),
+                icon(ic_heart, 15, m_error),
+            ]},
+            rule(m_outline_var),
+        ]})
+    }
+    return page(m_surface, [
+        m_appbar("Favorites", "testing_app"),
+        {t: "scroll", fillw: 1, c: rows},
+    ])
+}
+

@@ -13,3 +13,7 @@ splash-render = { path = "../splash-render" }
 [[example]]
 name = "translate"
 path = "examples/translate.rs"
+
+[[example]]
+name = "assemble"
+path = "examples/assemble.rs"

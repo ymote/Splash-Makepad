@@ -1,0 +1,15 @@
+// background_isolate_channels — flutter/samples/background_isolate_channels
+fn screen_background_isolate_channels() {
+    return na_screen("background_isolate_channels",
+        "Calling platform channels from a background isolate: passing a "
+        + "RootIsolateToken across and installing BackgroundIsolateBinaryMessenger "
+        + "so plugin calls work off the root isolate.",
+        [
+            "It exists because Flutter's platform channels are bound to the root isolate — a constraint with no counterpart here.",
+            "There are no platform channels in the Splash render pipeline to call from anywhere.",
+            "Rust threading is not isolate-shaped: no message-passing token is needed to call platform code off-thread.",
+            "The sibling Splash-OH repo does hold the real version of this problem — see its commit on doing no work on the sensor service's thread.",
+        ],
+        "Not portable. The constraint the sample teaches around does not exist in this stack.")
+}
+

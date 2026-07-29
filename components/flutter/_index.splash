@@ -1,0 +1,208 @@
+// _index.splash — the catalog index and the router.
+//
+// Concatenated LAST. Everything above defines `fn screen_*`; this file picks
+// one by `st.route` and leaves it as the script's value.
+//
+// Two things about the makepad-script VM shape this file:
+//
+//   1. A bare function call as the final top-level expression evaluates to nil,
+//      so the chosen node is bound to `node` and the file ends by naming it.
+//   2. There is no substring or startsWith. Parameterised routes are matched by
+//      rebuilding the full route string from the same data the screen uses and
+//      comparing for equality — see the `for` loops below.
+
+// dir, label, status, route      status: 1 ported, 0 documented
+let fs_samples = [
+    ["material_3_demo", "Material 3 Demo", 1, "material_3_demo"],
+    ["cupertino_gallery", "Cupertino Gallery", 1, "cupertino_gallery"],
+    ["date_planner", "Date Planner", 1, "date_planner"],
+    ["platform_design", "Platform Design", 1, "platform_design"],
+    ["animations", "Animations", 1, "animations"],
+    ["form_app", "Form App", 1, "form_app"],
+    ["navigation_and_routing", "Navigation and Routing", 1, "navigation_and_routing"],
+    ["compass_app", "Compass App", 1, "compass_app"],
+    ["desktop_photo_search", "Desktop Photo Search", 1, "desktop_photo_search"],
+    ["dynamic_theme", "Dynamic Theme", 1, "dynamic_theme"],
+    ["testing_app", "Testing App", 1, "testing_app"],
+    ["add_to_app", "Add to App", 0, "add_to_app"],
+    ["analysis_defaults", "Analysis Defaults", 0, "analysis_defaults"],
+    ["android_splash_screen", "Android Splash Screen", 0, "android_splash_screen"],
+    ["asset_transformation", "Asset Transformation", 0, "asset_transformation"],
+    ["background_isolate_channels", "Background Isolate Channels", 0, "background_isolate_channels"],
+    ["docs", "docs", 0, "docs"],
+    ["google_maps", "Google Maps", 0, "google_maps"],
+    ["ios_app_clip", "iOS App Clip", 0, "ios_app_clip"],
+    ["pedometer", "Pedometer", 0, "pedometer"],
+    ["platform_channels", "Platform Channels", 0, "platform_channels"],
+    ["platform_view_swift", "Platform View Swift", 0, "platform_view_swift"],
+    ["simple_sdf", "Simple SDF", 0, "simple_sdf"],
+    ["simple_shader", "Simple Shader", 0, "simple_shader"],
+    ["tool", "tool", 0, "tool"],
+    ["veggieseasons", "Veggie Seasons", 0, "veggieseasons"],
+    ["web_embedding", "Web Embedding", 0, "web_embedding"],
+]
+
+fn fs_index_row(label, dir, ported) {
+    let tint = pick_if(ported == 1, m_pri_cont, m_surf_highest)
+    let ink = pick_if(ported == 1, m_on_pri_cont, m_on_surf_var)
+    let glyph = pick_if(ported == 1, ic_check, ic_file)
+    return {t: "row", fillw: 1, h: 64, padx: 16, spacing: 12, aligny: 0.5,
+            tapto: dir, c: [
+        {t: "column", w: 36, h: 36, radius: 10, bg: tint, alignx: 0.5, aligny: 0.5,
+         c: [ icon(glyph, 14, ink) ]},
+        {t: "column", fitw: 1, spacing: 2, c: [
+            txt(label, 16, 400, m_on_surface),
+            txt(dir, 12, 400, m_on_surf_var),
+        ]},
+        spacer(),
+        icon(ic_fwd, 12, m_on_surf_var),
+    ]}
+}
+
+fn screen_index() {
+    let ported = []
+    let documented = []
+    for s in fs_samples {
+        let row = fs_index_row(s[1], s[0], s[2])
+        if s[2] == 1 { ported.push(row) } else { documented.push(row) }
+    }
+    return page(m_surface, [
+        {t: "column", bg: m_surf_cont, fillw: 1, padx: 16, pady: 16, spacing: 4, c: [
+            txt("flutter/samples", 28, 400, m_on_surface),
+            para("27 directories, rendered as native makepad widgets from the "
+                + "Splash DSL", 14, 400, m_on_surf_var),
+        ]},
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            {t: "row", fillw: 1, spacing: 8, c: [
+                {t: "column", fillw: 1, radius: 12, bg: m_pri_cont, pad: 12,
+                 spacing: 2, c: [
+                    txt("11", 28, 500, m_on_pri_cont),
+                    txt("ported", 12, 400, m_on_pri_cont),
+                ]},
+                {t: "column", fillw: 1, radius: 12, bg: m_surf_highest, pad: 12,
+                 spacing: 2, c: [
+                    txt("16", 28, 500, m_on_surface),
+                    txt("documented", 12, 400, m_on_surf_var),
+                ]},
+            ]},
+            m_section("Ported", ported),
+            m_section("No Splash+makepad analogue", documented),
+            {t: "column", fillw: 1, tapto: "theme:toggle",
+             c: [ m_btn_outlined("Toggle light / dark") ]},
+        ]},
+    ])
+}
+
+// ---- the router -------------------------------------------------------------
+
+let r = st.route
+let found = 0
+let node = {t: "column"}
+
+// Top-level sample routes.
+if r == "material_3_demo" { node = screen_material_3_demo(); found = 1 }
+else if r == "material_3_demo/color" { node = screen_material_3_demo_color(); found = 1 }
+else if r == "material_3_demo/typography" { node = screen_material_3_demo_typography(); found = 1 }
+else if r == "material_3_demo/elevation" { node = screen_material_3_demo_elevation(); found = 1 }
+else if r == "cupertino_gallery" { node = screen_cupertino_gallery(); found = 1 }
+else if r == "cupertino_gallery/settings" { node = screen_cupertino_gallery_settings(); found = 1 }
+else if r == "date_planner" { node = screen_date_planner(); found = 1 }
+else if r == "platform_design" { node = screen_platform_design(); found = 1 }
+else if r == "platform_design/news" { node = screen_platform_design_news(); found = 1 }
+else if r == "platform_design/profile" { node = screen_platform_design_profile(); found = 1 }
+else if r == "platform_design/settings" { node = screen_platform_design_settings(); found = 1 }
+else if r == "platform_design/ios" { node = screen_platform_design_ios(); found = 1 }
+else if r == "animations" { node = screen_animations(); found = 1 }
+else if r == "form_app" { node = screen_form_app(); found = 1 }
+else if r == "form_app/signin_http" { node = screen_form_app_signin_http(); found = 1 }
+else if r == "form_app/autofill" { node = screen_form_app_autofill(); found = 1 }
+else if r == "form_app/form_widgets" { node = screen_form_app_form_widgets(); found = 1 }
+else if r == "form_app/validation" { node = screen_form_app_validation(); found = 1 }
+else if r == "navigation_and_routing" { node = screen_navigation_and_routing(); found = 1 }
+else if r == "navigation_and_routing/new" { node = screen_navigation_and_routing_new(); found = 1 }
+else if r == "navigation_and_routing/all" { node = screen_navigation_and_routing_all(); found = 1 }
+else if r == "navigation_and_routing/authors" { node = screen_navigation_and_routing_authors(); found = 1 }
+else if r == "navigation_and_routing/settings" { node = screen_navigation_and_routing_settings(); found = 1 }
+else if r == "navigation_and_routing/signin" { node = screen_navigation_and_routing_signin(); found = 1 }
+else if r == "compass_app" { node = screen_compass_app(); found = 1 }
+else if r == "compass_app/search" { node = screen_compass_app_search(); found = 1 }
+else if r == "compass_app/results" { node = screen_compass_app_results(); found = 1 }
+else if r == "compass_app/activities" { node = screen_compass_app_activities(); found = 1 }
+else if r == "compass_app/booking" { node = screen_compass_app_booking(); found = 1 }
+else if r == "desktop_photo_search" { node = screen_desktop_photo_search(); found = 1 }
+else if r == "desktop_photo_search/fluent" { node = screen_desktop_photo_search_fluent(); found = 1 }
+else if r == "dynamic_theme" { node = screen_dynamic_theme(); found = 1 }
+else if r == "testing_app" { node = screen_testing_app(); found = 1 }
+else if r == "testing_app/favorites" { node = screen_testing_app_favorites(); found = 1 }
+else if r == "add_to_app" { node = screen_add_to_app(); found = 1 }
+else if r == "analysis_defaults" { node = screen_analysis_defaults(); found = 1 }
+else if r == "android_splash_screen" { node = screen_android_splash_screen(); found = 1 }
+else if r == "asset_transformation" { node = screen_asset_transformation(); found = 1 }
+else if r == "background_isolate_channels" { node = screen_background_isolate_channels(); found = 1 }
+else if r == "docs" { node = screen_docs(); found = 1 }
+else if r == "google_maps" { node = screen_google_maps(); found = 1 }
+else if r == "ios_app_clip" { node = screen_ios_app_clip(); found = 1 }
+else if r == "pedometer" { node = screen_pedometer(); found = 1 }
+else if r == "platform_channels" { node = screen_platform_channels(); found = 1 }
+else if r == "platform_view_swift" { node = screen_platform_view_swift(); found = 1 }
+else if r == "simple_sdf" { node = screen_simple_sdf(); found = 1 }
+else if r == "simple_shader" { node = screen_simple_shader(); found = 1 }
+else if r == "tool" { node = screen_tool(); found = 1 }
+else if r == "veggieseasons" { node = screen_veggieseasons(); found = 1 }
+else if r == "web_embedding" { node = screen_web_embedding(); found = 1 }
+
+// Parameterised routes, matched by rebuilding the route from the same data the
+// screen renders (no substring in this VM).
+if found == 0 {
+    for e in dp_events {
+        if r == "date_planner/" + e[5] { node = screen_date_planner_event(e[5]); found = 1 }
+    }
+}
+if found == 0 {
+    for d in an_basics {
+        if r == "animations/" + d[1] { node = screen_animations_demo(d[1]); found = 1 }
+    }
+    for d in an_misc {
+        if r == "animations/" + d[1] { node = screen_animations_demo(d[1]); found = 1 }
+    }
+}
+if found == 0 {
+    for b in nr_books {
+        if r == "navigation_and_routing/book/" + b[4] {
+            node = screen_navigation_and_routing_book(b[4]); found = 1
+        }
+    }
+    for a in nr_authors {
+        if r == "navigation_and_routing/author/" + a[2] {
+            node = screen_navigation_and_routing_author(a[2]); found = 1
+        }
+    }
+}
+// The Cupertino Gallery's 21 widget pages.
+if found == 0 {
+    if r == "cupertino_gallery/activity" { node = screen_cg_activity(); found = 1 }
+    else if r == "cupertino_gallery/alert" { node = screen_cg_alert(); found = 1 }
+    else if r == "cupertino_gallery/button" { node = screen_cg_button(); found = 1 }
+    else if r == "cupertino_gallery/checkbox" { node = screen_cg_checkbox(); found = 1 }
+    else if r == "cupertino_gallery/date_picker" { node = screen_cg_date_picker(); found = 1 }
+    else if r == "cupertino_gallery/list_tile" { node = screen_cg_list_tile(); found = 1 }
+    else if r == "cupertino_gallery/picker" { node = screen_cg_picker(); found = 1 }
+    else if r == "cupertino_gallery/radio" { node = screen_cg_radio(); found = 1 }
+    else if r == "cupertino_gallery/search" { node = screen_cg_search(); found = 1 }
+    else if r == "cupertino_gallery/segmented" { node = screen_cg_segmented(); found = 1 }
+    else if r == "cupertino_gallery/slider" { node = screen_cg_slider(); found = 1 }
+    else if r == "cupertino_gallery/switch" { node = screen_cg_switch(); found = 1 }
+    else if r == "cupertino_gallery/text_field" { node = screen_cg_text_field(); found = 1 }
+    else if r == "cupertino_gallery/text_theme" { node = screen_cg_text_theme(); found = 1 }
+    else if r == "cupertino_gallery/time_picker" { node = screen_cg_time_picker(); found = 1 }
+    else if r == "cupertino_gallery/action_sheet" { node = screen_cg_action_sheet(); found = 1 }
+    else if r == "cupertino_gallery/sheet" { node = screen_cg_sheet(); found = 1 }
+    else if r == "cupertino_gallery/popup" { node = screen_cg_popup(); found = 1 }
+    else if r == "cupertino_gallery/context_menu" { node = screen_cg_context_menu(); found = 1 }
+    else if r == "cupertino_gallery/scrollbar" { node = screen_cg_scrollbar(); found = 1 }
+    else if r == "cupertino_gallery/sliding" { node = screen_cg_sliding(); found = 1 }
+}
+
+if found == 0 { node = screen_index() }
+node
+
