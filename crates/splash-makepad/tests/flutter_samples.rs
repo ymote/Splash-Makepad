@@ -24,6 +24,19 @@ fn assembled() -> String {
 }
 
 /// Translate one route, or panic with the route name attached.
+/// Rendering seeds the state store — `sget(key, default)` writes the default
+/// when nothing has one — so every test in this file touches the same global,
+/// and `cargo test` runs them on parallel threads. That showed up once as a
+/// control test failing on a count that was right every time it ran alone.
+///
+/// A flaky test is worse than a slow one, so they take turns. The suite is a
+/// few seconds either way.
+static SERIAL: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+fn serial() -> std::sync::MutexGuard<'static, ()> {
+    SERIAL.lock().unwrap_or_else(|e| e.into_inner())
+}
+
 fn render(kit: &str, route: &str) -> String {
     let src = kit::with_state(route, false, kit);
     let tree = splash_render::build(&src, kit::register_stub_capabilities)
@@ -166,6 +179,7 @@ fn cases() -> Vec<(String, &'static str)> {
 
 #[test]
 fn every_route_renders_its_own_screen() {
+    let _serial = serial();
     let kit = assembled();
     let mut failures = Vec::new();
     for (route, marker) in cases() {
@@ -185,6 +199,7 @@ fn every_route_renders_its_own_screen() {
 /// wired into the router.
 #[test]
 fn every_indexed_sample_is_reachable() {
+    let _serial = serial();
     let kit = assembled();
     let index_marker = "27 directories";
     let dirs = std::fs::read_dir(kit_dir())
@@ -220,6 +235,7 @@ fn every_indexed_sample_is_reachable() {
 /// completely wrong. Three real bugs of this shape survived the render sweep.
 #[test]
 fn helper_calls_have_the_declared_arity() {
+    let _serial = serial();
     // Comments are not code. A prose mention like "argb() then builds ..." was
     // being read as a zero-argument call to argb, which is a checker bug rather
     // than a kit one — strip line comments before scanning.
@@ -362,6 +378,7 @@ fn helper_calls_have_the_declared_arity() {
 /// and render them all at one time and require twenty different frames.
 #[test]
 fn every_animation_demo_moves_and_is_its_own() {
+    let _serial = serial();
     const DEMOS: [&str; 20] = [
         "animated_container", "page_route", "controller", "tweens",
         "animated_builder", "custom_tween", "tween_sequence", "fade_transition",
@@ -406,6 +423,7 @@ fn every_animation_demo_moves_and_is_its_own() {
 /// The assembler's ordering contract, which the whole kit depends on.
 #[test]
 fn kit_assembles_head_first_and_index_last() {
+    let _serial = serial();
     let kit = assembled();
     // The files' own bodies use `// ---- ` as a section rule, so only look at
     // markers that name a .splash file.
@@ -445,6 +463,7 @@ fn kit_assembles_head_first_and_index_last() {
 /// must differ.
 #[test]
 fn a_control_changes_what_the_screen_renders() {
+    let _serial = serial();
     let kit = assembled();
     // route, the action its control names, and a fragment only one state emits
     let cases = [
@@ -512,6 +531,7 @@ fn a_control_changes_what_the_screen_renders() {
 
 #[test]
 fn probe2() {
+    let _serial = serial();
     let kit = assembled();
     splash_render::state::reset();
     let a = render(&kit, "material_3_demo");

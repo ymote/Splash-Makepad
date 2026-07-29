@@ -54,20 +54,32 @@ fn screen_web_embedding() {
 
     return page(m_surface, [
         m_appbar("Web Embedding", "index"),
-        {t: "column", fillw: 1, padx: 16, pady: 8, spacing: 8, c: [
+        {t: "column", fillw: 1, padx: 16, pady: 8, c: [
             para("Native widgets above, a real web surface below — one tree.",
                  13, 400, m_on_surf_var),
-            pick_if(st.backend == "arkui",
-                {t: "row", fillw: 1, radius: 8, bg: m_pri_cont, padx: 12,
-                 pady: 10, spacing: 8, aligny: 0.5,
+        ]},
+        native_or_note,
+        // Below the surface, not above it, and that is not a layout preference.
+        //
+        // The slot is positioned absolutely at `we_top` while everything else
+        // is laid out in flow, so anything added above it moves the flow and
+        // leaves the slot where it was. Putting this picker above the surface
+        // did exactly that on the first try: the surface covered it, and all
+        // that showed was the top edge of its rounded corner. Below the
+        // surface, the slot's y depends only on the app bar and one line of
+        // text — neither of which changes — so this control can be edited
+        // without silently moving a WebView on top of something.
+        pick_if(st.backend == "arkui",
+            {t: "column", fillw: 1, padx: 16, pady: 8, c: [
+                {t: "row", fillw: 1, radius: 8, bg: m_pri_cont,
+                 padx: 12, pady: 10, spacing: 8, aligny: 0.5,
                  tapto: act_cycle("we_page", 3), c: [
                     icon(ic_globe, 13, m_on_pri_cont),
                     txt("Showing " + we_page()[1] + " — tap to switch",
                         13, 500, m_on_pri_cont),
                 ]},
-                {t: "column", w: 1, h: 1}),
-        ]},
-        native_or_note,
+            ]},
+            {t: "column", w: 1, h: 1}),
         {t: "column", fillw: 1, pad: 16, spacing: 12, c: [
             m_section("Which direction this goes", [
                 para("The sample embeds a Flutter build into an existing page, "
