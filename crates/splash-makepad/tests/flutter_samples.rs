@@ -148,7 +148,7 @@ fn cases() -> Vec<(String, &'static str)> {
         ("asset_transformation", "splash:// resolves a request to bytes"),
         ("background_isolate_channels", "without blocking"),
         ("docs", "documents itself"),
-        ("google_maps", "OpenStreetMap vector tiles"),
+        ("google_maps", "OpenStreetMap either way"),
         ("ios_app_clip", "atomic service"),
         ("pedometer", "Health Connect"),
         ("platform_channels", "MethodChannel"),

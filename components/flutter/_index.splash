@@ -11,41 +11,56 @@
 //      rebuilding the full route string from the same data the screen uses and
 //      comparing for equality — see the `for` loops below.
 
-// dir, label, status, route      status: 1 ported (all 27 now are)
+// dir, label, status, route
+//
+// status  2  the screen does the thing — live host data, or it actually moves
+//         1  drawn, not working — the geometry and tokens are transcribed from
+//            the sample, the behaviour behind them is not
+//         0  a note. No port; it says what the counterpart here is
+//
+// This used to read `1` for all 27 and the index drew a check beside every one.
+// That was the complaint, and it was right: a screen that only describes a
+// capability was being counted as done. The split below is an outside review's
+// (gpt-5.6-terra) classification, not mine.
 let fs_samples = [
     ["material_3_demo", "Material 3 Demo", 1, "material_3_demo"],
     ["cupertino_gallery", "Cupertino Gallery", 1, "cupertino_gallery"],
     ["date_planner", "Date Planner", 1, "date_planner"],
     ["platform_design", "Platform Design", 1, "platform_design"],
-    ["animations", "Animations", 1, "animations"],
+    ["animations", "Animations", 2, "animations"],
     ["form_app", "Form App", 1, "form_app"],
-    ["navigation_and_routing", "Navigation and Routing", 1, "navigation_and_routing"],
+    ["navigation_and_routing", "Navigation and Routing", 2, "navigation_and_routing"],
     ["compass_app", "Compass App", 1, "compass_app"],
     ["desktop_photo_search", "Desktop Photo Search", 1, "desktop_photo_search"],
     ["dynamic_theme", "Dynamic Theme", 1, "dynamic_theme"],
     ["testing_app", "Testing App", 1, "testing_app"],
-    ["add_to_app", "Add to App", 1, "add_to_app"],
-    ["analysis_defaults", "Analysis Defaults", 1, "analysis_defaults"],
-    ["android_splash_screen", "Android Splash Screen", 1, "android_splash_screen"],
+    ["add_to_app", "Add to App", 2, "add_to_app"],
+    ["analysis_defaults", "Analysis Defaults", 0, "analysis_defaults"],
+    ["android_splash_screen", "Android Splash Screen", 0, "android_splash_screen"],
     ["asset_transformation", "Asset Transformation", 1, "asset_transformation"],
     ["background_isolate_channels", "Background Isolate Channels", 1, "background_isolate_channels"],
-    ["docs", "docs", 1, "docs"],
+    ["docs", "docs", 0, "docs"],
     ["google_maps", "Google Maps", 1, "google_maps"],
-    ["ios_app_clip", "iOS App Clip", 1, "ios_app_clip"],
+    ["ios_app_clip", "iOS App Clip", 0, "ios_app_clip"],
     ["pedometer", "Pedometer", 1, "pedometer"],
     ["platform_channels", "Platform Channels", 1, "platform_channels"],
     ["platform_view_swift", "Platform View Swift", 1, "platform_view_swift"],
     ["simple_sdf", "Simple SDF", 1, "simple_sdf"],
     ["simple_shader", "Simple Shader", 1, "simple_shader"],
-    ["tool", "tool", 1, "tool"],
-    ["veggieseasons", "Veggie Seasons", 1, "veggieseasons"],
+    ["tool", "tool", 0, "tool"],
+    ["veggieseasons", "Veggie Seasons", 0, "veggieseasons"],
     ["web_embedding", "Web Embedding", 1, "web_embedding"],
 ]
 
-fn fs_index_row(label, dir, ported) {
-    let tint = pick_if(ported == 1, m_pri_cont, m_surf_highest)
-    let ink = pick_if(ported == 1, m_on_pri_cont, m_on_surf_var)
-    let glyph = pick_if(ported == 1, ic_check, ic_file)
+fn fs_index_row(label, dir, status) {
+    // A check only where the screen does the thing. Drawn-but-inert gets a
+    // half-filled dot, a note gets a page glyph — so the list cannot read as
+    // 27 finished ports at a glance, which is exactly how it used to read.
+    let tint = pick_if(status == 2, m_pri_cont,
+               pick_if(status == 1, m_surf_highest, m_surf_cont))
+    let ink = pick_if(status == 2, m_on_pri_cont, m_on_surf_var)
+    let glyph = pick_if(status == 2, ic_check,
+                pick_if(status == 1, ic_paint, ic_file))
     return {t: "row", fillw: 1, h: 64, padx: 16, spacing: 12, aligny: 0.5,
             tapto: dir, c: [
         {t: "column", w: 36, h: 36, radius: 10, bg: tint, alignx: 0.5, aligny: 0.5,
@@ -59,28 +74,39 @@ fn fs_index_row(label, dir, ported) {
     ]}
 }
 
+fn fs_count_card(n, label, bg, ink) {
+    return {t: "column", fillw: 1, radius: 12, bg: bg, pad: 12, spacing: 2, c: [
+        txt(n, 26, 500, ink),
+        txt(label, 11, 400, ink),
+    ]}
+}
+
 fn screen_index() {
-    let ported = []
-    let documented = []
+    let working = []
+    let drawn = []
+    let notes = []
     for s in fs_samples {
         let row = fs_index_row(s[1], s[0], s[2])
-        if s[2] == 1 { ported.push(row) } else { documented.push(row) }
+        if s[2] == 2 { working.push(row) }
+        if s[2] == 1 { drawn.push(row) }
+        if s[2] == 0 { notes.push(row) }
     }
     return page(m_surface, [
         {t: "column", bg: m_surf_cont, fillw: 1, padx: 16, pady: 16, spacing: 4, c: [
             txt("flutter/samples", 28, 400, m_on_surface),
-            para("27 directories, rendered as native makepad widgets from the "
-                + "Splash DSL", 14, 400, m_on_surf_var),
+            para("All 27 directories have a screen. Three of them work; most "
+                + "are the sample drawn accurately and not wired up; six are "
+                + "notes, not ports.", 14, 400, m_on_surf_var),
         ]},
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
             {t: "row", fillw: 1, spacing: 8, c: [
-                {t: "column", fillw: 1, radius: 12, bg: m_pri_cont, pad: 12,
-                 spacing: 2, c: [
-                    txt("27", 28, 500, m_on_pri_cont),
-                    txt("of 27 directories", 12, 400, m_on_pri_cont),
-                ]},
+                fs_count_card("3", "work", m_pri_cont, m_on_pri_cont),
+                fs_count_card("18", "drawn only", m_surf_highest, m_on_surface),
+                fs_count_card("6", "notes", m_surf_cont, m_on_surf_var),
             ]},
-            m_section("Every sample", ported),
+            m_section("Working — live host data, or it moves", working),
+            m_section("Drawn, not wired up", drawn),
+            m_section("Notes, not ports", notes),
             {t: "column", fillw: 1, tapto: "theme:toggle",
              c: [ m_btn_outlined("Toggle light / dark") ]},
         ]},

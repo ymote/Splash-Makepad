@@ -17,6 +17,41 @@
 > animate, the map is a real OpenStreetMap renderer, and the capability screens
 > read live values off the device.
 
+## What an outside review found
+
+The index used to mark all 27 with a check. That was wrong, and this is the
+correction. gpt-5.6-terra was given both repos read-only and asked to classify
+every screen by what the code *does*, ignoring the comments — which in this
+codebase are long and persuasive and were part of the problem. Its verdict:
+
+| | count | what it means |
+|---|---|---|
+| works | 3 | live host data, or it actually moves |
+| drawn only | 18 | geometry and tokens transcribed from the sample, nothing behind them |
+| notes | 6 | prose. No port |
+
+The index now says exactly that, in three sections, with a check only on the
+three that work. The screens themselves are unchanged in that respect: what
+changed is that the catalog stopped claiming otherwise.
+
+Four things it found that were not just overclaiming:
+
+- **`web_embedding` crashed the app.** SIGSEGV on the screen the index marked
+  done. The `web` node's `src` was being applied as an image source on a Column
+  and its slot width — a device pixel count — as a node width in vp, and ArkUI
+  dereferenced a null frame node inside `SetWidth` rather than clamping.
+- **The web overlay leaked.** Slots were never reset per build, so after
+  visiting that screen the WebView floated over every screen after it.
+- **`google_maps` drew nothing on ArkUI** while its own text said "rendered from
+  OpenStreetMap vector tiles". The `map` tag hits the walker's unknown-tag arm.
+- **`compass_app` never touched the location stack**, which was sitting in
+  Splash-OH complete and unreachable — permissions declared, `location::get`
+  written, and no way for a DSL screen to call it.
+
+All four are fixed and verified on the device. The map now loads real OSM raster
+tiles on ArkUI; the web surface is a real ArkWeb component and says what it can
+and cannot do; the compass reads the platform's location switch and position.
+
 ## The "no analogue" screens are gone
 
 Every one of the 27 directories now has a screen that says something true about

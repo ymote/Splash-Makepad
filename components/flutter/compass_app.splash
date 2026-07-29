@@ -13,6 +13,17 @@
 // view-model layer to bind to, no repository, no command, no persistence — the
 // pipeline evaluates data to a tree once per mount. What is here is the app's
 // surface, not its structure.
+//
+// One thing here is not a mock. A travel planner on a phone can know where the
+// phone is, and this one asks: `location.enabled` reads the system switch and
+// `location.fix` returns the cached position. Splash-OH has had a location
+// stack all along — `location::get`, `nearest_city`, the permissions declared
+// in module.json5 — but only web pages could reach it; no DSL screen could, so
+// this screen was entirely static while the capability sat there unused.
+//
+// `location.fix` never blocks. A real request takes seconds and this runs while
+// the tree is being built, so the worker refreshes a cache and the screen shows
+// "locating" until a mount lands after the fix does.
 
 // name, country, continent, tags
 let ca_dest = [
@@ -37,6 +48,28 @@ let ca_activities = [
     ["Wildlife Viewing Cruise", "any"],
 ]
 
+// Where the phone is, from the platform. Not part of the Flutter sample — the
+// sample has no location — but it is the one thing this screen can say that a
+// mock cannot, and the capability was already here.
+fn ca_here() {
+    // The host answers with a line to show and a state to branch on. The VM has
+    // no JSON and no substring test, so anything this screen decides on has to
+    // arrive as a value `==` can compare.
+    let state = invoke("location.state")
+    let got = state == "ok"
+    let tint = pick_if(got, m_pri_cont, m_surf_highest)
+    let ink = pick_if(got, m_on_pri_cont, m_on_surf_var)
+    return {t: "row", fillw: 1, radius: 12, bg: tint, padx: 14, pady: 12,
+            spacing: 10, aligny: 0.5, c: [
+        icon(ic_pin, 14, ink),
+        {t: "column", fillw: 1, fith: 1, spacing: 2, c: [
+            txt("Where you are", 13, 500, ink),
+            para(invoke("location.fix"), 11, 400, ink),
+            para("system switch: " + invoke("location.enabled"), 11, 400, ink),
+        ]},
+    ]}
+}
+
 fn screen_compass_app() {
     let cards = []
     let i = 0
@@ -58,7 +91,24 @@ fn screen_compass_app() {
                 icon(ic_search, 15, m_on_surf_var),
                 txt("Search destinations", 16, 400, m_on_surf_var),
             ]},
+            ca_here(),
             m_section("Your bookings", cards),
+            m_section("What is real here and what is not", [
+                para("The destinations, activities and bookings are the "
+                     + "sample's own assets/destinations.json and "
+                     + "activities.json, drawn accurately and wired to nothing: "
+                     + "search does not search, the stepper does not step, and "
+                     + "a booking cannot be made.", 13, 400, m_on_surf_var),
+                para("The position above is real, read from the platform. It is "
+                     + "not part of the Flutter sample — that app has no "
+                     + "location — but Splash-OH's location stack was sitting "
+                     + "unused because no DSL screen could reach it.",
+                     13, 400, m_on_surf_var),
+                para("The architecture the sample exists to demonstrate — MVVM, "
+                     + "repositories, commands, an offline store — is still "
+                     + "absent. A tree evaluated once per mount has nowhere to "
+                     + "put a view model.", 13, 400, m_on_surf_var),
+            ]),
         ]},
     ])
 }

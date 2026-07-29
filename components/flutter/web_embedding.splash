@@ -17,16 +17,21 @@
 // Geometry is explicit on purpose. A web slot needs absolute coordinates and
 // the DSL tree does not know where a node lands, so the screen says. That is
 // the same thing frontend.rs does in Rust.
-
-let we_top = 300.0
-let we_h = 460.0
+//
+// In vp, the unit every other length in this kit is in. It used to say
+// `w: 1320.0` -- the phone's *physical* width -- which ArkTS then applied as
+// 1320vp, roughly 4300px. ArkUI does not clamp that; it dereferenced a null
+// frame node inside SetWidth and took the whole app down. A width of 0 now
+// means "as wide as the page", so no screen has to name a device pixel count.
+let we_top = 90.0
+let we_h = 300.0
 
 fn screen_web_embedding() {
     let native_or_note = pick_if(st.backend == "arkui",
         // The hole: this reserves the space, and the host puts a real WebView
         // at exactly these coordinates.
         {t: "web", src: "https://flutter.dev", fillw: 1, h: we_h,
-         x: 0.0, y: we_top, w: 1320.0},
+         x: 0.0, y: we_top, w: 0.0},
         {t: "column", fillw: 1, h: 240, radius: 12, bg: m_surf_highest,
          alignx: 0.5, aligny: 0.5, pad: 24, c: [
             para("A web surface needs a WebView the host composites. The "
@@ -51,10 +56,11 @@ fn screen_web_embedding() {
                      13, 400, m_on_surf_var),
             ]),
             m_section("What is still missing", [
-                para("The slot's coordinates are written by hand. A web surface "
+                para("The slot's y is still written by hand. A web surface "
                      + "needs absolute geometry and the DSL tree does not know "
                      + "where a node lands, so a screen that wants one has to "
-                     + "say — the same thing the bridge's own cards do in Rust.",
+                     + "say — the same thing the bridge's own cards do in Rust. "
+                     + "The width no longer is: 0 means as wide as the page.",
                      13, 400, m_on_surf_var),
                 para("The sample's interop — JavaScript calling into Dart — has "
                      + "its counterpart in `splash.invoke`, which the "

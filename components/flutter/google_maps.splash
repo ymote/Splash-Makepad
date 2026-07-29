@@ -15,9 +15,43 @@
 let syd_lat = 0.0 - 33.86
 let syd_lon = 151.20
 
+// makepad has MapView. ArkUI has no map node at all — the `map` tag hit the
+// walker's unknown-tag arm and the node was dropped on the floor, so this
+// screen drew an empty box on the phone while the text above it said "rendered
+// from OpenStreetMap vector tiles". That was a fabrication and this is the
+// repair: the same tiles, from the same source, rasterised by OSM's servers
+// instead of by a vector renderer, laid out as ordinary image nodes.
+//
+// Tile numbers are the standard slippy-map scheme, computed for
+// LatLng(-33.86, 151.20) — the sample's own camera.
+//   zoom 11 -> 1884, 1228      zoom 15 -> 30146, 19662
+fn gm_tiles(z, cx, cy, side) {
+    let rows = []
+    let j = 0 - 1
+    while j <= 1 {
+        let cells = []
+        let i = 0 - 1
+        while i <= 1 {
+            cells.push({t: "image", w: side, h: side,
+                        src: "https://tile.openstreetmap.org/" + z + "/"
+                             + (cx + i) + "/" + (cy + j) + ".png"})
+            i = i + 1
+        }
+        rows.push({t: "row", fith: 1, c: cells})
+        j = j + 1
+    }
+    return {t: "column", fillw: 1, fith: 1, alignx: 0.5, radius: 12, c: rows}
+}
+
 fn gm_map(zoom, tilt, rotation) {
     return {t: "map", fillw: 1, h: 260, radius: 12,
             lat: syd_lat, lon: syd_lon, zoom: zoom, tilt: tilt, rotation: rotation}
+}
+
+// Same place, whichever backend is asking.
+fn gm_view(zoom, tilt, rotation, z, cx, cy) {
+    return pick_if(st.backend == "arkui", gm_tiles(z, cx, cy, 100),
+                   gm_map(zoom, tilt, rotation))
 }
 
 fn screen_google_maps() {
@@ -26,11 +60,13 @@ fn screen_google_maps() {
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
             // The sample's own camera: Sydney at zoom 11, flat.
             m_section("initialCameraPosition", [
-                para("LatLng(-33.86, 151.20), zoom 11 — the sample's camera, "
-                     + "rendered from OpenStreetMap vector tiles.",
+                para("LatLng(-33.86, 151.20), zoom 11 — the sample's camera. "
+                     + "OpenStreetMap either way: makepad rasterises the vector "
+                     + "tiles itself, ArkUI has no map node so it loads the "
+                     + "raster tiles for the same coordinates.",
                      13, 400, m_on_surf_var),
                 {t: "stack", fillw: 1, fith: 1, c: [
-                    gm_map(11.0, 0.0, 0.0),
+                    gm_view(11.0, 0.0, 0.0, 11, 1884, 1228),
                     // The marker, drawn over the centre rather than anchored.
                     {t: "column", fillw: 1, h: 260, alignx: 0.5, aligny: 0.5,
                      c: [ icon(ic_pin, 28, m_error) ]},
@@ -48,8 +84,11 @@ fn screen_google_maps() {
             m_section("2.5D — tilt and bearing", [
                 para("The same place at zoom 15 with a 55 degree tilt and a 30 "
                      + "degree bearing. MapView carries both; this is the "
-                     + "renderer's own, not a plugin.", 13, 400, m_on_surf_var),
-                gm_map(15.0, 55.0, 30.0),
+                     + "renderer's own, not a plugin. Tilt and bearing are the "
+                     + "part that does not survive the trip to raster tiles — "
+                     + "on ArkUI this is the same place, flat.",
+                     13, 400, m_on_surf_var),
+                gm_view(15.0, 55.0, 30.0, 15, 30146, 19662),
             ]),
             m_section("What is still missing", [
                 para("Markers are overlay types on MapView (MapMarker, MapPuck, "
@@ -57,8 +96,13 @@ fn screen_google_maps() {
                      + "above is painted over the map rather than anchored to "
                      + "the coordinate — it will not stay put as the camera "
                      + "moves.", 13, 400, m_on_surf_var),
-                para("The sample needs an API key and network access. This one "
-                     + "needs neither: the tiles are OpenStreetMap.",
+                para("The sample needs an API key. This one does not — the "
+                     + "tiles are OpenStreetMap — but it does need the network, "
+                     + "which the ArkUI half now uses.",
+                     13, 400, m_on_surf_var),
+                para("ArkUI gets a flat 3x3 of raster tiles, not a map: no pan, "
+                     + "no zoom, no tilt, and the camera is baked into the tile "
+                     + "numbers. Real parity needs a map node on that backend.",
                      13, 400, m_on_surf_var),
             ]),
         ]},
