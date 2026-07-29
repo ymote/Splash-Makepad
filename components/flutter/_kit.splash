@@ -474,22 +474,50 @@ fn c_iconrow(glyph, tint, title, subtitle, route) {
 // column of values with the selection band behind the middle row and the
 // neighbours dimmed. It is a picture of a picker, not a picker — it does not
 // spin — and the Cupertino Gallery pages say so.
-fn c_wheel(cols, sel_index) {
-    let lanes = []
-    for col in cols {
-        let rows = []
-        let i = 0
+// One column of a picker.
+//
+// ArkUI has a real one, and the walker has always supported it — the catalog
+// uses `{t: "textpicker"}` on its own picker screen. So this screen was drawing
+// a fake wheel next to a note saying wheels are not available, on a backend
+// that had one. On ArkUI it is now the system picker and it spins under a
+// finger; on makepad, which genuinely has no picker widget, it stays a column
+// of labels, but a tap picks a row rather than the selection being painted on.
+fn c_lane(col, key, dflt) {
+    if st.backend == "arkui" {
+        let r = ""
+        let first = 1
         for v in col {
-            let d = i - sel_index
-            let shade = pick_if(d == 0, c_label, c_label2)
-            rows.push({t: "column", fillw: 1, h: 34, alignx: 0.5, aligny: 0.5,
-                       c: [ txt(v, 18, 400, shade) ]})
-            i = i + 1
+            if first == 0 { r = r + ";" }
+            first = 0
+            r = r + v
         }
-        lanes.push({t: "column", fillw: 1, c: rows})
+        return {t: "textpicker", range: r, fillw: 1, h: 180}
+    }
+    let rows = []
+    let i = 0
+    for v in col {
+        let sel = sget(key, dflt) == i
+        rows.push({t: "column", fillw: 1, h: 34, alignx: 0.5, aligny: 0.5,
+                   tapto: act_set(key, i),
+                   c: [ txt(v, 18, 400, pick_if(sel, c_label, c_label2)) ]})
+        i = i + 1
+    }
+    return {t: "column", fillw: 1, c: rows}
+}
+
+fn c_wheel(cols, key, dflt) {
+    let lanes = []
+    let ci = 0
+    for col in cols {
+        lanes.push(c_lane(col, key + "_" + ci, dflt))
+        ci = ci + 1
+    }
+    // The native picker draws its own selection band; the drawn one needs the
+    // band painted behind the middle row.
+    if st.backend == "arkui" {
+        return {t: "row", fillw: 1, h: 180, c: lanes}
     }
     return {t: "stack", fillw: 1, h: 180, c: [
-        // The selection band sits behind the middle lane row.
         {t: "column", fillw: 1, h: 180, aligny: 0.5, c: [
             {t: "column", fillw: 1, h: 34, radius: 8, bg: c_fill},
         ]},

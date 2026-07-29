@@ -297,39 +297,58 @@ fn screen_cg_search() {
 // picker_page.dart: CupertinoPicker, itemExtent 32, children One/Two/Three.
 fn screen_cg_picker() {
     return cg_detail("Picker", [
-        c_wheel([["One", "Two", "Three"]], 1),
-        cg_note("makepad has no picker widget, so this wheel is drawn from a "
-                + "column of labels with the selection band behind it. It does "
-                + "not spin."),
+        c_wheel([["One", "Two", "Three"]], "cg_pick", 1),
+        cg_note(pick_if(st.backend == "arkui",
+            "The system picker. It spins under a finger — ArkUI has a real one "
+            + "and this screen used to draw a fake wheel beside a note saying "
+            + "it did not.",
+            "makepad has no picker widget, so this wheel is a column of labels "
+            + "with the selection band behind it. It does not spin, but a tap "
+            + "picks a row.")),
     ])
 }
 
 // date_picker_page.dart: CupertinoDatePicker in its default dateAndTime mode.
 fn screen_cg_date_picker() {
     return cg_detail("Date Picker", [
-        c_wheel([["Mon Jul 27", "Tue Jul 28", "Wed Jul 29"],
-                 ["8", "9", "10"], ["25", "30", "35"], ["AM", "PM", ""]], 1),
-        cg_note("Drawn, not native — see the Picker page."),
+        pick_if(st.backend == "arkui",
+            {t: "datepicker", fillw: 1, h: 180},
+            c_wheel([["Mon Jul 27", "Tue Jul 28", "Wed Jul 29"],
+                     ["8", "9", "10"], ["25", "30", "35"], ["AM", "PM", ""]],
+                    "cg_date", 1)),
+        cg_note(pick_if(st.backend == "arkui",
+            "The system date wheel, not four columns of labels. The sample's "
+            + "mode is dateAndTime; this is the date half — ArkUI's datepicker "
+            + "and timepicker are separate nodes.",
+            "Drawn, not native — see the Picker page.")),
     ])
 }
 
 // time_picker_page.dart: CupertinoTimerPicker (hours and minutes).
 fn screen_cg_time_picker() {
     return cg_detail("Time Picker", [
-        c_wheel([["0", "1", "2"], ["hours", "hours", "hours"],
-                 ["14", "15", "16"], ["min", "min", "min"]], 1),
-        cg_note("Drawn, not native — see the Picker page."),
+        pick_if(st.backend == "arkui",
+            {t: "timepicker", fillw: 1, h: 180},
+            c_wheel([["0", "1", "2"], ["hours", "hours", "hours"],
+                     ["14", "15", "16"], ["min", "min", "min"]],
+                    "cg_time", 1)),
+        cg_note(pick_if(st.backend == "arkui",
+            "The system time wheel. CupertinoTimerPicker counts a duration "
+            + "rather than naming a time of day, which ArkUI's timepicker does "
+            + "not do — that part is still a difference, not a port.",
+            "Drawn, not native — see the Picker page.")),
     ])
 }
 
 // segmented_control_page.dart / sliding_segmented_control_page.dart:
 // One / Two / Three, first selected. Both are 28 tall.
-fn cg_segments(sliding) {
+fn cg_segments(sliding, key) {
     let segs = ["One", "Two", "Three"]
+    let cur = sget(key, 0)
     let cells = []
     let i = 0
     for s in segs {
-        let sel = i == 0
+        let sel = cur == i
         let bg = pick_if(sel, pick_if(sliding == 1, c_grouped, c_blue), clear)
         // `sel && sliding == 0` inline in the call never bound `ink` — the VM
         // reported "variable ink not found in scope" on the line below and the
@@ -339,7 +358,8 @@ fn cg_segments(sliding) {
         if sel { if sliding == 0 { light = 1 } }
         let ink = pick_if(light == 1, white, c_label)
         cells.push({t: "column", fillw: 1, h: 28, radius: 7, alignx: 0.5,
-                    aligny: 0.5, bg: bg, c: [ txt(s, 13, 500, ink) ]})
+                    aligny: 0.5, bg: bg, tapto: act_set(key, i),
+                    c: [ txt(s, 13, 500, ink) ]})
         i = i + 1
     }
     return cells
@@ -348,17 +368,19 @@ fn cg_segments(sliding) {
 fn screen_cg_segmented() {
     return cg_detail("Segmented Control", [
         {t: "row", fillw: 1, h: 32, radius: 7, border: 1, bordercolor: c_blue,
-         pad: 2, c: cg_segments(0)},
+         pad: 2, c: cg_segments(0, "cg_seg")},
     ])
 }
 
 fn screen_cg_sliding() {
     return cg_detail("Sliding Segmented Control", [
         {t: "row", fillw: 1, h: 32, radius: 8, bg: c_fill, pad: 2,
-         c: cg_segments(1)},
-        cg_note("The thumb slides between segments under the finger. The static "
-                + "control is what the DSL can express; the sliding needs an "
-                + "animation it has no vocabulary for."),
+         c: cg_segments(1, "cg_slide")},
+        cg_note("Tapping a segment moves the thumb. What it does not do is "
+                + "slide: the thumb jumps to the new segment because a tree is "
+                + "evaluated once per tap, and there is no tween between the "
+                + "two positions. Dragging the thumb is the other half, and a "
+                + "drag is not an event the walk wires on either backend."),
     ])
 }
 

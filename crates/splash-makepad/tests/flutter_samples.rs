@@ -497,6 +497,14 @@ fn a_control_changes_what_the_screen_renders() {
         ("asset_transformation", "set:at_one=!", "One request"),
         ("platform_view_swift", "set:pvs_count=+1", "count 1"),
         ("platform_view_swift", "set:pvs_native=1", ""),
+        // The three the user found static. The picker's tap targets only exist
+        // on this backend — ArkUI gets the system wheel, which spins on its own
+        // and needs no state.
+        ("cupertino_gallery/segmented", "set:cg_seg=1", ""),
+        ("cupertino_gallery/sliding", "set:cg_slide=2", ""),
+        ("cupertino_gallery/picker", "set:cg_pick_0=2", ""),
+        ("cupertino_gallery/date_picker", "set:cg_date_1=2", ""),
+        ("cupertino_gallery/time_picker", "set:cg_time_0=0", ""),
     ];
     let mut failures = Vec::new();
     for (route, action, marker) in cases {
