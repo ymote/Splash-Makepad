@@ -87,7 +87,7 @@ fn dps_variant(label, fluent) {
              alignx: 0.5, aligny: 0.5, tapto: act_cycle("dps_query", 4),
              c: [ txt("Search", 14, 500, white) ]},
         ]},
-        {t: "scroll", fillw: 1, padx: 16, spacing: 10, c: tiles},
+        {t: "scroll", fillw: 1, fillh: restfill(), padx: 16, spacing: 10, c: tiles},
         {t: "row", fillw: 1, padx: 16, pady: 12, c: [
             {t: "column", fillw: 1, tapto: other,
              c: [ m_btn_outlined(other_label) ]},

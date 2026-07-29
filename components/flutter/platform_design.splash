@@ -72,7 +72,7 @@ fn pd_mat_tabbar(active) {
 fn pd_mat_page(title, active, body_kids) {
     return page(m_surface, [
         m_appbar(title, "index"),
-        {t: "scroll", fillw: 1, pad: 12, spacing: 12, c: body_kids},
+        {t: "scroll", fillw: 1, fillh: restfill(), pad: 12, spacing: 12, c: body_kids},
         pd_mat_tabbar(active),
     ])
 }
@@ -190,7 +190,7 @@ fn screen_platform_design_ios() {
     }
     return page(c_bg, [
         c_navbar("Songs — iOS chrome", "platform_design"),
-        {t: "scroll", fillw: 1, bg: c_grouped, c: rows},
+        {t: "scroll", fillw: 1, fillh: restfill(), bg: c_grouped, c: rows},
         {t: "column", fillw: 1, bg: c_grouped, c: [
             rule(c_separator),
             {t: "row", fillw: 1, h: 50, c: [

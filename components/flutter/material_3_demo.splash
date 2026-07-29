@@ -35,7 +35,7 @@ fn m3_tabbar(active) {
 
 fn m3_page(active, body_kids) {
     let kids = [ m_appbar("Material 3", "index") ]
-    kids.push({t: "scroll", fillw: 1, pad: 16, spacing: 16, c: body_kids})
+    kids.push({t: "scroll", fillw: 1, fillh: restfill(), pad: 16, spacing: 16, c: body_kids})
     kids.push(m3_tabbar(active))
     return page(m_surface, kids)
 }

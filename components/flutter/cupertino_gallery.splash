@@ -71,7 +71,7 @@ fn screen_cupertino_gallery() {
             ]},
         ]},
         c_largetitle("Cupertino Gallery"),
-        {t: "scroll", fillw: 1, bg: c_grouped, c: rows},
+        {t: "scroll", fillw: 1, fillh: restfill(), bg: c_grouped, c: rows},
         cg_tabbar("Widgets"),
     ])
 }
@@ -79,7 +79,7 @@ fn screen_cupertino_gallery() {
 fn screen_cupertino_gallery_settings() {
     return page(c_bg, [
         c_largetitle("Settings"),
-        {t: "scroll", fillw: 1, padx: 16, c: [
+        {t: "scroll", fillw: 1, fillh: restfill(), padx: 16, c: [
             c_group("APPEARANCE", [
                 {t: "row", fillw: 1, h: 44, padx: 16, spacing: 8, aligny: 0.5,
                  tapto: act_toggle("cup_settings_dark"), c: [

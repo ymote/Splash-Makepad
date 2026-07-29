@@ -63,7 +63,7 @@ fn screen_testing_app() {
                 txt("Favorites " + n, 14, 500, m_on_pri_cont),
             ]},
         ]},
-        {t: "scroll", fillw: 1, c: rows},
+        {t: "scroll", fillw: 1, fillh: restfill(), c: rows},
         // The SnackBar the sample shows on each toggle. It says the count now,
         // because a message that never changes is not feedback.
         {t: "row", bg: m_inv_surf, radius: 4, fillw: 1, h: 48, padx: 16,

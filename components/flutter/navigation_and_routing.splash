@@ -73,7 +73,7 @@ fn nr_page(active, filter) {
     return page(m_surface, [
         m_appbar("Books", "index"),
         nr_tabbar(active),
-        {t: "scroll", fillw: 1, c: nr_booklist(filter) },
+        {t: "scroll", fillw: 1, fillh: restfill(), c: nr_booklist(filter) },
         nr_bottombar("Books"),
     ])
 }
@@ -116,7 +116,7 @@ fn screen_navigation_and_routing_authors() {
     }
     return page(m_surface, [
         m_appbar("Authors", "index"),
-        {t: "scroll", fillw: 1, c: rows},
+        {t: "scroll", fillw: 1, fillh: restfill(), c: rows},
         nr_bottombar("Authors"),
     ])
 }

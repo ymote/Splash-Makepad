@@ -67,7 +67,7 @@ fn screen_dynamic_theme() {
     }
     return page(m_surface, [
         m_appbar("Flutter + GenAI", "index"),
-        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+        {t: "scroll", fillw: 1, fillh: restfill(), pad: 16, spacing: 16, c: [
             m_section("API key", [
                 {t: "row", fillw: 1, h: 56, radius: 4, bg: m_surf_highest,
                  padx: 16, spacing: 8, aligny: 0.5, c: [

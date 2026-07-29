@@ -271,6 +271,23 @@ fn lerp_argb(c1, c2, t) {
 // correctly checked. Fixing it means reading NODE_SCROLL_OFFSET before the
 // rebuild and restoring it after, which needs a shim getter this build does not
 // have. Verified on the phone; not fixed.
+// 1 on ArkUI, 0 on makepad — for a scroll that has a bar under it.
+//
+// A scroll with a following sibling and no bounded height gets an ArkUI
+// viewport that runs past the bottom of the screen: it reaches its scroll end
+// with content still below the fold, and the bar after it is pushed off
+// entirely. The Cupertino Gallery lost its last two entries that way — Text
+// Theme and Time Picker could not be reached at all. `fillh` in a column maps to
+// LAYOUT_WEIGHT, so it claims exactly what the fixed-size siblings leave.
+//
+// Not on makepad. The host mounts Splash with `height: Fit`, and a Fill inside
+// a Fit is degenerate there — it collapsed every screen in this kit to nothing
+// once already. Both backends test `fillh` against 1, so 0 is a no-op on each.
+fn restfill() {
+    if st.backend == "arkui" { return 1 }
+    return 0
+}
+
 fn act_set(key, v)    { return "set:" + key + "=" + v }
 fn act_toggle(key)    { return "set:" + key + "=!" }
 fn act_up(key, n)     { return "set:" + key + "=+" + n }
