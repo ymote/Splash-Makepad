@@ -1,14 +1,68 @@
 // platform_channels — flutter/samples/platform_channels
-fn screen_platform_channels() {
-    return na_screen("platform_channels",
-        "MethodChannel, EventChannel, BasicMessageChannel and custom "
-        + "MessageCodecs — invoking platform methods, streaming values back, and "
-        + "passing typed messages both ways.",
-        [
-            "The Dart half is a thin UI over channel calls; the substance is the Kotlin and Swift on the other side.",
-            "There is no channel in the render pipeline. splash_render::build takes a `register` hook for injecting host functions, but nothing here installs one.",
-            "The nearest thing this project has is Splash-OH's splash.invoke(tool, args) bridge — the same idea, already built, in the sibling repo.",
-        ],
-        "Not portable as a screen. The mechanism exists in this project; it lives in Splash-OH, not in the renderer.")
+//
+// This used to be a "no Splash+makepad analogue" screen, and it was wrong in
+// the same way `google_maps` was: it judged the makepad DSL in isolation
+// instead of what this project actually has.
+//
+// The sample demonstrates a UI calling into the platform and getting a typed
+// answer back (MethodChannel), a stream of values (EventChannel), and typed
+// messages both ways (BasicMessageChannel/MessageCodec).
+//
+// The mechanism has been here all along. `splash_render::build` takes a
+// `register` hook for injecting host functions, and Splash-OH's own weather
+// card already uses it (`fetch_num`, `fetch_fmt`). The bridge carries ~45
+// capabilities for web pages via `splash.invoke(tool, args)`. The renderer now
+// reaches that same registry through `invoke(tool)`, installed by the bridge at
+// mount so the one-directional crate dependency still holds.
+//
+// The answers below are real, read from the device when this screen mounted.
+
+fn pc_row(tool, answer) {
+    return {t: "column", fillw: 1, fith: 1, bg: m_surf_lowest, radius: 8,
+            pad: 12, spacing: 4, c: [
+        txt(tool, 13, 500, m_primary),
+        para(answer, 12, 400, m_on_surf_var),
+    ]}
 }
 
+fn screen_platform_channels() {
+    // MethodChannel: ask the platform by name, get an answer.
+    let calls = [
+        ["device.info", invoke("device.info")],
+        ["device.display", invoke("device.display")],
+        ["device.battery", invoke("device.battery")],
+        ["device.time", invoke("device.time")],
+    ]
+    let rows = []
+    for c in calls { rows.push(pc_row(c[0], c[1])) }
+
+    return page(m_surface, [
+        m_appbar("Platform Channels", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("MethodChannel — invoke(tool) returns an answer", rows),
+            // EventChannel: a value that keeps changing. The host re-mounts
+            // against a clock, so re-reading the sensor is the same shape as
+            // subscribing to a stream.
+            m_section("EventChannel — a value that keeps arriving", [
+                pc_row("sensor.accelerometer", invoke("sensor.accelerometer")),
+            ]),
+            m_section("How this works here", [
+                para("`splash_render::build` takes a `register` hook for "
+                     + "injecting host functions. The bridge installs the "
+                     + "capability registry through it at mount, so the "
+                     + "renderer never depends on the bridge — the same "
+                     + "inversion `app::set_router` uses for navigation.",
+                     13, 400, m_on_surf_var),
+                para("The answers read \"unavailable\" on a backend with no "
+                     + "capabilities installed, which is what the makepad "
+                     + "build shows.", 13, 400, m_on_surf_var),
+            ]),
+            m_section("What is still missing", [
+                para("BasicMessageChannel's typed codecs. `invoke` takes a tool "
+                     + "name and returns a string; the bridge's own tools take "
+                     + "typed argument objects, but no DSL node carries one.",
+                     13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}

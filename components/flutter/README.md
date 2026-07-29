@@ -143,6 +143,32 @@ Both cost real debugging time and are easy to hit again:
    the same data the screen renders and comparing for equality — see the `for`
    loops at the bottom of `_index.splash`.
 
+## Three that were wrongly written off
+
+`google_maps`, `platform_channels` and `pedometer` each carried a "no analogue"
+screen. All three were wrong, and wrong the same way: they judged what the
+**makepad DSL** could express in isolation, rather than what this project has.
+
+- **google_maps** — makepad ships a ~12k-line OpenStreetMap vector-tile
+  renderer with rotation and tilt (`widgets/src/map`). A map is a widget here,
+  not a platform view. Now a real map at the sample's own camera, plus a 2.5D
+  view.
+- **platform_channels** — `splash_render::build` has always taken a `register`
+  hook for injecting host functions, and Splash-OH's weather card already used
+  it. The bridge carries ~45 capabilities. `invoke(tool)` now reaches that
+  registry, installed by the bridge at mount so the renderer still does not
+  depend on it. On device the screen shows the real answers.
+- **pedometer** — the FFIgen/JNIgen half has no counterpart, but the app is a
+  step counter over a platform sensor, and Splash-OH has `sensor::list` /
+  `sample` / `stream`.
+
+The remaining thirteen look genuinely inert to me — lint config, an Android
+launch screen, an Xcode target, a UIKit technique, repo docs, CI tooling, a
+sample deleted upstream. Two are near-misses I have not done: `simple_sdf` and
+`simple_shader` need a compiled MPSL variant in `splash-widgets` that a DSL node
+selects by name, and `web_embedding` could use Splash-OH's web slots
+(`webslot::declare`). Treat the count as "not yet", not "impossible".
+
 ## Visual QA
 
 Every screen was driven onto a real device (OnePlus 6T, Android) and looked at.
