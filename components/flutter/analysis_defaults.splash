@@ -1,13 +1,12 @@
 // analysis_defaults — flutter/samples/analysis_defaults
-// Not a sample: the shared analysis_options.yaml every other sample includes.
-fn screen_analysis_defaults() {
-    return na_screen("analysis_defaults",
-        "The shared analysis_options.yaml that every other sample in the repo "
-        + "includes, so lint rules are set once for the whole repository.",
-        [
-            "It is repository infrastructure, not an app — there is nothing to render.",
-            "The Rust equivalent already exists here and is not a screen: the workspace lints, rustfmt.toml and clippy in CI.",
-        ],
-        "Nothing to port. Listed so the directory mapping stays one-to-one.")
-}
+//
+// Not a UI port: this sample is configuration, tooling or prose. It states
+// what the counterpart on this stack is rather than dismissing it.
 
+fn screen_analysis_defaults() {
+    return counterpart_screen("Analysis Defaults",
+        "One shared analysis_options.yaml that every sample in the repo includes, so lint rules are set once for the whole repository.",
+        "The same idea, one layer down: a Cargo workspace with shared lints, rustfmt.toml, and clippy run over every crate at once. `cargo test --workspace` is the equivalent of including the shared config everywhere — the settings live in one place and no crate opts out.",
+        ["Dart's analyzer has no counterpart; rustc and clippy are the compiler, not a separate tool a project can swap.",
+         "There is nothing to draw either way. This directory is configuration in both repos."])
+}

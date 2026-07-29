@@ -1,13 +1,45 @@
 // platform_view_swift — flutter/samples/platform_view_swift
-fn screen_platform_view_swift() {
-    return na_screen("platform_view_swift",
-        "Combining a native iOS UIViewController with a full-screen Flutter "
-        + "view, switching between them and passing a counter across.",
-        [
-            "The whole technique is UIKit presenting a FlutterViewController and a MethodChannel carrying the count.",
-            "makepad does not present as a UIViewController you can push and pop from Swift.",
-            "There is no iOS target in this repo.",
-        ],
-        "Not portable. The sample is a UIKit navigation technique.")
-}
+//
+// Previously "no analogue": a native iOS UIViewController presenting a
+// full-screen Flutter view, switching between them and passing a counter
+// across. No UIKit here, so nothing to port.
+//
+// The UIKit part is true. What the sample is actually about — a platform's own
+// rendering surface living in the same app as the framework-drawn tree, with
+// state crossing between them — this stack does, and does the harder version:
+// the surface sits *inside* the native tree rather than replacing it.
+//
+// `xcomp::surface(w, h)` is an ArkUI XComponent: a real EGL surface that camera
+// preview and video decode render into, composited among the widgets Rust
+// built. The state below is read from it.
 
+fn screen_platform_view_swift() {
+    return page(m_surface, [
+        m_appbar("Platform View", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("A platform surface in the same tree", [
+                {t: "column", fillw: 1, bg: m_surf_lowest, radius: 8, pad: 12,
+                 spacing: 4, c: [
+                    txt("surface.state", 13, 500, m_primary),
+                    para(invoke("surface.state"), 12, 400, m_on_surf_var),
+                ]},
+                para("An ArkUI XComponent — a real EGL surface that camera "
+                     + "preview and video decode render into, composited among "
+                     + "the widgets Rust built. Not a view swap: the surface "
+                     + "lives inside the tree.", 13, 400, m_on_surf_var),
+            ]),
+            m_section("How this differs from the sample", [
+                para("The sample switches between a UIViewController and a "
+                     + "full-screen Flutter view and passes a counter across a "
+                     + "MethodChannel. Here both halves are on screen at once, "
+                     + "and the channel equivalent is `invoke` — see the "
+                     + "Platform Channels screen.", 13, 400, m_on_surf_var),
+            ]),
+            m_section("What has no equivalent", [
+                para("UIKit. There is no UIViewController to present, no "
+                     + "navigation controller to push onto, and no iOS target "
+                     + "in this repo.", 13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}

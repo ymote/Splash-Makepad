@@ -1,13 +1,12 @@
 // android_splash_screen — flutter/samples/android_splash_screen
-fn screen_android_splash_screen() {
-    return na_screen("android_splash_screen",
-        "How to use Android 12's SplashScreen API with Flutter: an animated "
-        + "launch icon that hands off smoothly to the first Flutter frame.",
-        [
-            "The splash is drawn by the Android system before any Flutter frame exists — it is themes.xml and a windowSplashScreenAnimatedIcon, not widget code.",
-            "The equivalent for a makepad app is whatever the target platform's launch screen is; nothing about it is expressible in the DSL.",
-            "There is no Android target in this repo to attach one to.",
-        ],
-        "Not portable. This is a platform launch-screen contract, not UI.")
-}
+//
+// Not a UI port: this sample is configuration, tooling or prose. It states
+// what the counterpart on this stack is rather than dismissing it.
 
+fn screen_android_splash_screen() {
+    return counterpart_screen("Android Splash Screen",
+        "Android 12's SplashScreen API with Flutter: an animated launch icon that hands off smoothly to the first Flutter frame.",
+        "OpenHarmony has the same seam. The system draws the app's launch window from the ability's configuration before any Rust runs, and the first native tree is mounted after `onCreate` hands over a NodeContent. The handoff this sample is careful about — system art, then the app's first frame — happens here too; it is configured in module.json5 rather than drawn.",
+        ["No animated launch icon is configured in this app, so there is nothing to show beyond the default.",
+         "Android's `windowSplashScreenAnimatedIcon` and the exit-animation callback have no OpenHarmony equivalent this project uses."])
+}

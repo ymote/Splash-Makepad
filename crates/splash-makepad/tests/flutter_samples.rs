@@ -143,21 +143,21 @@ fn cases() -> Vec<(String, &'static str)> {
     // not the index — so assert on its verdict, not the shared banner.
     for (route, marker) in [
         ("add_to_app", "This screen is the embed"),
-        ("analysis_defaults", "analysis_options.yaml"),
-        ("android_splash_screen", "windowSplashScreenAnimatedIcon"),
+        ("analysis_defaults", "shared lints"),
+        ("android_splash_screen", "launch window"),
         ("asset_transformation", "splash:// resolves a request to bytes"),
         ("background_isolate_channels", "without blocking"),
-        ("docs", "compass_app"),
+        ("docs", "documents itself"),
         ("google_maps", "OpenStreetMap vector tiles"),
-        ("ios_app_clip", "entitlements"),
+        ("ios_app_clip", "atomic service"),
         ("pedometer", "Health Connect"),
         ("platform_channels", "MethodChannel"),
-        ("platform_view_swift", "UIViewController"),
-        ("simple_sdf", "does not render"),
-        ("simple_shader", "does not render"),
-        ("tool", "flutter analyze"),
+        ("platform_view_swift", "surface.state"),
+        ("simple_sdf", "Sdf2d"),
+        ("simple_shader", "Sdf2d"),
+        ("tool", "flutter_samples.rs"),
         ("veggieseasons", "flutter/demos"),
-        ("web_embedding", "hostElement"),
+        ("web_embedding", "one tree"),
     ] {
         v.push((route.to_string(), marker));
     }

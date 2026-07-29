@@ -447,40 +447,35 @@ fn c_wheel(cols, sel_index) {
     ]}
 }
 
-// ---- the "no analogue" screen ----------------------------------------------
+// ---- the platform-counterpart screen ---------------------------------------
 //
-// Roughly half of flutter/samples exists to demonstrate Flutter's *platform
-// integration* — embedding into a host app, plugins, FFI, GLSL shaders, build
-// tooling. Those have no Splash+makepad counterpart to draw, so rather than
-// invent a fake UI for them, each gets this screen: what the sample teaches,
-// and precisely why it does not port.
+// Replaces the old "No Splash+makepad analogue" banner. That framing was wrong
+// more often than it was right — six samples carrying it turned out to have
+// real counterparts here, each time because the note judged what the makepad
+// DSL could express rather than what this stack has.
+//
+// So a sample that is not a UI port now says three things instead of one: what
+// it teaches, what this stack's counterpart is, and what genuinely has no
+// equivalent. The third list is usually short and specific.
 
-fn na_screen(title, what, why, verdict) {
-    let bullets = []
-    for w in why {
-        // The bullet text column must FILL the remaining width, not FIT it —
-        // a Fit column hugs the unwrapped line and the sentence runs off screen.
-        // aligny 0 keeps the dash on the first line; a row centres by default,
-        // which floated it to the middle of a three-line sentence.
-        bullets.push({t: "row", fillw: 1, fith: 1, spacing: 8, aligny: 0.0, c: [
-            txt("—", 14, 400, m_on_surf_var),
-            {t: "column", fillw: 1, fith: 1, c: [ para(w, 14, 400, m_on_surf_var) ]},
+fn counterpart_screen(title, teaches, counterpart, missing) {
+    let gaps = []
+    for m in missing {
+        gaps.push({t: "row", fillw: 1, fith: 1, spacing: 8, aligny: 0.0, c: [
+            txt("\u{2014}", 14, 400, m_on_surf_var),
+            {t: "column", fillw: 1, fith: 1, c: [ para(m, 14, 400, m_on_surf_var) ]},
         ]})
     }
     return page(m_surface, [
         m_appbar(title, "index"),
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
-            {t: "row", bg: m_err_cont, radius: 8, fillw: 1, padx: 12, pady: 8,
-             spacing: 8, c: [
-                icon(ic_ban, 14, m_error),
-                txt("No Splash+makepad analogue", 14, 500, m_error),
-            ]},
-            m_section("What the Flutter sample demonstrates", [
-                para(what, 14, 400, m_on_surf_var),
+            m_section("What the Flutter sample teaches", [
+                para(teaches, 14, 400, m_on_surf_var),
             ]),
-            m_section("Why it does not port", bullets),
-            m_section("Verdict", [ para(verdict, 14, 400, m_on_surf_var) ]),
+            m_section("The counterpart here", [
+                para(counterpart, 14, 400, m_on_surface),
+            ]),
+            m_section("What has no equivalent", gaps),
         ]},
     ])
 }
-

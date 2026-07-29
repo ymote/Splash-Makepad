@@ -58,6 +58,8 @@ fn widget_name(kind: NodeKind) -> &'static str {
         NodeKind::Map => "MapView",
         NodeKind::Shader => "FlutterShader",
         NodeKind::Sdf => "FlutterSdf",
+        // No web surface on this backend; the screen branches on st.backend.
+        NodeKind::Web => "View",
         // every container-ish kind is a View with the right flow.
         _ => "View",
     }

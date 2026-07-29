@@ -2,146 +2,49 @@
 
 > ## These are illustrations, not ports. Read this first.
 >
-> An independent review (OpenAI Codex, `gpt-5.6-terra`, read-only) was asked
-> whether this is a port of Flutter's widgets or a set of static pictures that
-> resemble them. Its verdict, which is correct:
+> An independent review (OpenAI Codex, read-only) was asked whether this is a
+> port of Flutter's widgets or static pictures that resemble them. Its verdict,
+> which is correct:
 >
 > > *"mostly static pictures resembling Flutter widgets, plus limited route
 > > navigation — not faithful Flutter ports."*
 >
-> The numbers back it up. Of 285 explicit nodes here, **244 (86%) are
-> `column`/`row`/`scroll`**, and there is **not one `{t:"button"}` node**. Every
-> button, FAB, chip, tab, list row and app-bar action is a styled container.
+> Most of the kit's nodes are layout containers, and the DSL has no `onPressed`,
+> no state model and no animator. The screens are faithful in content and
+> geometry; they are not working widgets. Read every "ported" below as "drawn".
 >
-> That is a property of the stack, not of effort. `NodeKind` has 23 tags and
-> `Attrs` has 34 scalar fields, and between them **zero** concepts for
-> `onPressed`, state (`pressed`/`hovered`/`focused`/`disabled`/`selected`),
-> animation, or semantics. A Flutter widget essentially *is* that state machine
-> — `WidgetStateProperty` resolved against a state set and driven by an
-> `AnimationController`. Matching `Size(64,40)` and `StadiumBorder` reproduces
-> one row of a table whose other dimension this DSL cannot express.
->
-> Two concrete defects the review surfaced, both verified:
->
-> - **The makepad emitter never forwards `on`, `value` or `total`.** So
->   `{t:"checkbox", on: 1}` renders an *unchecked* box and `{t:"slider",
->   value: 0.35}` sits at its default — while the caption beside it says 0.35.
->   The controls are real native widgets; their declared state never reaches
->   them. Not yet fixed.
-> - **One "exact" metric was wrong.** The notched CupertinoListTile subtitle is
->   `_kNotchedSubtitleFontSize` = **14**, not the base tile's `_kSubtitleFontSize`
->   = 12 (`cupertino/list_tile.dart:44-46,349`). Fixed.
->
-> What this directory honestly is: **a static frame of each screen**, with real
-> layout, real colour tokens, real content from the samples, and route
-> navigation between screens. What it is not: working widgets. Read every
-> "ported" below as "drawn".
+> The exceptions are worth naming, because they are real: the animation demos
+> animate, the map is a real OpenStreetMap renderer, and the capability screens
+> read live values off the device.
 
+## The "no analogue" screens are gone
 
-Every directory of [flutter/samples](https://github.com/flutter/samples) has a
-`.splash` file here — 27 of them, authored in the Splash DSL and rendered as
-**native makepad widgets**. 108 routes, each verified by
-`crates/splash-makepad/tests/flutter_samples.rs`.
+Every one of the 27 directories now has a screen that says something true about
+this stack. The old banner — *"No Splash+makepad analogue"* — was wrong six
+times, and always for the same reason: it judged what the **makepad DSL** could
+express rather than what the project has.
 
-```sh
-cargo test -p splash-makepad          # sweep all 108 routes, no device needed
-cargo run  -p flutter-samples         # run the catalog
-```
+What it got wrong, and what was actually there:
 
-## What ported, and what did not
-
-Eleven of the 27 directories are apps with a UI to draw. They are ported: 92
-screens, with the samples' real content — the M3 type scale at its actual sp
-values, the six elevation levels with their dp and surface-tint percentages, all
-nine `date_planner` events with their task lists, the four `libraryInstance`
-books, the real `destinations.json` entries, the seven `platform_design`
-settings rows.
-
-The other sixteen exist to demonstrate Flutter's **platform integration** —
-embedding into a host app, plugins, FFI, GLSL shaders, build tooling. There is
-nothing to draw, so each gets a screen stating what the sample teaches and
-exactly why it does not port, rather than an invented UI.
-
-| directory | screens | notes |
+| sample | the claim | what was true |
 |---|---|---|
-| `material_3_demo` | 4 | Components, Color, Typography, Elevation |
-| `cupertino_gallery` | 23 | all 21 widget pages, plus Widgets/Settings tabs |
-| `animations` | 21 | index plus all 20 demos, as still frames — see below |
-| `navigation_and_routing` | 13 | Popular/New/All, authors, details, settings, sign-in |
-| `date_planner` | 10 | the four Period buckets, all nine events |
-| `platform_design` | 5 | four Material tabs plus the iOS chrome |
-| `compass_app` | 5 | Home, Search, Results, Activities, Booking |
-| `form_app` | 5 | index plus the four form demos |
-| `desktop_photo_search` | 2 | both the Material and fluent_ui variants |
-| `testing_app` | 2 | home and favourites |
-| `dynamic_theme` | 1 | chat surface; the theme toggle is real |
-| 16 others | 16 | `add_to_app`, `platform_channels`, `simple_sdf`, … |
+| `google_maps` | "a platform view; no widget tree describes a map" | makepad ships a 12k-line OpenStreetMap renderer with tilt |
+| `platform_channels` | "there is no channel in the render pipeline" | `build` always took a `register` hook; the bridge has ~45 capabilities |
+| `pedometer` | "needs a platform sensor API" | Splash-OH has `sensor::list`/`sample`/`stream` |
+| `asset_transformation` | "Cargo has no asset pipeline" | `splash://` resolves a request to bytes, one generated |
+| `add_to_app` | "no FlutterEngine equivalent" | this app *is* add-to-app, inverted |
+| `web_embedding` | "no hostElement to embed into" | `webslot::declare` composites a WebView into the native tree |
 
-## The honest limits
+The rest are configuration, tooling or prose in **both** repos — shared lints,
+a launch window, an Xcode target, repo docs, CI tooling, a sample deleted
+upstream. Those now name their counterpart (HarmonyOS atomic services are the
+App Clip concept; `tests/flutter_samples.rs` is the CI walker) instead of being
+dismissed.
 
-These are **visual ports**. The pipeline evaluates the DSL to a tree once per
-mount; there is no per-component state, no async, no HTTP, no navigation stack
-and no animation. So:
-
-- **`animations`** ports its index and all 20 titles, but not the animations.
-  The DSL has no tween, curve or controller. Two demos *are* live, because
-  makepad's own shaders drive them off draw time: the circular spinner and the
-  M3 shape-morph indicator.
-- **`compass_app`** ports its five screens but not its architecture, which is
-  most of the sample — MVVM, repositories, use-cases, DI, offline-first store.
-- **`desktop_photo_search`** ports the split-pane shape; the Unsplash search
-  needs an HTTP client the pipeline does not have. The tiles are placeholders.
-- **`form_app`** shows the real validation messages in place rather than
-  triggering them — there is no `FormState` to validate.
-- **`navigation_and_routing`** makes every screen reachable, but by re-mount,
-  not by routing. `tapto` is a one-string signal, not a route table.
-- **`simple_sdf` / `simple_shader`** are the interesting near-misses: makepad
-  draws every widget with MPSL and has a first-class `Sdf2d` API, but no DSL
-  node carries shader source, and MPSL compiles at build time — a runtime string
-  is never compiled. Reaching them means a compiled variant in `splash-widgets`
-  that a DSL node selects by name.
-
-Anything a screen cannot honestly render says so on the screen.
-
-## How the kit is assembled
-
-The DSL has no `import`, so the kit is **concatenated**, in an order
-`splash_makepad::kit` fixes:
-
-| file | position | holds |
-|---|---|---|
-| `_kit.splash` | first | M3 and iOS tokens, chrome helpers, the "no analogue" screen |
-| one per sample | sorted, between | `fn screen_*` for that sample |
-| `_index.splash` | last | the index and the route dispatch |
-
-`splash_makepad::kit::concat_kit` is what the route-sweep test and the
-`assemble` example both call. The **app** bakes the same files with
-`include_str!` instead, because `cargo-makepad` compiles the Android build
-inside a generated wrapper crate that never runs the app's build script —
-`OUT_DIR` is undefined there and the build fails to compile. A relative
-`include_str!` resolves against the source file and works on both targets. The
-cost is a file list spelled out in `main.rs`, which
-`baked_kit_matches_the_directory` pins to the directory so it cannot drift.
-
-Assemble a kit by hand with:
-
-```sh
-cargo run -p splash-makepad --example assemble -- components/flutter \
-    --route date_planner/maya | cargo run -p splash-makepad --example translate -- /dev/stdin
-```
-
-## Two things the makepad-script VM does that shape these files
-
-Both cost real debugging time and are easy to hit again:
-
-1. **A bare function call as the final top-level expression evaluates to nil.**
-   `screen_index()` on the last line yields nothing and `build` returns `None`.
-   It must be bound first — `let node = screen_index()`, then `node`. Wrapping
-   in `if` or an object literal also works.
-2. **There is no substring or `startsWith`.** Parameterised routes
-   (`date_planner/maya`) are matched by rebuilding the full route string from
-   the same data the screen renders and comparing for equality — see the `for`
-   loops at the bottom of `_index.splash`.
+Two remain unfinished rather than impossible: `simple_shader` and `simple_sdf`
+are built as compiled MPSL variants, they compile, the node is emitted, and
+nothing draws. The suspect is the Splash isolate not resolving a widget this
+crate adds to the prelude — the same seam as the one upstream PR. Unconfirmed.
 
 ## Three that were wrongly written off
 

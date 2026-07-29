@@ -41,6 +41,10 @@ pub enum NodeKind {
     /// at build time — but it can select a shader that was compiled.
     Shader,
     Sdf,
+    /// A web surface positioned into the native tree. The host reserves the
+    /// space and puts a real WebView there — the hybrid Splash-OH's own cards
+    /// use, reached from the DSL.
+    Web,
 }
 
 impl NodeKind {
@@ -73,6 +77,7 @@ impl NodeKind {
             "map" => Self::Map,
             "shader" => Self::Shader,
             "sdf" => Self::Sdf,
+            "web" => Self::Web,
             _ => return None,
         })
     }
@@ -150,6 +155,10 @@ pub struct Attrs {
     pub zoom: Option<f64>,
     pub tilt: Option<f64>,
     pub rotation: Option<f64>,
+    /// Absolute position for a surface the host composites (a web slot). The
+    /// tree does not know where a node lands, so a screen that wants one says.
+    pub x: Option<f64>,
+    pub y: Option<f64>,
 }
 
 /// One node in the backend-agnostic tree.

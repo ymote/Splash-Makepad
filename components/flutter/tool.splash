@@ -1,13 +1,12 @@
 // tool — flutter/samples/tool
-// Not a sample: the repo's own CI tooling.
-fn screen_tool() {
-    return na_screen("tool",
-        "The repository's CI helper — it walks every sample, runs flutter "
-        + "analyze and the tests, and reports which ones fail.",
-        [
-            "It is build tooling, not an app.",
-            "Its analogue here is cargo test plus tests/flutter_samples.rs, which sweeps every route in this kit and asserts each one translates.",
-        ],
-        "Nothing to render, but the idea did port — the route sweep is this repo's version of it.")
-}
+//
+// Not a UI port: this sample is configuration, tooling or prose. It states
+// what the counterpart on this stack is rather than dismissing it.
 
+fn screen_tool() {
+    return counterpart_screen("tool",
+        "The repository's CI helper: it walks every sample, runs flutter analyze and the tests over each, and reports which ones fail.",
+        "The same job, done by `crates/splash-makepad/tests/flutter_samples.rs`. It sweeps every route in this kit, asserts each renders a string only that screen emits — because an unrecognised route silently falls through to the index and looks healthy — and pins the helper arities, the assembly order, and that every animation demo moves and is its own. `tools/visual-qa.sh` is the other half: it drives every route onto a real device and photographs it.",
+        ["Nothing renders; this is the harness, not a screen.",
+         "flutter analyze has no direct equivalent — clippy and rustc do that work at build time rather than as a separate sweep."])
+}

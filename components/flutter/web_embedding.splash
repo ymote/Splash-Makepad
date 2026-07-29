@@ -1,14 +1,65 @@
 // web_embedding — flutter/samples/web_embedding
-fn screen_web_embedding() {
-    return na_screen("web_embedding",
-        "Embedding Flutter web into an existing page without an iframe: "
-        + "launching into a custom hostElement, and the same thing again as an "
-        + "Angular component.",
-        [
-            "The sample is HTML, JavaScript and TypeScript around a Flutter web build — the Dart is a placeholder.",
-            "makepad targets the web through Wasm and owns a canvas; there is no hostElement contract to embed into.",
-            "The interop the sample shows off is JS calling into Dart, which has no counterpart in the render pipeline.",
-        ],
-        "Not portable. This is a JavaScript embedding contract.")
-}
+//
+// Previously "no analogue": the sample is HTML, JavaScript and TypeScript
+// around a Flutter web build, and makepad owns a canvas with no hostElement
+// contract to embed into.
+//
+// True of makepad, and it was the wrong thing to check. Splash-OH's whole
+// hybrid is this: a web surface composited into a tree of native widgets, with
+// the native side reserving the space and ArkTS putting a real Web component
+// there. The bridge's own browser and frontend cards do it; the DSL can now
+// reach it through a `web` node.
+//
+// The sample embeds Flutter *into* a page. This embeds a page into native
+// widgets. Same seam, opposite direction — which is the honest comparison,
+// because a Flutter build is not the thing being hosted here.
+//
+// Geometry is explicit on purpose. A web slot needs absolute coordinates and
+// the DSL tree does not know where a node lands, so the screen says. That is
+// the same thing frontend.rs does in Rust.
 
+let we_top = 300.0
+let we_h = 460.0
+
+fn screen_web_embedding() {
+    let native_or_note = pick_if(st.backend == "arkui",
+        // The hole: this reserves the space, and the host puts a real WebView
+        // at exactly these coordinates.
+        {t: "web", src: "https://flutter.dev", fillw: 1, h: we_h,
+         x: 0.0, y: we_top, w: 1320.0},
+        {t: "column", fillw: 1, h: 240, radius: 12, bg: m_surf_highest,
+         alignx: 0.5, aligny: 0.5, pad: 24, c: [
+            para("A web surface needs a WebView the host composites. The "
+                 + "makepad backend owns its own canvas and has none, so there "
+                 + "is nothing to embed here — this screen is the ArkUI half.",
+                 13, 400, m_on_surf_var),
+         ]})
+
+    return page(m_surface, [
+        m_appbar("Web Embedding", "index"),
+        {t: "column", fillw: 1, padx: 16, pady: 8, c: [
+            para("Native widgets above, a real web surface below — one tree.",
+                 13, 400, m_on_surf_var),
+        ]},
+        native_or_note,
+        {t: "column", fillw: 1, pad: 16, spacing: 12, c: [
+            m_section("Which direction this goes", [
+                para("The sample embeds a Flutter build into an existing page, "
+                     + "with and without Angular. This embeds a page into "
+                     + "native widgets: the native side reserves a hole and "
+                     + "ArkTS positions a Web component into it.",
+                     13, 400, m_on_surf_var),
+            ]),
+            m_section("What is still missing", [
+                para("The slot's coordinates are written by hand. A web surface "
+                     + "needs absolute geometry and the DSL tree does not know "
+                     + "where a node lands, so a screen that wants one has to "
+                     + "say — the same thing the bridge's own cards do in Rust.",
+                     13, 400, m_on_surf_var),
+                para("The sample's interop — JavaScript calling into Dart — has "
+                     + "its counterpart in `splash.invoke`, which the "
+                     + "platform_channels screen shows.", 13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}
