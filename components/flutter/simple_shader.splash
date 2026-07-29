@@ -16,7 +16,10 @@
 // simple.frag: color = mix(mix(sky, blue, p*2), mix(blue, navy, p*2-1),
 // step(0.5, p)) where p = (st.x + st.y) / 2.
 
-let sh_n = 18
+// Resolution, stepped — same reason as simple_sdf: a shader evaluated per cell
+// is a function, and a function can be sampled at any rate.
+let sh_res = [9, 18, 36, 72]
+let sh_n = sh_res[sget("sh_res", 1)]
 
 fn sh_cell(ix, iy) {
     let sky  = argb(255, 2, 125, 253)
@@ -50,6 +53,12 @@ fn screen_simple_shader() {
         m_appbar("Simple Shader", "index"),
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
             sh_grid(),
+            {t: "row", fillw: 1, radius: 8, bg: m_pri_cont, padx: 12, pady: 10,
+             spacing: 8, aligny: 0.5, tapto: act_cycle("sh_res", 4), c: [
+                icon(ic_bolt, 13, m_on_pri_cont),
+                txt(sh_n + "x" + sh_n + " cells — tap to resample",
+                    13, 500, m_on_pri_cont),
+            ]},
             m_section("What this is", [
                 para("simple.frag, evaluated in the DSL: sky to blue to navy "
                      + "across (st.x + st.y) / 2, with the step at 0.5. A "
@@ -60,7 +69,8 @@ fn screen_simple_shader() {
             ]),
             m_section("What the GPU would still do better", [
                 para("Per-pixel instead of per-cell, and for free. This grid is "
-                     + "18x18 native nodes; the shader is one draw call.",
+                     + sh_n + "x" + sh_n + " native nodes; the shader is one "
+                     + "draw call at any resolution.",
                      13, 400, m_on_surf_var),
                 para("The compiled-MPSL route is built (FlutterShader in "
                      + "splash-widgets) and is the right answer on makepad, but "

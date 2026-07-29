@@ -13,6 +13,12 @@ fn screen_background_isolate_channels() {
     return page(m_surface, [
         m_appbar("Background Work", "index"),
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            {t: "row", fillw: 1, radius: 8, bg: m_pri_cont, padx: 12, pady: 10,
+             spacing: 8, aligny: 0.5, tapto: act_up("bg_runs", 1), c: [
+                icon(ic_bolt, 13, m_on_pri_cont),
+                txt("Run it again — " + sget("bg_runs", 1) + " runs",
+                    13, 500, m_on_pri_cont),
+            ]},
             m_section("A platform call that waits, without blocking", [
                 {t: "column", fillw: 1, bg: m_surf_lowest, radius: 8, pad: 12,
                  spacing: 4, c: [

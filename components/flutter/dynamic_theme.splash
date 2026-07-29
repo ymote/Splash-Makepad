@@ -11,7 +11,14 @@
 // What does not port is the model call. google_generative_ai needs an HTTPS
 // client and a streaming response; the render pipeline has neither, so the
 // transcript is a fixed exchange showing the three tool calls the sample
-// declares.
+// declares — but it now arrives a turn at a time when you send, rather than
+// being there before you ask.
+//
+// Two of the three declared functions are real. change_theme_mode flips the
+// host's dark flag, and change_text_scale_factor scales this screen's own type
+// — the sample's own 1.0-is-14px, 2.0-is-48px range, applied where a reader can
+// see it. change_theme_color is the one that stays a note: the palette is built
+// from M3 baseline tokens at kit level, not seeded per screen.
 
 let dt_messages = [
     [1, "Make the theme purple"],
@@ -22,9 +29,27 @@ let dt_messages = [
     [0, "change_text_scale_factor({ scale: 1.3 }) → text scale updated"],
 ]
 
+// The sample's scale argument, as the three steps its own prompt asks for.
+fn dt_scale() {
+    let i = sget("dt_scale", 0)
+    if i == 1 { return 1.15 }
+    if i == 2 { return 1.3 }
+    return 1.0
+}
+
+// Type on this screen answers change_text_scale_factor.
+fn dt_sz(n) { return n * dt_scale() }
+
 fn screen_dynamic_theme() {
+    // The transcript arrives a turn at a time. Two entries per turn, so the
+    // model's answer lands with the question that asked for it.
+    let turns = sget("dt_turn", 1)
+    let shown = turns * 2
     let bubbles = []
+    let mi = 0
     for m in dt_messages {
+        if mi >= shown { break }
+        mi = mi + 1
         let mine = m[0] == 1
         // The bubble must FILL its share of the row: a `fillw` paragraph inside
         // a `fitw` column is degenerate — Fill resolving against Fit collapsed
@@ -32,7 +57,7 @@ fn screen_dynamic_theme() {
         // opposite side gives the incoming/outgoing offset instead.
         let bubble = {t: "column", fillw: 1, fith: 1, radius: 16, pad: 12,
                       bg: pick_if(mine, m_pri_cont, m_surf_highest), c: [
-            para(m[1], 14, 400, pick_if(mine, m_on_pri_cont, m_on_surface)),
+            para(m[1], dt_sz(14), 400, pick_if(mine, m_on_pri_cont, m_on_surface)),
         ]}
         let gutter = {t: "column", w: 56, h: 1}
         let cells = []
@@ -50,18 +75,26 @@ fn screen_dynamic_theme() {
                 ]},
                 m_btn("Submit", m_primary, m_on_primary),
             ]),
-            m_section("Transcript", bubbles),
+            m_section("Transcript — " + turns + " of 3 turns", bubbles),
             m_section("Declared functions", [
                 dt_fn("change_theme_color", "hex — 6 characters, e.g. FF00EE"),
                 dt_fn("change_theme_mode", "mode — light | dark | system"),
                 dt_fn("change_text_scale_factor", "scale — 1.0 is 14px, 2.0 is 48px"),
             ]),
-            m_section("This one is real", [
-                para("change_theme_mode is the one tool call that works here: the "
-                    + "host carries the dark flag and every screen re-reads it on "
-                    + "mount.", 13, 400, m_on_surf_var),
+            m_section("Two of these are real", [
+                para("change_theme_mode flips the host's dark flag and every "
+                    + "screen re-reads it on mount.",
+                    dt_sz(13), 400, m_on_surf_var),
                 {t: "column", fillw: 1, tapto: "theme:toggle",
                  c: [ m_btn("Toggle theme mode", m_sec_cont, m_on_sec_cont) ]},
+                para("change_text_scale_factor is applied to this screen's own "
+                    + "type. Currently " + dt_scale() + "x.",
+                    dt_sz(13), 400, m_on_surf_var),
+                {t: "column", fillw: 1, tapto: act_cycle("dt_scale", 3),
+                 c: [ m_btn_outlined("Scale text — 1.0, 1.15, 1.3") ]},
+                para("change_theme_color is the one that stays a note: the "
+                    + "palette is built from M3 baseline tokens at kit level, "
+                    + "not seeded per screen.", dt_sz(13), 400, m_on_surf_var),
             ]),
         ]},
         // The prompt bar.
@@ -71,7 +104,8 @@ fn screen_dynamic_theme() {
              padx: 16, aligny: 0.5,
              c: [ {t: "input", placeholder: "Ask Gemini…", fillw: 1, fith: 1} ]},
             {t: "column", w: 48, h: 48, radius: 24, bg: m_primary,
-             alignx: 0.5, aligny: 0.5, c: [ icon(ic_bolt, 16, m_on_primary) ]},
+             alignx: 0.5, aligny: 0.5, tapto: act_climb("dt_turn", 3),
+             c: [ icon(ic_bolt, 16, m_on_primary) ]},
         ]},
     ])
 }

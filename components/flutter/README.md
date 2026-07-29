@@ -37,12 +37,27 @@ it with `sget(key, default)`, and a tap names an action instead of a route:
 Actions ride the same interning as routes, so a control needs no new node
 attribute and both backends get it from the one place a tap already lands.
 
-Eight screens are wired against it — Material 3, Cupertino Gallery, Form App,
-Date Planner, Compass, Platform Design, Photo Search and Testing — and
-`a_control_changes_what_the_screen_renders` holds them to it: render, apply the
-action the control names, render again, and the two must differ. That is the
-test the catalog never had, and it is why eighteen screens could sit in the
-index marked as ports while none of their controls worked.
+All eighteen are wired against it, and
+`a_control_changes_what_the_screen_renders` holds twenty-eight cases to it:
+render, apply the action the control names, render again, and the two must
+differ. That is the test the catalog never had, and it is why eighteen screens
+could sit in the index marked as ports while none of their controls worked.
+
+Eight had controls already drawn and inert — Material 3, Cupertino Gallery, Form
+App, Date Planner, Compass, Platform Design, Photo Search, Testing. The other
+ten had none at all, so each got the interaction its sample actually has:
+
+| screen | what it does now |
+|---|---|
+| `dynamic_theme` | the transcript arrives a turn at a time, and `change_text_scale_factor` scales this screen's own type — two of the sample's three declared functions are real |
+| `google_maps` | the camera steps through four zooms, each a different request to OSM |
+| `simple_sdf` / `simple_shader` | resample the field at 4 resolutions — the point of both screens is that it is arithmetic, not a picture |
+| `web_embedding` | the slot navigates between three pages (ArkUI only; there is no slot on makepad) |
+| `platform_channels` | call again, and narrow to one channel. `device.notifications` was registered and reached by nothing — it is on the list now |
+| `pedometer` | re-read the sensor, with the read count so a fresh answer is distinguishable |
+| `background_isolate_channels` | re-run the off-main call |
+| `asset_transformation` | step through the three requests one at a time |
+| `platform_view_swift` | the sample's own interaction: switch halves and pass a counter across |
 
 Three defects fell out of writing it, each invisible before:
 
@@ -56,9 +71,13 @@ Three defects fell out of writing it, each invisible before:
   vanished entirely — the Compass stepper drew its two buttons with nothing
   between them.
 
-**Known limitation, verified on the phone:** a tap rebuilds the whole tree and
-ArkUI's Scroll is a new node each time, so the view jumps to the top. The
-control is correctly changed; you are just no longer looking at it.
+Scroll position survives a tap. A rebuild replaces the Scroll node, so the view
+used to snap to the top — checking a checkbox halfway down a screen left you at
+the top of it. The offset is read off the old node before it is dropped and
+written back onto the new one, but only when the route is unchanged: a tap that
+ticks a checkbox should leave you looking at the checkbox, and a tap that
+navigates should start the new screen at the top. That needed the shim's only
+getter, `splash_get_f32`.
 
 ## What an outside review found
 

@@ -21,15 +21,45 @@ fn at_row(label, answer) {
     ]}
 }
 
+let at_reqs = [["a generated asset", "assets.shim"],
+               ["a shipped asset", "assets.index"],
+               ["a miss", "assets.missing"]]
+
+fn at_label() { return at_reqs[sget("at_pick", 0)][0] }
+
+fn at_rows() {
+    let out = []
+    let i = 0
+    for r in at_reqs {
+        if son("at_one") == 0 { out.push(at_row(r[0], invoke(r[1]))) }
+        if son("at_one") { if i == sget("at_pick", 0) { out.push(at_row(r[0], invoke(r[1]))) } }
+        i = i + 1
+    }
+    return out
+}
+
 fn screen_asset_transformation() {
     return page(m_surface, [
         m_appbar("Asset Transformation", "index"),
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
-            m_section("splash:// resolves a request to bytes", [
-                at_row("a generated asset", invoke("assets.shim")),
-                at_row("a shipped asset", invoke("assets.index")),
-                at_row("a miss", invoke("assets.missing")),
-            ]),
+            // One at a time, so the difference between a hit, a generated
+            // answer and a miss is a thing you step through rather than three
+            // rows to compare.
+            {t: "row", fillw: 1, radius: 8, bg: m_pri_cont, padx: 12, pady: 10,
+             spacing: 8, aligny: 0.5, tapto: act_toggle("at_one"), c: [
+                icon(ic_file, 13, m_on_pri_cont),
+                txt(pick_if(son("at_one"), "One request — tap for all three",
+                                           "All three — tap for one"),
+                    13, 500, m_on_pri_cont),
+            ]},
+            pick_if(son("at_one"),
+                {t: "row", fillw: 1, radius: 8, bg: m_surf_highest, padx: 12,
+                 pady: 10, aligny: 0.5, tapto: act_cycle("at_pick", 3), c: [
+                    txt(at_label() + " — tap to step", 13, 500, m_on_surface),
+                ]},
+                {t: "column", w: 1, h: 1}),
+            m_section("splash:// resolves a request to bytes",
+                at_rows()),
             m_section("Where this differs from Flutter", [
                 para("Flutter transforms at bundle time: the asset on disk is "
                      + "rewritten before it ships. This transforms at request "

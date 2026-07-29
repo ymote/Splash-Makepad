@@ -21,6 +21,12 @@ fn screen_pedometer() {
     return page(m_surface, [
         m_appbar("Pedometer", "index"),
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            {t: "row", fillw: 1, radius: 8, bg: m_pri_cont, padx: 12, pady: 10,
+             spacing: 8, aligny: 0.5, tapto: act_up("pd_reads", 1), c: [
+                icon(ic_walk, 13, m_on_pri_cont),
+                txt("Read the sensor again — " + sget("pd_reads", 1)
+                    + " reads this session", 13, 500, m_on_pri_cont),
+            ]},
             m_section("Steps", [
                 {t: "column", fillw: 1, alignx: 0.5, pady: 8, spacing: 4, c: [
                     icon(ic_walk, 34, m_primary),
@@ -30,6 +36,11 @@ fn screen_pedometer() {
                      + "capability bridge platform_channels uses. A device "
                      + "without that sensor answers with the error rather than "
                      + "a number.", 13, 400, m_on_surf_var),
+                para("Tapping re-reads: the sample subscribes to a stream, and "
+                     + "this samples on demand. The accelerometer row below is "
+                     + "the one that visibly changes between reads, because a "
+                     + "step count does not move while a phone sits still.",
+                     13, 400, m_on_surf_var),
             ]),
             m_section("What the sensor stack reports", [
                 pd_row("sensor.list", invoke("sensor.list")),

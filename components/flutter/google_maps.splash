@@ -54,6 +54,18 @@ fn gm_view(zoom, tilt, rotation, z, cx, cy) {
                    gm_map(zoom, tilt, rotation))
 }
 
+// Zoom, as the four tile sets this screen ships. Panning would need tiles
+// fetched per gesture; stepping the camera needs only arithmetic, and each step
+// is a genuinely different request to OSM.
+let gm_cams = [
+    [9,  471,  307, "9 — the region"],
+    [11, 1884, 1228, "11 — the sample's camera"],
+    [13, 7536, 4915, "13 — the harbour"],
+    [15, 30146, 19662, "15 — the streets"],
+]
+
+fn gm_cam() { return gm_cams[sget("gm_zoom", 1)] }
+
 fn screen_google_maps() {
     return page(m_surface, [
         m_appbar("Sydney", "index"),
@@ -66,10 +78,18 @@ fn screen_google_maps() {
                      + "raster tiles for the same coordinates.",
                      13, 400, m_on_surf_var),
                 {t: "stack", fillw: 1, fith: 1, c: [
-                    gm_view(11.0, 0.0, 0.0, 11, 1884, 1228),
+                    gm_view(gm_cam()[0] * 1.0, 0.0, 0.0,
+                            gm_cam()[0], gm_cam()[1], gm_cam()[2]),
                     // The marker, drawn over the centre rather than anchored.
                     {t: "column", fillw: 1, h: 260, alignx: 0.5, aligny: 0.5,
                      c: [ icon(ic_pin, 28, m_error) ]},
+                ]},
+                {t: "row", fillw: 1, radius: 8, bg: m_pri_cont, padx: 12,
+                 pady: 10, spacing: 8, aligny: 0.5,
+                 tapto: act_cycle("gm_zoom", 4), c: [
+                    icon(ic_search, 13, m_on_pri_cont),
+                    txt("Zoom " + gm_cam()[3] + " — tap to step",
+                        13, 500, m_on_pri_cont),
                 ]},
                 {t: "row", fillw: 1, bg: m_surf_lowest, radius: 8, padx: 12,
                  pady: 8, spacing: 8, aligny: 0.5, c: [

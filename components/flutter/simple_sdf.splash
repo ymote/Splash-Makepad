@@ -11,7 +11,12 @@
 // makepad would draw this per-pixel with Sdf2d, and that route is built; it
 // does not resolve in the Splash isolate yet. This one runs on both backends.
 
-let sdf_n = 22
+// Resolution, stepped. The whole point of the screen is that the field is
+// arithmetic rather than a picture, and nothing shows that like recomputing it
+// at a different sampling rate: 264 is 22x12dp, and the others divide it
+// exactly so no row lands mid-pixel and seams.
+let sdf_res = [11, 22, 33, 44]
+let sdf_n = sdf_res[sget("sdf_res", 1)]
 
 fn sd_heart(px, py) {
     let x = absn(px)
@@ -63,6 +68,12 @@ fn screen_simple_sdf() {
         m_appbar("Simple SDF", "index"),
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
             sd_grid(),
+            {t: "row", fillw: 1, radius: 8, bg: m_pri_cont, padx: 12, pady: 10,
+             spacing: 8, aligny: 0.5, tapto: act_cycle("sdf_res", 4), c: [
+                icon(ic_bolt, 13, m_on_pri_cont),
+                txt(sdf_n + "x" + sdf_n + " cells — tap to resample",
+                    13, 500, m_on_pri_cont),
+            ]},
             m_section("What this is", [
                 para("sdHeart from the sample's GLSL, evaluated per cell: fold "
                      + "on x, branch on p.y + p.x > 1, take the distance to the "

@@ -25,20 +25,49 @@ fn pc_row(tool, answer) {
     ]}
 }
 
+// The tools this screen can call. `device.notifications` was registered and
+// reached by nothing — the review found it sitting there unused — so it is on
+// the list now.
+let pc_tools = ["device.info", "device.display", "device.battery",
+                "device.time", "device.notifications"]
+
 fn screen_platform_channels() {
     // MethodChannel: ask the platform by name, get an answer.
-    let calls = [
-        ["device.info", invoke("device.info")],
-        ["device.display", invoke("device.display")],
-        ["device.battery", invoke("device.battery")],
-        ["device.time", invoke("device.time")],
-    ]
+    //
+    // Every rebuild re-invokes, so the counter is not decoration: it is how you
+    // can tell a fresh answer from the one already on screen. device.time
+    // changes every read, which makes the whole thing checkable by eye.
+    let reads = sget("pc_reads", 1)
+    let one = sget("pc_one", 0)
     let rows = []
-    for c in calls { rows.push(pc_row(c[0], c[1])) }
+    let ti = 0
+    for t in pc_tools {
+        if one == 0 { rows.push(pc_row(t, invoke(t))) }
+        if one == 1 { if ti == sget("pc_pick", 0) { rows.push(pc_row(t, invoke(t))) } }
+        ti = ti + 1
+    }
 
     return page(m_surface, [
         m_appbar("Platform Channels", "index"),
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            {t: "row", fillw: 1, spacing: 8, c: [
+                {t: "column", fillw: 1, radius: 8, bg: m_pri_cont, padx: 12,
+                 pady: 10, alignx: 0.5, tapto: act_up("pc_reads", 1), c: [
+                    txt("Call again — " + reads + " so far", 13, 500, m_on_pri_cont),
+                ]},
+                {t: "column", fillw: 1, radius: 8, bg: m_surf_highest, padx: 12,
+                 pady: 10, alignx: 0.5, tapto: act_toggle("pc_one"), c: [
+                    txt(pick_if(one == 1, "One channel", "All channels"),
+                        13, 500, m_on_surface),
+                ]},
+            ]},
+            pick_if(one == 1,
+                {t: "row", fillw: 1, radius: 8, bg: m_surf_highest, padx: 12,
+                 pady: 10, alignx: 0.5, tapto: act_cycle("pc_pick", 5), c: [
+                    txt("Channel " + (sget("pc_pick", 0) + 1) + " of 5 — tap to change",
+                        13, 500, m_on_surface),
+                ]},
+                {t: "column", w: 1, h: 1}),
             m_section("MethodChannel — invoke(tool) returns an answer", rows),
             // EventChannel: a value that keeps changing. The host re-mounts
             // against a clock, so re-reading the sensor is the same shape as

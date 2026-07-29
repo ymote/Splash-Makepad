@@ -12,15 +12,55 @@
 // `xcomp::surface(w, h)` is an ArkUI XComponent: a real EGL surface that camera
 // preview and video decode render into, composited among the widgets Rust
 // built. The state below is read from it.
+//
+// The sample's actual interaction ports too, and it is the part that was
+// missing: it switches between the two halves and passes a counter across. So
+// does this. The counter lives in the one store both halves read, which is the
+// honest local form of "passed across a channel" — there is no boundary here to
+// pass it over, because the surface is inside the tree rather than beside it.
+
+fn pvs_half(title, sub, count, active, act) {
+    let bg = pick_if(active, m_pri_cont, m_surf_highest)
+    let ink = pick_if(active, m_on_pri_cont, m_on_surf_var)
+    return {t: "column", fillw: 1, radius: 12, bg: bg, pad: 14, spacing: 4,
+            tapto: act, c: [
+        txt(title, 14, 500, ink),
+        txt(sub, 11, 400, ink),
+        txt("count " + count, 22, 500, ink),
+    ]}
+}
 
 fn screen_platform_view_swift() {
+    // Which half is in front, and the counter both of them read.
+    let native = son("pvs_native")
+    let n = sget("pvs_count", 0)
     return page(m_surface, [
         m_appbar("Platform View", "index"),
         {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("Switch, and pass the count across", [
+                {t: "row", fillw: 1, spacing: 8, c: [
+                    pvs_half("Platform surface", "XComponent · EGL", n,
+                             native, act_set("pvs_native", 1)),
+                    pvs_half("Widget tree", "ArkUI nodes from the DSL", n,
+                             native == 0, act_set("pvs_native", 0)),
+                ]},
+                {t: "row", fillw: 1, radius: 8, bg: m_surf_lowest, padx: 12,
+                 pady: 10, spacing: 8, aligny: 0.5,
+                 tapto: act_up("pvs_count", 1), c: [
+                    icon(ic_plus, 13, m_primary),
+                    txt("Increment — the other half sees it too",
+                        13, 500, m_on_surface),
+                ]},
+                para("The sample presents a UIViewController, switches to a "
+                     + "full-screen Flutter view and passes a counter over a "
+                     + "MethodChannel. Both halves are on screen at once here, "
+                     + "so the count needs no channel: they read the same "
+                     + "store.", 13, 400, m_on_surf_var),
+            ]),
             m_section("A platform surface in the same tree", [
                 {t: "column", fillw: 1, bg: m_surf_lowest, radius: 8, pad: 12,
-                 spacing: 4, c: [
-                    txt("surface.state", 13, 500, m_primary),
+                 spacing: 4, tapto: act_up("pvs_reads", 1), c: [
+                    txt("surface.state — tap to re-read", 13, 500, m_primary),
                     para(invoke("surface.state"), 12, 400, m_on_surf_var),
                 ]},
                 para("An ArkUI XComponent — a real EGL surface that camera "

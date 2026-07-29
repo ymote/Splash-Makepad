@@ -465,6 +465,19 @@ fn a_control_changes_what_the_screen_renders() {
         ("platform_design/settings", "set:pd_notify_0=!", ""),
         ("platform_design/profile", "set:pd_mood=2", ""),
         ("desktop_photo_search", "set:dps_query=~4", "coffee"),
+        // The ten the review called "drawn only" that had no control at all.
+        ("dynamic_theme", "set:dt_turn=^3", "2 of 3 turns"),
+        ("dynamic_theme", "set:dt_scale=~3", "1.15x"),
+        ("google_maps", "set:gm_zoom=~4", "13 — the harbour"),
+        ("simple_sdf", "set:sdf_res=~4", "33x33 cells"),
+        ("simple_shader", "set:sh_res=~4", "36x36 cells"),
+        ("platform_channels", "set:pc_one=!", "One channel"),
+        ("platform_channels", "set:pc_reads=+1", "2 so far"),
+        ("pedometer", "set:pd_reads=+1", "2 reads this session"),
+        ("background_isolate_channels", "set:bg_runs=+1", "2 runs"),
+        ("asset_transformation", "set:at_one=!", "One request"),
+        ("platform_view_swift", "set:pvs_count=+1", "count 1"),
+        ("platform_view_swift", "set:pvs_native=1", ""),
     ];
     let mut failures = Vec::new();
     for (route, action, marker) in cases {
@@ -487,6 +500,11 @@ fn a_control_changes_what_the_screen_renders() {
             ));
         }
     }
+    // web_embedding is deliberately not in that list. Its control switches
+    // which page the web slot loads, and there is no slot on this backend —
+    // makepad owns its own canvas and has no WebView to composite. The screen
+    // renders the note instead, identically before and after, which is right.
+    // Asserting it here would only be asserting that `pick_if` works.
     splash_render::state::reset();
     assert!(failures.is_empty(), "\n{}", failures.join("\n"));
 }
