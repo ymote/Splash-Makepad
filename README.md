@@ -18,6 +18,46 @@ Splash DSL  ──►  splash-render  ──►  UiNode tree  ──►  splash-
 - **`crates/splash-makepad`** — the makepad backend: `to_makepad_ui(&UiNode) -> String` turns the tree into makepad's `View{}/Label{}/…` dialect. Pure, unit-tested — no makepad-platform/draw needed to build or test.
 - **`crates/splash-widgets`** — the **themed native-widget kits** (Material 3 now; iOS / liquid-glass later), as **external `script_mod!` variants of makepad's widgets** (see *Fork-free theming* below).
 - **`components/<theme>/`** — each theme's **component library**, authored as `.splash` (e.g. `components/material/catalog.splash`, ~35 Material components + demo screens). Pure data — hot-reloadable, no rebuild.
+- **`components/flutter/`** — the **flutter/samples port**: one `.splash` per sample directory, 108 routes (see below).
+
+## The flutter/samples port
+
+> **These are static illustrations, not widget ports.** 86% of the kit's nodes
+> are layout containers and none are buttons; the DSL has no `onPressed`, no
+> state model and no animation, so a Flutter widget cannot be reproduced —
+> only pictured. See the [kit README](components/flutter/README.md) for the
+> independent review that established this and the two defects it found.
+
+
+Every directory of [flutter/samples](https://github.com/flutter/samples) has a `.splash` file in `components/flutter/` — 27 of them, 108 routes, all swept by `cargo test`. Full write-up in [`components/flutter/README.md`](components/flutter/README.md).
+
+Eleven directories are apps with a UI to draw, and are ported: 92 screens carrying the samples' real content — the M3 type scale at its actual sp values, the six elevation levels with their dp and surface-tint percentages, all nine `date_planner` events with their task lists, the four `libraryInstance` books, the real `destinations.json` entries.
+
+The other sixteen exist to demonstrate Flutter's **platform integration** — `add_to_app`, `platform_channels`, `pedometer`'s FFIgen bindings, the GLSL shader samples, build tooling. There is nothing to draw, so each gets a screen naming what the sample teaches and why it does not port, rather than an invented UI.
+
+These are **visual ports**: the pipeline evaluates the DSL to a tree once per mount, so there is no per-component state, no async, no HTTP, no navigation stack and no animation. `animations` ports its index and all 20 titles but not the animations; `compass_app` ports its five screens but not the architecture that is most of the sample. Anything a screen cannot honestly render says so on the screen.
+
+The kit spans many files and the DSL has no `import`, so it is **concatenated** in a fixed order by `splash_makepad::kit` — `_kit.splash` first, samples sorted, `_index.splash` (the router) last. The test and the `assemble` example call that function; the app bakes the same files with `include_str!`, because `cargo-makepad` builds Android inside a generated wrapper crate that never runs the app's build script. A test pins the baked list to the directory so the two cannot drift.
+
+```sh
+cargo test -p splash-makepad     # sweep all 108 routes — no device needed
+cargo run  -p flutter-samples    # run the catalog on desktop
+cargo makepad android run -p flutter-samples --release    # …or on a phone
+tools/visual-qa.sh               # screenshot all 108 on the device
+```
+
+Every screen has been run on a real device (OnePlus 6T) and looked at, not just
+asserted on: `tools/visual-qa.sh` drives each route over adb, screenshots it and
+builds contact sheets. That found nine rendering defects the route sweep
+structurally cannot see — a collapsed page root, clipped descenders, unwrapped
+paragraphs, three empty pickers, one-pixel chat bubbles — all fixed. The
+remaining deviations from Flutter are structural and listed in the kit's README.
+
+Tapping needed two fixes on top of that, both in the kit's README: a `View`
+ignores `on_click` (only `Button`/`CheckBox`/`GlassPanel` have it), so the
+translator now overlays a transparent Button on any tappable container; and
+because the `Splash` isolate resolves `ui` against its own view root, the
+`nav_signal` label the handler writes to has to live *inside* the mounted tree.
 
 ## Fork-free theming (the key design point)
 

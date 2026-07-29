@@ -1,0 +1,13 @@
+// android_splash_screen — flutter/samples/android_splash_screen
+fn screen_android_splash_screen() {
+    return na_screen("android_splash_screen",
+        "How to use Android 12's SplashScreen API with Flutter: an animated "
+        + "launch icon that hands off smoothly to the first Flutter frame.",
+        [
+            "The splash is drawn by the Android system before any Flutter frame exists — it is themes.xml and a windowSplashScreenAnimatedIcon, not widget code.",
+            "The equivalent for a makepad app is whatever the target platform's launch screen is; nothing about it is expressible in the DSL.",
+            "There is no Android target in this repo to attach one to.",
+        ],
+        "Not portable. This is a platform launch-screen contract, not UI.")
+}
+

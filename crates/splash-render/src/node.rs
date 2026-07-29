@@ -32,6 +32,10 @@ pub enum NodeKind {
     DatePicker,
     TimePicker,
     TextPicker,
+    /// An OpenStreetMap view — makepad ships a full vector-tile renderer
+    /// (`widgets/src/map`, ~12k lines) with rotation and tilt, so a real map is
+    /// not a platform view here, it is a widget.
+    Map,
 }
 
 impl NodeKind {
@@ -61,6 +65,7 @@ impl NodeKind {
             "datepicker" => Self::DatePicker,
             "timepicker" => Self::TimePicker,
             "textpicker" => Self::TextPicker,
+            "map" => Self::Map,
             _ => return None,
         })
     }
@@ -132,6 +137,12 @@ pub struct Attrs {
     pub aligny: Option<f32>,
     pub on: Option<i32>,
     pub tap: Option<i32>,
+    /// Map camera. `tilt` is what makes the view 2.5D; `rotation` is the bearing.
+    pub lat: Option<f64>,
+    pub lon: Option<f64>,
+    pub zoom: Option<f64>,
+    pub tilt: Option<f64>,
+    pub rotation: Option<f64>,
 }
 
 /// One node in the backend-agnostic tree.

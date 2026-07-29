@@ -1,0 +1,180 @@
+// compass_app — flutter/samples/compass_app
+//
+// The largest sample: a travel-planning app that exists to demonstrate the
+// Flutter *architecture* guidelines — MVVM, repositories, use-cases, DI via
+// provider, a command pattern, an offline-first local store, fake vs remote
+// data sources, and a Dart server. Roughly 9k lines across app/ and server/.
+//
+// The five screens port: Home, Search form, Results, Activities, Booking. The
+// destinations and activities below are the real assets/destinations.json and
+// assets/activities.json entries.
+//
+// The architecture does not port, and that is most of the sample. There is no
+// view-model layer to bind to, no repository, no command, no persistence — the
+// pipeline evaluates data to a tree once per mount. What is here is the app's
+// surface, not its structure.
+
+// name, country, continent, tags
+let ca_dest = [
+    ["Alaska", "United States", "North America", "Mountain · Wildlife watching"],
+    ["Amalfi Coast", "Italy", "Europe", "Beach · Romantic · Foodie"],
+    ["Amazon Rainforest", "Brazil", "South America", "Jungle · Adventure sports"],
+    ["The Andes Mountains", "South America", "South America", "Mountain · Hiking"],
+    ["Angkor Wat", "Cambodia", "Asia", "Historic · Sightseeing"],
+    ["Antelope Canyon", "United States", "North America", "Hiking · Sightseeing"],
+    ["Aruba", "Aruba", "South America", "Beach · Island · Scuba diving"],
+    ["Asheville", "USA", "North America", "City · Hiking · Cultural"],
+]
+
+let ca_continents = ["Africa", "Asia", "Australia", "Europe",
+                     "North America", "Oceania", "South America"]
+
+// name, time of day
+let ca_activities = [
+    ["Glacier Trekking and Ice Climbing", "morning"],
+    ["Dog Sledding Experience", "morning"],
+    ["Hiking in Denali National Park", "any"],
+    ["Wildlife Viewing Cruise", "any"],
+]
+
+fn screen_compass_app() {
+    let cards = []
+    let i = 0
+    for d in ca_dest {
+        if i < 4 {
+            cards.push(ca_card(d[0], d[1], d[3]))
+        }
+        i = i + 1
+    }
+    return page(m_surface, [
+        m_appbar("Compass", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            {t: "column", fillw: 1, spacing: 4, c: [
+                txt("Let's explore", 32, 400, m_on_surface),
+                txt("Where would you like to go?", 16, 400, m_on_surf_var),
+            ]},
+            {t: "row", fillw: 1, h: 56, radius: 28, bg: m_surf_highest, padx: 20,
+             spacing: 10, aligny: 0.5, tapto: "compass_app/search", c: [
+                icon(ic_search, 15, m_on_surf_var),
+                txt("Search destinations", 16, 400, m_on_surf_var),
+            ]},
+            m_section("Your bookings", cards),
+        ]},
+    ])
+}
+
+fn ca_card(name, country, tags) {
+    return {t: "column", fillw: 1, radius: 12, bg: m_surf_lowest, elevation: 1,
+            c: [
+        {t: "column", fillw: 1, h: 120, radius: 12, bg: m_pri_cont,
+         alignx: 0.5, aligny: 0.5, c: [ icon(ic_pin, 26, m_on_pri_cont) ]},
+        {t: "column", fillw: 1, pad: 12, spacing: 4, c: [
+            txt(name, 16, 500, m_on_surface),
+            txt(country, 13, 400, m_on_surf_var),
+            txt(tags, 12, 400, m_on_surf_var),
+        ]},
+    ]}
+}
+
+fn screen_compass_app_search() {
+    let chips = []
+    for c in ca_continents { chips.push(m_chip(c, c == "Europe")) }
+    return page(m_surface, [
+        m_appbar("Search", "compass_app"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("Where to?", chips),
+            m_section("When", [
+                {t: "row", fillw: 1, h: 56, radius: 8, bg: m_surf_highest,
+                 padx: 16, spacing: 10, aligny: 0.5, c: [
+                    icon(ic_cal, 14, m_on_surf_var),
+                    txt("Jan 1 — Jan 8", 16, 400, m_on_surface),
+                ]},
+            ]),
+            m_section("Guests", [
+                {t: "row", fillw: 1, h: 56, spacing: 16, aligny: 0.5, c: [
+                    txt("Guests", 16, 400, m_on_surface),
+                    spacer(),
+                    ca_stepper("2"),
+                ]},
+            ]),
+            m_btn("Search", m_primary, m_on_primary),
+        ]},
+    ])
+}
+
+fn ca_stepper(value) {
+    return {t: "row", fitw: 1, spacing: 16, aligny: 0.5, c: [
+        {t: "column", w: 36, h: 36, radius: 18, bg: m_surf_highest,
+         alignx: 0.5, aligny: 0.5, c: [ txt("−", 18, 500, m_on_surface) ]},
+        txt(value, 16, 500, m_on_surface),
+        {t: "column", w: 36, h: 36, radius: 18, bg: m_surf_highest,
+         alignx: 0.5, aligny: 0.5, c: [ txt("+", 18, 500, m_on_surface) ]},
+    ]}
+}
+
+fn screen_compass_app_results() {
+    let cards = []
+    for d in ca_dest { cards.push(ca_result_row(d[0], d[1], d[3])) }
+    return page(m_surface, [
+        m_appbar("Results", "compass_app/search"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 12, c: cards},
+    ])
+}
+
+fn ca_result_row(name, country, tags) {
+    return {t: "row", fillw: 1, fith: 1, radius: 12, bg: m_surf_low, spacing: 12,
+            tapto: "compass_app/activities", c: [
+        {t: "column", w: 96, h: 96, radius: 12, bg: m_ter_cont,
+         alignx: 0.5, aligny: 0.5, c: [ icon(ic_pin, 20, m_on_ter_cont) ]},
+        {t: "column", fillw: 1, fith: 1, padx: 4, pady: 12, spacing: 4, c: [
+            txt(name, 16, 500, m_on_surface),
+            txt(country, 13, 400, m_on_surf_var),
+            para(tags, 12, 400, m_on_surf_var),
+        ]},
+    ]}
+}
+
+fn screen_compass_app_activities() {
+    let morning = []
+    let anytime = []
+    for a in ca_activities {
+        let row = {t: "row", fillw: 1, fith: 1, pady: 10, spacing: 12,
+                   aligny: 0.5, c: [
+            {t: "checkbox", on: 0, w: 18, h: 18},
+            {t: "column", fillw: 1, fith: 1, c: [ para(a[0], 15, 400, m_on_surface) ]},
+        ]}
+        if a[1] == "morning" { morning.push(row) } else { anytime.push(row) }
+    }
+    return page(m_surface, [
+        m_appbar("Activities", "compass_app/results"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("Morning", morning),
+            m_section("Any time", anytime),
+        ]},
+        {t: "row", fillw: 1, padx: 16, pady: 12, bg: m_surf_cont, c: [
+            {t: "column", fillw: 1, tapto: "compass_app/booking",
+             c: [ m_btn_wide("Confirm", m_primary, m_on_primary) ]},
+        ]},
+    ])
+}
+
+fn screen_compass_app_booking() {
+    return page(m_surface, [
+        m_appbar("Booking", "compass_app/activities"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            {t: "column", fillw: 1, h: 160, radius: 12, bg: m_pri_cont,
+             alignx: 0.5, aligny: 0.5, c: [ icon(ic_compass, 40, m_on_pri_cont) ]},
+            {t: "column", fillw: 1, spacing: 4, c: [
+                txt("Alaska, United States", 24, 400, m_on_surface),
+                txt("Jan 1 — Jan 8 · 2 guests", 14, 400, m_on_surf_var),
+            ]},
+            m_section("Itinerary", [
+                txt("Glacier Trekking and Ice Climbing", 14, 400, m_on_surface),
+                txt("Dog Sledding Experience", 14, 400, m_on_surface),
+                txt("Hiking in Denali National Park", 14, 400, m_on_surface),
+            ]),
+            m_btn_wide("Share", m_primary, m_on_primary),
+        ]},
+    ])
+}
+

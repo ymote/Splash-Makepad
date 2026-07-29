@@ -1,0 +1,14 @@
+// web_embedding — flutter/samples/web_embedding
+fn screen_web_embedding() {
+    return na_screen("web_embedding",
+        "Embedding Flutter web into an existing page without an iframe: "
+        + "launching into a custom hostElement, and the same thing again as an "
+        + "Angular component.",
+        [
+            "The sample is HTML, JavaScript and TypeScript around a Flutter web build — the Dart is a placeholder.",
+            "makepad targets the web through Wasm and owns a canvas; there is no hostElement contract to embed into.",
+            "The interop the sample shows off is JS calling into Dart, which has no counterpart in the render pipeline.",
+        ],
+        "Not portable. This is a JavaScript embedding contract.")
+}
+

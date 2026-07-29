@@ -19,6 +19,8 @@
 //! (see the module docs on [`wiring`]); this crate keeps the translation pure
 //! and unit-tested so it needs no window to verify.
 
+pub mod kit;
+
 use splash_render::{NodeKind, UiNode};
 use std::fmt::Write as _;
 
@@ -50,6 +52,10 @@ fn widget_name(kind: NodeKind) -> &'static str {
         NodeKind::Loading => "LoadingSpinner",
         // The M3 loading indicator: a solid shape that morphs + rotates.
         NodeKind::Progress => "LoadingMorph",
+        // makepad ships an OpenStreetMap vector-tile renderer with rotation and
+        // tilt. A map is a widget here, not a platform view — which is why
+        // `google_maps` is portable after all.
+        NodeKind::Map => "MapView",
         // every container-ish kind is a View with the right flow.
         _ => "View",
     }
@@ -65,7 +71,84 @@ fn flow(kind: NodeKind) -> Option<&'static str> {
     }
 }
 
+/// Whether a tap on this node has to be delegated to an overlaid `Button`.
+///
+/// `on_click` is a `ScriptFnRef` field on `Button`, `CheckBox` and `GlassPanel`
+/// and **nowhere else** — a `View` parses the property and silently ignores it,
+/// so a row, card or list item carrying `tapto` was completely dead. `Button`
+/// in turn takes no children, so the tappable region cannot simply *be* one.
+///
+/// The way out is an overlay: wrap the container in an `Overlay` view holding
+/// the original content plus a transparent, content-sized `Button` on top. The
+/// Button owns the hit area and the callback; the content underneath is
+/// untouched. Verified on device — a plain row with `tapto` does nothing, the
+/// same row under this wrapper navigates.
+fn needs_click_overlay(node: &UiNode) -> bool {
+    node.attrs.tapto.is_some() && widget_name(node.kind) == "View"
+}
+
 fn emit(node: &UiNode, out: &mut String, depth: usize) {
+    if needs_click_overlay(node) {
+        emit_click_overlay(node, out, depth);
+        return;
+    }
+    emit_widget(node, out, depth);
+}
+
+/// `Overlay{ <content>, Button{…on_click} }` — see [`needs_click_overlay`].
+fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
+    let ind = "    ".repeat(depth);
+    let inner_ind = "    ".repeat(depth + 1);
+    let a = &node.attrs;
+
+    let _ = writeln!(out, "{ind}View {{");
+    let _ = writeln!(out, "{inner_ind}flow: Overlay");
+    // The wrapper takes over the node's outer size so the Button, which fills
+    // it, ends up exactly the size of the content it covers.
+    match a.w {
+        Some(w) => {
+            let _ = writeln!(out, "{inner_ind}width: {w}");
+        }
+        None => {
+            let _ = writeln!(out, "{inner_ind}width: Fill");
+        }
+    }
+    match a.h {
+        Some(h) => {
+            let _ = writeln!(out, "{inner_ind}height: {h}");
+        }
+        None => {
+            let _ = writeln!(out, "{inner_ind}height: Fit");
+        }
+    }
+
+    // The content, with `tapto` stripped so it does not re-enter this path.
+    let mut content = node.clone();
+    content.attrs.tapto = None;
+    emit_widget(&content, out, depth + 1);
+
+    // The hit target: an empty Button filling the wrapper.
+    //
+    // Deliberately plain. An earlier version set `draw_bg +: { color:
+    // #00000000, border_size: 0.0 }` to hide the button's chrome, and the
+    // button stopped responding entirely — the themed `draw_bg` shader has no
+    // `border_size` instance, and the bad merge takes the whole widget out.
+    // One property per line for the same reason: the comma-joined form did not
+    // parse. Keep this shape unless a device check says otherwise.
+    let target = a.tapto.as_ref().expect("checked by needs_click_overlay");
+    let _ = writeln!(out, "{inner_ind}Button {{");
+    let _ = writeln!(out, "{inner_ind}    width: Fill");
+    let _ = writeln!(out, "{inner_ind}    height: Fill");
+    let _ = writeln!(out, "{inner_ind}    text: \"\"");
+    let _ = writeln!(
+        out,
+        "{inner_ind}    on_click: || {{ ui.nav_signal.set_text({target:?}) }}"
+    );
+    let _ = writeln!(out, "{inner_ind}}}");
+    let _ = writeln!(out, "{ind}}}");
+}
+
+fn emit_widget(node: &UiNode, out: &mut String, depth: usize) {
     let ind = "    ".repeat(depth);
     let name = widget_for(node);
     // An `id` makes the widget addressable in the mounted tree: `name := Widget{…}`.
@@ -78,8 +161,12 @@ fn emit(node: &UiNode, out: &mut String, depth: usize) {
         }
     }
     emit_attrs(node, out, depth + 1);
-    // Only container views carry children.
-    if name == "View" || name == "RoundedView" {
+    // Only containers carry children — decided by the node's *kind*, not by the
+    // concrete widget it was promoted to. A container that carries a background,
+    // a corner or an elevation still renders as a container; keying off the
+    // widget name dropped the children of every raised card, because
+    // `RoundedShadowView` is not spelled `View`.
+    if widget_name(node.kind) == "View" {
         for c in &node.children {
             emit(c, out, depth + 1);
         }
@@ -245,6 +332,54 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
     if let Some(src) = &a.src {
         let _ = writeln!(out, "{ind}source: {src:?}");
     }
+
+    // Map camera. Field names are MapView's own (widgets/src/map/view.rs).
+    if node.kind == NodeKind::Map {
+        if let Some(v) = a.lat {
+            let _ = writeln!(out, "{ind}center_lat: {v}");
+        }
+        if let Some(v) = a.lon {
+            let _ = writeln!(out, "{ind}center_lon: {v}");
+        }
+        if let Some(v) = a.zoom {
+            let _ = writeln!(out, "{ind}zoom: {v}");
+        }
+        if let Some(v) = a.tilt {
+            let _ = writeln!(out, "{ind}tilt: {v}");
+        }
+        if let Some(v) = a.rotation {
+            let _ = writeln!(out, "{ind}rotation: {v}");
+        }
+    }
+
+    // Control state.
+    //
+    // `on`, `value` and `total` were declared in `Attrs` and then never emitted,
+    // so every `{t:"checkbox", on: 1}` rendered *unchecked* and every
+    // `{t:"slider", value: 0.35}` sat at its default — with a caption beside it
+    // claiming 0.35. The controls were real native widgets whose declared state
+    // never reached them.
+    //
+    // Field names are makepad's, not invented: `CheckBox` (and `Toggle`, which
+    // is a CheckBox variant — see widgets/src/check_box.rs) exposes
+    // `active: Option<bool>`; `Slider` has min/max/step/`default` and no `value`.
+    if let Some(on) = a.on {
+        if matches!(
+            node.kind,
+            NodeKind::Checkbox | NodeKind::Toggle | NodeKind::Radio
+        ) {
+            let _ = writeln!(out, "{ind}active: {}", on != 0);
+        }
+    }
+    if let Some(v) = a.value {
+        if node.kind == NodeKind::Slider {
+            // The kit expresses slider positions as a 0..1 fraction, so pin the
+            // range unless the caller gave an explicit `total`.
+            let _ = writeln!(out, "{ind}min: 0.0");
+            let _ = writeln!(out, "{ind}max: {}", a.total.unwrap_or(1.0));
+            let _ = writeln!(out, "{ind}default: {v}");
+        }
+    }
 }
 
 /// `0xAARRGGBB` (the Splash colour word) → makepad `#RRGGBBAA`.
@@ -313,6 +448,81 @@ mod tests {
         assert!(ui.contains("flow: Right"));
         assert!(ui.contains("Button {"));
         assert!(ui.contains("text: \"Tap\""));
+    }
+
+    #[test]
+    fn a_raised_container_keeps_its_children() {
+        // An elevated card promotes to RoundedShadowView. It is still a
+        // container: dropping its children rendered every Material "elevated
+        // card with content" as an empty shadow box.
+        let ui = to_makepad_ui(&tree(
+            r#"{t:"column", bg: 4294901760, radius: 12, elevation: 3, c:[
+                   {t:"text", text:"content", h: 20}
+               ]}"#,
+        ));
+        assert!(ui.contains("RoundedShadowView {"), "{ui}");
+        assert!(
+            ui.contains("text: \"content\""),
+            "a raised container must still emit its children:\n{ui}"
+        );
+    }
+
+    #[test]
+    fn control_state_reaches_the_widget() {
+        // Declared state used to be dropped on the floor: the attribute existed
+        // and nothing emitted it.
+        let ui = to_makepad_ui(&tree(r#"{t:"checkbox", on: 1}"#));
+        assert!(ui.contains("active: true"), "checkbox keeps its state:\n{ui}");
+
+        let ui = to_makepad_ui(&tree(r#"{t:"toggle", on: 0}"#));
+        assert!(ui.contains("active: false"), "toggle keeps its state:\n{ui}");
+
+        let ui = to_makepad_ui(&tree(r#"{t:"slider", value: 0.35}"#));
+        assert!(ui.contains("default: 0.35"), "slider keeps its value:\n{ui}");
+        assert!(ui.contains("max: 1"), "0..1 range unless total says otherwise:\n{ui}");
+
+        // A container is not a control; `on` there means nothing.
+        let ui = to_makepad_ui(&tree(r#"{t:"column", on: 1}"#));
+        assert!(!ui.contains("active:"), "containers take no state:\n{ui}");
+    }
+
+    #[test]
+    fn a_tappable_container_gets_a_button_over_it() {
+        // A View ignores `on_click`, so a row carrying `tapto` must be wrapped in
+        // an Overlay with a real Button on top or the tap is silently dropped.
+        let ui = to_makepad_ui(&tree(
+            r#"{t:"row", h: 56, tapto:"date_planner", c:[
+                   {t:"text", text:"Date Planner", h: 20}
+               ]}"#,
+        ));
+        assert!(ui.contains("flow: Overlay"), "needs an overlay wrapper:\n{ui}");
+        assert!(ui.contains("Button {"), "needs a real Button:\n{ui}");
+        assert!(
+            ui.contains(r#"on_click: || { ui.nav_signal.set_text("date_planner") }"#),
+            "the Button carries the handler:\n{ui}"
+        );
+        // The content survives, and does not itself carry a dead handler.
+        assert!(ui.contains("text: \"Date Planner\""), "{ui}");
+        assert_eq!(ui.matches("on_click").count(), 1, "exactly one handler:\n{ui}");
+    }
+
+    #[test]
+    fn a_tappable_button_needs_no_overlay() {
+        // Button supports on_click natively — wrapping it would be pure overhead.
+        let ui = to_makepad_ui(&tree(r#"{t:"button", label:"Go", tapto:"index"}"#));
+        assert!(!ui.contains("flow: Overlay"), "no wrapper needed:\n{ui}");
+        assert_eq!(ui.matches("Button {").count(), 1, "{ui}");
+        assert!(ui.contains("on_click"), "{ui}");
+    }
+
+    #[test]
+    fn a_leaf_widget_still_drops_stray_children() {
+        // A Button is not a container; children under it are not emitted.
+        let ui = to_makepad_ui(&tree(
+            r#"{t:"button", label:"Tap", c:[ {t:"text", text:"nope", h: 20} ]}"#,
+        ));
+        assert!(ui.contains("text: \"Tap\""));
+        assert!(!ui.contains("nope"), "leaf widgets carry no children:\n{ui}");
     }
 
     #[test]

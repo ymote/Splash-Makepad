@@ -1,0 +1,14 @@
+// pedometer — flutter/samples/pedometer
+fn screen_pedometer() {
+    return na_screen("pedometer",
+        "FFIgen and JNIgen: generating Dart bindings for Android Health Connect "
+        + "and reading step counts through them, as a plugin plus example app.",
+        [
+            "Of its ~123k lines, ~91k are generated bindings and ~32k more are the Health Connect wrapper — the app itself is under 400 lines.",
+            "The generated-bindings story has a direct Rust analogue (bindgen), but it is a build-time concern with nothing to draw.",
+            "Reading step data needs a platform sensor API; the render pipeline has no capability surface at all.",
+            "Splash-OH is where that half lives in this project — sensors, location and the rest of its 45 native capabilities.",
+        ],
+        "Not portable. The UI is a step counter; the sample is a binding generator.")
+}
+

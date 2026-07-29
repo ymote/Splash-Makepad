@@ -1,0 +1,193 @@
+// platform_design — flutter/samples/platform_design
+//
+// "Adaptive Music App": the same four tabs (Songs, News, Profile, Settings)
+// drawn with Material chrome on Android and Cupertino chrome on iOS. That
+// side-by-side is the whole point of the sample, so both are here — the tab
+// switches the chrome, exactly as the sample switches on defaultTargetPlatform.
+//
+// Songs and news headlines are randomly generated upstream (english_words +
+// lorem). There is no RNG in the DSL and the host injects none, so these are
+// fixed word pairs and the sample's real headline templates — same shape, no
+// pretence of reproducing a seed.
+
+// The sample's 11-colour Material pool (500 shades).
+let pd_colors = [
+    argb(255, 244,  67,  54), argb(255,  33, 150, 243), argb(255,   0, 150, 136),
+    argb(255, 255, 235,  59), argb(255, 255, 193,   7), argb(255, 255,  87,  34),
+    argb(255,  76, 175,  80), argb(255,  63,  81, 181), argb(255, 205, 220,  57),
+    argb(255, 233,  30,  99), argb(255, 255, 152,   0),
+]
+
+let pd_songs = [
+    "Silent Harbor", "Golden Thread", "Velvet Signal", "Copper Field",
+    "Quiet Ember", "Marble Season", "Hollow Anchor", "Amber Circuit",
+    "Paper Lantern", "Iron Meadow", "Static Bloom", "Cobalt Winter",
+]
+
+// The real headline templates from utils.dart, filled with fixed word pairs.
+let pd_news = [
+    ["Silent Harbor says gravity", "Rain drums under a low ceiling of cloud while the city keeps its own tempo."],
+    ["Golden Thread releases Velvet Signal", "A second record arrives after three years of near total silence from the band."],
+    ["Copper Field talks about their childhood", "Long interviews rarely go anywhere, but this one starts somewhere unusual."],
+    ["Quiet Ember arrested due to paper lantern", "Details remain thin, and the label has so far declined to comment further."],
+    ["Marble Season says the world needs more patience", "An unhurried argument, delivered from a folding chair in an empty venue."],
+    ["Hollow Anchor calls their band luminous", "Naming things is the hardest part, they insist, and then prove the point."],
+]
+
+let pd_settings = [
+    "Send me marketing emails",
+    "Enable notifications",
+    "Remind me to rate this app",
+    "Background song refresh",
+    "Recommend me songs based on my location",
+    "Auto-transition playback to cast devices",
+    "Find friends from my contact list",
+]
+
+// ---- Material (Android) chrome ---------------------------------------------
+
+fn pd_mat_tabbar(active) {
+    let items = [
+        ["Songs", ic_music, "platform_design"],
+        ["News", ic_news, "platform_design/news"],
+        ["Profile", ic_user, "platform_design/profile"],
+        ["Settings", ic_gear, "platform_design/settings"],
+    ]
+    let cells = []
+    for it in items {
+        let sel = it[0] == active
+        let ink = pick_if(sel, m_on_sec_cont, m_on_surf_var)
+        cells.push({t: "column", fillw: 1, h: 80, spacing: 4, alignx: 0.5, aligny: 0.5,
+                    tapto: it[2], c: [
+            {t: "column", w: 64, h: 32, radius: 16, alignx: 0.5, aligny: 0.5,
+             bg: pick_if(sel, m_sec_cont, clear), c: [ icon(it[1], 15, ink) ]},
+            txt(it[0], 12, 500, ink),
+        ]})
+    }
+    return {t: "column", fillw: 1, bg: m_surf_cont, c: [
+        rule(m_outline_var), {t: "row", fillw: 1, h: 80, c: cells},
+    ]}
+}
+
+fn pd_mat_page(title, active, body_kids) {
+    return page(m_surface, [
+        m_appbar(title, "index"),
+        {t: "scroll", fillw: 1, pad: 12, spacing: 12, c: body_kids},
+        pd_mat_tabbar(active),
+    ])
+}
+
+fn screen_platform_design() {
+    let rows = []
+    let i = 0
+    for s in pd_songs {
+        rows.push({t: "row", fillw: 1, fith: 1, pady: 8, spacing: 12,
+                   aligny: 0.5, c: [
+            {t: "column", w: 48, h: 48, radius: 8, bg: pd_colors[i % 11]},
+            {t: "column", fillw: 1, fith: 1, spacing: 2, c: [
+                para(s, 16, 400, m_on_surface),
+                txt("Song " + (i + 1), 13, 400, m_on_surf_var),
+            ]},
+            icon(ic_play, 14, m_on_surf_var),
+        ]})
+        i = i + 1
+    }
+    return pd_mat_page("Songs", "Songs", rows)
+}
+
+fn screen_platform_design_news() {
+    let cards = []
+    let i = 0
+    for n in pd_news {
+        cards.push({t: "row", fillw: 1, radius: 4, bg: m_surf_low, elevation: 1.5,
+                    pad: 12, spacing: 12, c: [
+            {t: "column", w: 56, h: 56, radius: 4, bg: pd_colors[i % 11]},
+            {t: "column", fillw: 1, fith: 1, spacing: 4, c: [
+                para(n[0], 15, 500, m_on_surface),
+                para(n[1], 13, 400, m_on_surf_var),
+            ]},
+        ]})
+        i = i + 1
+    }
+    return pd_mat_page("News", "News", cards)
+}
+
+fn screen_platform_design_profile() {
+    let intensity = ["Super heavy", "Dial it to 11", "Head bangin'", "1000W",
+                     "My neighbor hates me"]
+    let mood = ["Over the moon", "Basking in sunlight", "Hello fellow Martians",
+                "Into the darkness"]
+    let a = []
+    for o in intensity { a.push(pd_opt_row(o, o == "Dial it to 11")) }
+    let b = []
+    for o in mood { b.push(pd_opt_row(o, o == "Over the moon")) }
+    return pd_mat_page("Profile", "Profile", [
+        {t: "column", fillw: 1, spacing: 8, alignx: 0.5, pady: 12, c: [
+            {t: "column", w: 88, h: 88, radius: 44, bg: m_surf_highest,
+             alignx: 0.5, aligny: 0.5, c: [ txt("😼", 44, 400, m_on_surface) ]},
+        ]},
+        m_section("MY INTENSITY PREFERENCE  🔥", a),
+        m_section("CURRENT MOOD  🤘🏾🚀", b),
+        m_btn("Log out", m_err_cont, m_error),
+    ])
+}
+
+fn pd_opt_row(label, selected) {
+    return {t: "row", fillw: 1, h: 40, spacing: 12, aligny: 0.5, c: [
+        {t: "radio", on: pick_if(selected, 1, 0), w: 16, h: 16},
+        txt(label, 14, 400, m_on_surface),
+    ]}
+}
+
+fn screen_platform_design_settings() {
+    let rows = []
+    let i = 0
+    for s in pd_settings {
+        rows.push({t: "row", fillw: 1, fith: 1, pady: 8, spacing: 12,
+                   aligny: 0.5, c: [
+            {t: "column", fillw: 1, fith: 1, c: [ para(s, 14, 400, m_on_surface) ]},
+            {t: "toggle", on: pick_if(i % 2 == 0, 1, 0), fitw: 1},
+        ]})
+        i = i + 1
+    }
+    return pd_mat_page("Settings", "Settings", [ m_section("Preferences", rows) ])
+}
+
+// ---- Cupertino (iOS) chrome -------------------------------------------------
+// The same four tabs, drawn the way the sample draws them on iOS.
+
+fn screen_platform_design_ios() {
+    let rows = []
+    let i = 0
+    for s in pd_songs {
+        if i > 0 { rows.push(rule(c_separator)) }
+        rows.push({t: "row", fillw: 1, fith: 1, padx: 16, pady: 8, spacing: 12,
+                   aligny: 0.5, c: [
+            {t: "column", w: 44, h: 44, radius: 6, bg: pd_colors[i % 11]},
+            {t: "column", fillw: 1, fith: 1, spacing: 2, c: [
+                para(s, 17, 400, c_label),
+                txt("Song " + (i + 1), 13, 400, c_label2),
+            ]},
+            icon(ic_fwd, 13, c_label2),
+        ]})
+        i = i + 1
+    }
+    return page(c_bg, [
+        c_navbar("Songs — iOS chrome", "platform_design"),
+        {t: "scroll", fillw: 1, bg: c_grouped, c: rows},
+        {t: "column", fillw: 1, bg: c_grouped, c: [
+            rule(c_separator),
+            {t: "row", fillw: 1, h: 50, c: [
+                pd_ios_tab("Songs", ic_music, 1), pd_ios_tab("News", ic_news, 0),
+                pd_ios_tab("Profile", ic_user, 0), pd_ios_tab("Settings", ic_gear, 0),
+            ]},
+        ]},
+    ])
+}
+
+fn pd_ios_tab(label, glyph, sel) {
+    let ink = pick_if(sel == 1, c_blue, c_label2)
+    return {t: "column", fillw: 1, h: 50, spacing: 2, alignx: 0.5, aligny: 0.5,
+            c: [ icon(glyph, 17, ink), txt(label, 10, 400, ink) ]}
+}
+

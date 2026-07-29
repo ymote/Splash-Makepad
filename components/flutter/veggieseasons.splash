@@ -1,0 +1,12 @@
+// veggieseasons — flutter/samples/veggieseasons
+fn screen_veggieseasons() {
+    return na_screen("veggieseasons",
+        "A Cupertino-styled app about seasonal vegetables. Upstream it is now a "
+        + "README and nothing else.",
+        [
+            "The sample was deprecated and moved to flutter/demos, where it is no longer maintained.",
+            "The directory in flutter/samples contains one file: a README saying so. There is no Dart left to port.",
+        ],
+        "Nothing to port. Listed because the directory still exists upstream.")
+}
+

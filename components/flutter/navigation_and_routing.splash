@@ -1,0 +1,194 @@
+// navigation_and_routing — flutter/samples/navigation_and_routing
+//
+// A small library browser used to demonstrate Router/go_router: a Books screen
+// with Popular / New / All tabs, an Authors screen, book and author details,
+// Settings, and a sign-in gate.
+//
+// The four books and three authors are the real libraryInstance data. What does
+// not port is the point of the sample: the Router API itself — declarative
+// route parsing, deep links, browser history, the auth redirect. `tapto` is a
+// one-string signal the host matches; there is no route table, no stack, no
+// back entry. Every screen here is reachable, but by re-mount, not by routing.
+
+// title, author, popular, new, key
+let nr_books = [
+    ["Left Hand of Darkness", "Ursula K. Le Guin", 1, 1, "0"],
+    ["Too Like the Lightning", "Ada Palmer", 0, 1, "1"],
+    ["Kindred", "Octavia E. Butler", 1, 0, "2"],
+    ["The Lathe of Heaven", "Ursula K. Le Guin", 0, 0, "3"],
+]
+
+let nr_authors = [
+    ["Ursula K. Le Guin", "2 books", "0"],
+    ["Ada Palmer", "1 book", "1"],
+    ["Octavia E. Butler", "1 book", "2"],
+]
+
+fn nr_tabbar(active) {
+    let tabs = [
+        ["Popular", "navigation_and_routing"],
+        ["New", "navigation_and_routing/new"],
+        ["All", "navigation_and_routing/all"],
+    ]
+    let cells = []
+    for t in tabs {
+        let sel = t[0] == active
+        let ink = pick_if(sel, m_primary, m_on_surf_var)
+        cells.push({t: "column", fillw: 1, fillh: 1, alignx: 0.5, aligny: 1.0,
+                    tapto: t[1], c: [
+            {t: "column", fillw: 1, alignx: 0.5, c: [ txt(t[0], 14, 500, ink) ]},
+            {t: "column", fillw: 1, h: 3, bg: pick_if(sel, m_primary, clear)},
+        ]})
+    }
+    return {t: "column", fillw: 1, bg: m_surf_cont, c: [
+        {t: "row", fillw: 1, h: 48, c: cells},
+        rule(m_outline_var),
+    ]}
+}
+
+fn nr_booklist(filter) {
+    let rows = []
+    for b in nr_books {
+        let show = 0
+        if filter == "all" { show = 1 }
+        if filter == "popular" { if b[2] == 1 { show = 1 } }
+        if filter == "new" { if b[3] == 1 { show = 1 } }
+        if show == 1 {
+            rows.push({t: "row", fillw: 1, fith: 1, padx: 16, pady: 8, spacing: 12,
+                       aligny: 0.5, tapto: "navigation_and_routing/book/" + b[4], c: [
+                {t: "column", w: 36, h: 48, radius: 4, bg: m_pri_cont,
+                 alignx: 0.5, aligny: 0.5, c: [ icon(ic_book, 14, m_on_pri_cont) ]},
+                {t: "column", fillw: 1, fith: 1, spacing: 2, c: [
+                    para(b[0], 16, 400, m_on_surface),
+                    txt(b[1], 13, 400, m_on_surf_var),
+                ]},
+                icon(ic_fwd, 12, m_on_surf_var),
+            ]})
+        }
+    }
+    return rows
+}
+
+fn nr_page(active, filter) {
+    return page(m_surface, [
+        m_appbar("Books", "index"),
+        nr_tabbar(active),
+        {t: "scroll", fillw: 1, c: nr_booklist(filter) },
+        nr_bottombar("Books"),
+    ])
+}
+
+fn nr_bottombar(active) {
+    let items = [
+        ["Books", ic_book, "navigation_and_routing"],
+        ["Authors", ic_user, "navigation_and_routing/authors"],
+        ["Settings", ic_gear, "navigation_and_routing/settings"],
+    ]
+    let cells = []
+    for it in items {
+        let ink = pick_if(it[0] == active, m_primary, m_on_surf_var)
+        cells.push({t: "column", fillw: 1, h: 80, spacing: 4, alignx: 0.5,
+                    aligny: 0.5, tapto: it[2],
+                    c: [ icon(it[1], 15, ink), txt(it[0], 12, 500, ink) ]})
+    }
+    return {t: "column", fillw: 1, bg: m_surf_cont, c: [
+        rule(m_outline_var), {t: "row", fillw: 1, h: 80, c: cells},
+    ]}
+}
+
+fn screen_navigation_and_routing() { return nr_page("Popular", "popular") }
+fn screen_navigation_and_routing_new() { return nr_page("New", "new") }
+fn screen_navigation_and_routing_all() { return nr_page("All", "all") }
+
+fn screen_navigation_and_routing_authors() {
+    let rows = []
+    for a in nr_authors {
+        rows.push({t: "row", fillw: 1, fith: 1, padx: 16, pady: 8, spacing: 12,
+                   aligny: 0.5, tapto: "navigation_and_routing/author/" + a[2], c: [
+            {t: "column", w: 40, h: 40, radius: 20, bg: m_ter_cont,
+             alignx: 0.5, aligny: 0.5, c: [ icon(ic_user, 14, m_on_ter_cont) ]},
+            {t: "column", fillw: 1, fith: 1, spacing: 2, c: [
+                para(a[0], 16, 400, m_on_surface),
+                txt(a[1], 13, 400, m_on_surf_var),
+            ]},
+            icon(ic_fwd, 12, m_on_surf_var),
+        ]})
+    }
+    return page(m_surface, [
+        m_appbar("Authors", "index"),
+        {t: "scroll", fillw: 1, c: rows},
+        nr_bottombar("Authors"),
+    ])
+}
+
+fn screen_navigation_and_routing_book(key) {
+    let title = ""
+    let author = ""
+    for b in nr_books { if b[4] == key { title = b[0]; author = b[1] } }
+    return page(m_surface, [
+        m_appbar("Book", "navigation_and_routing"),
+        {t: "scroll", fillw: 1, pad: 24, spacing: 16, alignx: 0.5, c: [
+            {t: "column", w: 96, h: 128, radius: 8, bg: m_pri_cont, elevation: 2,
+             alignx: 0.5, aligny: 0.5, c: [ icon(ic_book, 34, m_on_pri_cont) ]},
+            txt(title, 24, 400, m_on_surface),
+            txt(author, 16, 400, m_on_surf_var),
+            m_btn_outlined("View author"),
+        ]},
+    ])
+}
+
+fn screen_navigation_and_routing_author(key) {
+    let name = ""
+    for a in nr_authors { if a[2] == key { name = a[0] } }
+    let rows = []
+    for b in nr_books {
+        if b[1] == name {
+            rows.push(m_navrow(b[0], "navigation_and_routing/book/" + b[4]))
+        }
+    }
+    return page(m_surface, [
+        m_appbar("Author", "navigation_and_routing/authors"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            {t: "column", fillw: 1, spacing: 8, alignx: 0.5, pady: 12, c: [
+                {t: "column", w: 72, h: 72, radius: 36, bg: m_ter_cont,
+                 alignx: 0.5, aligny: 0.5, c: [ icon(ic_user, 26, m_on_ter_cont) ]},
+                txt(name, 22, 400, m_on_surface),
+            ]},
+            m_section("Books", rows),
+        ]},
+    ])
+}
+
+fn screen_navigation_and_routing_settings() {
+    return page(m_surface, [
+        m_appbar("Settings", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("Account", [ m_btn("Sign out", m_err_cont, m_error) ]),
+            m_section("Navigation examples", [
+                para("Example using the Link widget:", 14, 400, m_on_surf_var),
+                m_btn_outlined("Go to /book/0"),
+                para("Example using GoRouter.of(context).go():", 14, 400, m_on_surf_var),
+                m_btn_outlined("Go to /authors"),
+                para("Displays a dialog on the root Navigator:", 14, 400, m_on_surf_var),
+                m_btn_outlined("Show Dialog"),
+            ]),
+        ]},
+        nr_bottombar("Settings"),
+    ])
+}
+
+fn screen_navigation_and_routing_signin() {
+    return page(m_surface, [
+        m_appbar("Sign in", "navigation_and_routing"),
+        {t: "scroll", fillw: 1, pad: 24, spacing: 16, c: [
+            txt("Sign in", 24, 400, m_on_surface),
+            fa_field("Username", "Enter your username"),
+            fa_field("Password", "Enter your password"),
+            m_btn("Sign in", m_primary, m_on_primary),
+            para("The sample gates every route behind this screen with a "
+                + "redirect. There is no redirect here — no route table to "
+                + "attach one to.", 13, 400, m_on_surf_var),
+        ]},
+    ])
+}
+

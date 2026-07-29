@@ -1,0 +1,13 @@
+// platform_view_swift — flutter/samples/platform_view_swift
+fn screen_platform_view_swift() {
+    return na_screen("platform_view_swift",
+        "Combining a native iOS UIViewController with a full-screen Flutter "
+        + "view, switching between them and passing a counter across.",
+        [
+            "The whole technique is UIKit presenting a FlutterViewController and a MethodChannel carrying the count.",
+            "makepad does not present as a UIViewController you can push and pop from Swift.",
+            "There is no iOS target in this repo.",
+        ],
+        "Not portable. The sample is a UIKit navigation technique.")
+}
+

@@ -1,0 +1,13 @@
+// tool — flutter/samples/tool
+// Not a sample: the repo's own CI tooling.
+fn screen_tool() {
+    return na_screen("tool",
+        "The repository's CI helper — it walks every sample, runs flutter "
+        + "analyze and the tests, and reports which ones fail.",
+        [
+            "It is build tooling, not an app.",
+            "Its analogue here is cargo test plus tests/flutter_samples.rs, which sweeps every route in this kit and asserts each one translates.",
+        ],
+        "Nothing to render, but the idea did port — the route sweep is this repo's version of it.")
+}
+

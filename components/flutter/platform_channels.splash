@@ -1,0 +1,14 @@
+// platform_channels — flutter/samples/platform_channels
+fn screen_platform_channels() {
+    return na_screen("platform_channels",
+        "MethodChannel, EventChannel, BasicMessageChannel and custom "
+        + "MessageCodecs — invoking platform methods, streaming values back, and "
+        + "passing typed messages both ways.",
+        [
+            "The Dart half is a thin UI over channel calls; the substance is the Kotlin and Swift on the other side.",
+            "There is no channel in the render pipeline. splash_render::build takes a `register` hook for injecting host functions, but nothing here installs one.",
+            "The nearest thing this project has is Splash-OH's splash.invoke(tool, args) bridge — the same idea, already built, in the sibling repo.",
+        ],
+        "Not portable as a screen. The mechanism exists in this project; it lives in Splash-OH, not in the renderer.")
+}
+

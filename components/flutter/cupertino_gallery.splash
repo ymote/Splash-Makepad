@@ -1,0 +1,418 @@
+// cupertino_gallery — flutter/samples/cupertino_gallery
+//
+// A CupertinoTabScaffold with two tabs (Widgets, Settings). The Widgets tab is
+// a CupertinoSliverNavigationBar large title over 21 list rows, each pushing a
+// WidgetDetailPage.
+//
+// Every detail page below is transcribed from its own source in
+// `cupertino_gallery/lib/widgets/*.dart` — the same labels, the same controls,
+// the same initial values (`switch_page.dart` starts ON, `checkbox_page.dart`
+// OFF, `slider_page.dart` at 0.5, `picker_page.dart` shows One/Two/Three).
+// An earlier version of this file invented its own content for these pages,
+// which is why the gallery read as barely implemented.
+//
+// Geometry is Flutter's, from the framework source rather than the spec:
+// CupertinoButton large is minSize 44 / padding v16 h20 / radius 12
+// (cupertino/constants.dart:64-86); CupertinoTextField radius 9
+// (text_field.dart:369); the activity indicator is radius 10
+// (activity_indicator.dart:12); the tab bar is 50 (bottom_tab_bar.dart:19);
+// segmented controls are 28 tall (segmented_control.dart:22).
+
+let cg_widgets = [
+    ["Action Sheet", "action_sheet"], ["Activity Indicator", "activity"],
+    ["Alert Dialog", "alert"], ["Button", "button"], ["Checkbox", "checkbox"],
+    ["Context Menu", "context_menu"], ["Date Picker", "date_picker"],
+    ["List Tile", "list_tile"], ["Picker", "picker"],
+    ["Popup Surface", "popup"], ["Radio", "radio"], ["Scrollbar", "scrollbar"],
+    ["Search Text Field", "search"], ["Segmented Control", "segmented"],
+    ["Sheet", "sheet"], ["Slider", "slider"],
+    ["Sliding Segmented Control", "sliding"], ["Switch", "switch"],
+    ["Text Field", "text_field"], ["Text Theme", "text_theme"],
+    ["Time Picker", "time_picker"],
+]
+
+fn cg_tabbar(active) {
+    let items = [
+        ["Widgets", ic_list, "cupertino_gallery"],
+        ["Settings", ic_gear, "cupertino_gallery/settings"],
+    ]
+    let cells = []
+    for it in items {
+        let ink = pick_if(it[0] == active, c_blue, c_label2)
+        cells.push({t: "column", fillw: 1, h: 50, spacing: 2, alignx: 0.5, aligny: 0.5,
+                    tapto: it[2], c: [ icon(it[1], 18, ink), txt(it[0], 10, 400, ink) ]})
+    }
+    return {t: "column", fillw: 1, bg: c_grouped, c: [
+        rule(c_separator),
+        {t: "row", fillw: 1, h: 50, c: cells},
+    ]}
+}
+
+fn screen_cupertino_gallery() {
+    let rows = []
+    for w in cg_widgets {
+        // CustomCupertinoListTile: 16 horizontal / 12 vertical padding, a
+        // trailing forward chevron and a bottom separator (widgets_page.dart).
+        rows.push({t: "column", fillw: 1, c: [
+            {t: "row", fillw: 1, fith: 1, padx: 16, pady: 12,
+             tapto: "cupertino_gallery/" + w[1], c: [
+                txt(w[0], 17, 400, c_label),
+                spacer(),
+                icon(ic_fwd, 13, c_label2),
+            ]},
+            rule(c_separator),
+        ]})
+    }
+    return page(c_bg, [
+        {t: "row", bg: c_grouped, fillw: 1, h: 44, padx: 16, aligny: 0.5, c: [
+            {t: "row", fitw: 1, h: 44, padx: 4, spacing: 4, aligny: 0.5,
+             tapto: "index", c: [
+                icon(ic_back, 15, c_blue), txt("Samples", 17, 400, c_blue),
+            ]},
+        ]},
+        c_largetitle("Cupertino Gallery"),
+        {t: "scroll", fillw: 1, bg: c_grouped, c: rows},
+        cg_tabbar("Widgets"),
+    ])
+}
+
+fn screen_cupertino_gallery_settings() {
+    return page(c_bg, [
+        c_largetitle("Settings"),
+        {t: "scroll", fillw: 1, padx: 16, c: [
+            c_group("APPEARANCE", [
+                {t: "row", fillw: 1, h: 44, padx: 16, spacing: 8, aligny: 0.5, c: [
+                    txt("Dark Mode", 17, 400, c_label), spacer(),
+                    {t: "toggle", on: dk, w: 51, h: 31},
+                ]},
+            ]),
+            c_group("TEXT SIZE", [
+                {t: "column", fillw: 1, padx: 16, pady: 12, spacing: 8, c: [
+                    {t: "slider", value: 0.5, fillw: 1, h: 28},
+                    {t: "row", fillw: 1, c: [
+                        txt("A", 13, 400, c_label2), spacer(), txt("A", 22, 400, c_label2),
+                    ]},
+                ]},
+            ]),
+        ]},
+        cg_tabbar("Settings"),
+    ])
+}
+
+// ---- the WidgetDetailPage shell ---------------------------------------------
+// Each page is a CupertinoPageScaffold: a nav bar over a centred child.
+
+fn cg_detail(title, body_kids) {
+    return page(c_bg, [
+        c_navbar(title, "cupertino_gallery"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, alignx: 0.5, c: body_kids},
+    ])
+}
+
+fn cg_note(s) {
+    return {t: "column", fillw: 1, padx: 4, c: [ para(s, 13, 400, c_label2) ]}
+}
+
+// CupertinoButton, large size style. `.filled` paints activeBlue; plain draws
+// the label in activeBlue on nothing; disabled drops to the inactive grey.
+fn cg_button(label, filled, enabled) {
+    let ink = pick_if(enabled == 1, pick_if(filled == 1, white, c_blue), c_label2)
+    let fill = pick_if(filled == 1, pick_if(enabled == 1, c_blue, c_fill), clear)
+    return {t: "column", bg: fill, radius: 12, h: 44, padx: 20, fitw: 1,
+            alignx: 0.5, aligny: 0.5, c: [ txt(label, 17, 400, ink) ]}
+}
+
+// button_page.dart: two labelled groups, each Enabled then Disabled.
+fn screen_cg_button() {
+    return cg_detail("Button", [
+        txt("CupertinoButton widget", 17, 400, c_label),
+        cg_button("Enabled", 0, 1),
+        cg_button("Disabled", 0, 0),
+        gap(16),
+        txt("CupertinoButton.filled widget", 17, 400, c_label),
+        cg_button("Enabled", 1, 1),
+        cg_button("Disabled", 1, 0),
+    ])
+}
+
+// switch_page.dart holds one CupertinoSwitch, initially ON. Track 51x31 with a
+// 28 thumb (cupertino/switch.dart:29-31).
+fn screen_cg_switch() {
+    return cg_detail("Switch", [ {t: "toggle", on: 1, w: 51, h: 31} ])
+}
+
+// checkbox_page.dart: one CupertinoCheckbox, initially OFF.
+fn screen_cg_checkbox() {
+    return cg_detail("Checkbox", [ {t: "checkbox", on: 0, w: 18, h: 18} ])
+}
+
+// slider_page.dart: one CupertinoSlider at 0.5.
+fn screen_cg_slider() {
+    return cg_detail("Slider", [ {t: "slider", value: 0.5, fillw: 1, h: 30} ])
+}
+
+// radio_page.dart: three CupertinoListTiles, each with a leading CupertinoRadio,
+// in a RadioGroup with the first selected.
+fn screen_cg_radio() {
+    let rows = []
+    let labels = ["Option 1", "Option 2", "Option 3"]
+    let i = 0
+    for l in labels {
+        if i > 0 { rows.push(rule(c_separator)) }
+        rows.push({t: "row", fillw: 1, h: 44, padx: 16, spacing: 12, aligny: 0.5, c: [
+            {t: "radio", on: pick_if(i == 0, 1, 0), w: 16, h: 16},
+            txt(l, 17, 400, c_label),
+        ]})
+        i = i + 1
+    }
+    return cg_detail("Radio", [
+        {t: "column", fillw: 1, bg: c_grouped, radius: 10, c: rows},
+    ])
+}
+
+// activity_indicator_page.dart: one centred CupertinoActivityIndicator.
+fn screen_cg_activity() {
+    return cg_detail("Activity Indicator", [ {t: "loading", w: 20, h: 20, bg: c_label2} ])
+}
+
+// alert_dialog_page.dart: a button showing an alert titled "Alert" with
+// "This is a sample alert dialog." and OK / NO.
+fn screen_cg_alert() {
+    return cg_detail("Alert Dialog", [
+        cg_button("Show Alert Dialog", 0, 1),
+        {t: "column", bg: c_grouped, radius: 14, w: 270, alignx: 0.5, c: [
+            {t: "column", fillw: 1, pad: 20, spacing: 4, alignx: 0.5, c: [
+                txt("Alert", 17, 500, c_label),
+                para("This is a sample alert dialog.", 13, 400, c_label),
+            ]},
+            rule(c_separator),
+            {t: "row", fillw: 1, h: 45, c: [
+                {t: "column", fillw: 1, fillh: 1, alignx: 0.5, aligny: 0.5,
+                 c: [ txt("OK", 17, 400, c_blue) ]},
+                {t: "column", w: 1, fillh: 1, bg: c_separator},
+                {t: "column", fillw: 1, fillh: 1, alignx: 0.5, aligny: 0.5,
+                 c: [ txt("NO", 17, 400, c_blue) ]},
+            ]},
+        ]},
+    ])
+}
+
+// action_sheet_page.dart: Title / Message, Action One, Action Two, Cancel.
+fn cg_sheet_action(label, weight) {
+    return {t: "column", fillw: 1, h: 57, alignx: 0.5, aligny: 0.5,
+            c: [ txt(label, 20, weight, c_blue) ]}
+}
+
+fn screen_cg_action_sheet() {
+    return cg_detail("Action Sheet", [
+        cg_button("Show Action Sheet", 0, 1),
+        {t: "column", fillw: 1, spacing: 8, c: [
+            {t: "column", fillw: 1, bg: c_grouped, radius: 14, c: [
+                {t: "column", fillw: 1, pad: 16, spacing: 2, alignx: 0.5, c: [
+                    txt("Title", 13, 500, c_label2),
+                    txt("Message", 13, 400, c_label2),
+                ]},
+                rule(c_separator),
+                cg_sheet_action("Action One", 400),
+                rule(c_separator),
+                cg_sheet_action("Action Two", 400),
+            ]},
+            {t: "column", fillw: 1, bg: c_grouped, radius: 14,
+             c: [ cg_sheet_action("Cancel", 500) ]},
+        ]},
+    ])
+}
+
+// list_tile_page.dart: an insetGrouped section then a plain one, three
+// Title/Subtitle tiles each, leading icons info/person/wifi then search/heart/ant.
+fn cg_tile(glyph) {
+    return {t: "row", fillw: 1, fith: 1, padx: 16, pady: 10, spacing: 16,
+            aligny: 0.5, c: [
+        icon(glyph, 20, c_blue),
+        {t: "column", fillw: 1, fith: 1, spacing: 3, c: [
+            txt("Title", 17, 400, c_label),
+            txt("Subtitle", 12, 400, c_label2),
+        ]},
+        icon(ic_fwd, 13, c_label2),
+    ]}
+}
+
+fn cg_tile_section(glyphs) {
+    let rows = []
+    let first = 1
+    for g in glyphs {
+        if first == 0 { rows.push(rule(c_separator)) }
+        first = 0
+        rows.push(cg_tile(g))
+    }
+    return {t: "column", fillw: 1, bg: c_grouped, radius: 10, c: rows}
+}
+
+fn screen_cg_list_tile() {
+    return cg_detail("List Tile", [
+        cg_tile_section([ic_bolt, ic_user, ic_globe]),
+        cg_tile_section([ic_search, ic_heart, ic_leaf]),
+    ])
+}
+
+// text_field_page.dart: one CupertinoTextField, placeholder "Enter text".
+fn screen_cg_text_field() {
+    return cg_detail("Text Field", [
+        {t: "column", fillw: 1, h: 36, radius: 9, bg: c_grouped, border: 1,
+         bordercolor: c_separator, padx: 7, aligny: 0.5,
+         c: [ {t: "input", placeholder: "Enter text", fillw: 1, fith: 1} ]},
+    ])
+}
+
+// search_text_field_page.dart: a bare CupertinoSearchTextField, height 36.
+fn screen_cg_search() {
+    return cg_detail("Search Text Field", [
+        {t: "row", fillw: 1, h: 36, radius: 9, bg: c_fill, padx: 8, spacing: 6,
+         aligny: 0.5, c: [
+            icon(ic_search, 13, c_label2),
+            {t: "input", placeholder: "Search", fillw: 1, fith: 1},
+        ]},
+    ])
+}
+
+// picker_page.dart: CupertinoPicker, itemExtent 32, children One/Two/Three.
+fn screen_cg_picker() {
+    return cg_detail("Picker", [
+        c_wheel([["One", "Two", "Three"]], 1),
+        cg_note("makepad has no picker widget, so this wheel is drawn from a "
+                + "column of labels with the selection band behind it. It does "
+                + "not spin."),
+    ])
+}
+
+// date_picker_page.dart: CupertinoDatePicker in its default dateAndTime mode.
+fn screen_cg_date_picker() {
+    return cg_detail("Date Picker", [
+        c_wheel([["Mon Jul 27", "Tue Jul 28", "Wed Jul 29"],
+                 ["8", "9", "10"], ["25", "30", "35"], ["AM", "PM", ""]], 1),
+        cg_note("Drawn, not native — see the Picker page."),
+    ])
+}
+
+// time_picker_page.dart: CupertinoTimerPicker (hours and minutes).
+fn screen_cg_time_picker() {
+    return cg_detail("Time Picker", [
+        c_wheel([["0", "1", "2"], ["hours", "hours", "hours"],
+                 ["14", "15", "16"], ["min", "min", "min"]], 1),
+        cg_note("Drawn, not native — see the Picker page."),
+    ])
+}
+
+// segmented_control_page.dart / sliding_segmented_control_page.dart:
+// One / Two / Three, first selected. Both are 28 tall.
+fn cg_segments(sliding) {
+    let segs = ["One", "Two", "Three"]
+    let cells = []
+    let i = 0
+    for s in segs {
+        let sel = i == 0
+        let bg = pick_if(sel, pick_if(sliding == 1, c_grouped, c_blue), clear)
+        let ink = pick_if(sel && sliding == 0, white, c_label)
+        cells.push({t: "column", fillw: 1, h: 28, radius: 7, alignx: 0.5,
+                    aligny: 0.5, bg: bg, c: [ txt(s, 13, 500, ink) ]})
+        i = i + 1
+    }
+    return cells
+}
+
+fn screen_cg_segmented() {
+    return cg_detail("Segmented Control", [
+        {t: "row", fillw: 1, h: 32, radius: 7, border: 1, bordercolor: c_blue,
+         pad: 2, c: cg_segments(0)},
+    ])
+}
+
+fn screen_cg_sliding() {
+    return cg_detail("Sliding Segmented Control", [
+        {t: "row", fillw: 1, h: 32, radius: 8, bg: c_fill, pad: 2,
+         c: cg_segments(1)},
+        cg_note("The thumb slides between segments under the finger. The static "
+                + "control is what the DSL can express; the sliding needs an "
+                + "animation it has no vocabulary for."),
+    ])
+}
+
+// text_theme_page.dart: three sample lines in the theme's styles.
+fn screen_cg_text_theme() {
+    return cg_detail("Text Theme", [
+        {t: "column", fillw: 1, spacing: 16, c: [
+            para("This is the default text style", 17, 400, c_label),
+            para("This is the action text style", 17, 400, c_blue),
+            para("This is the picker text style", 21, 400, c_label),
+        ]},
+    ])
+}
+
+// scrollbar_page.dart: a CupertinoScrollbar over rows of "Item N".
+fn screen_cg_scrollbar() {
+    let rows = []
+    let i = 0
+    while i < 24 {
+        rows.push({t: "column", fillw: 1, c: [
+            {t: "row", fillw: 1, h: 44, padx: 16, aligny: 0.5,
+             c: [ txt("Item " + i, 17, 400, c_label) ]},
+            rule(c_separator),
+        ]})
+        i = i + 1
+    }
+    return page(c_bg, [
+        c_navbar("Scrollbar", "cupertino_gallery"),
+        {t: "scroll", fillw: 1, bg: c_grouped, c: rows},
+    ])
+}
+
+// context_menu_page.dart: "Long press to activate context menu:" over a child,
+// with Action one / Action two.
+fn screen_cg_context_menu() {
+    return cg_detail("Context Menu", [
+        para("Long press to activate context menu:", 17, 400, c_label),
+        {t: "column", w: 120, h: 120, radius: 8, bg: c_fill, alignx: 0.5,
+         aligny: 0.5, c: [ icon(ic_image, 30, c_label2) ]},
+        {t: "column", fillw: 1, bg: c_grouped, radius: 14, c: [
+            {t: "column", fillw: 1, h: 44, padx: 16, aligny: 0.5,
+             c: [ txt("Action one", 17, 400, c_label) ]},
+            rule(c_separator),
+            {t: "column", fillw: 1, h: 44, padx: 16, aligny: 0.5,
+             c: [ txt("Action two", 17, 400, c_label) ]},
+        ]},
+        cg_note("A long-press lifts the child into a full-screen overlay. The "
+                + "DSL has tap and nothing else, and no overlay to lift into."),
+    ])
+}
+
+// popup_surface_page.dart: a button, and the surface reading
+// "This is a popup surface."
+fn screen_cg_popup() {
+    return cg_detail("Popup Surface", [
+        cg_button("Show Popup Surface", 0, 1),
+        {t: "column", fillw: 1, bg: c_grouped, radius: 14, pad: 24, alignx: 0.5,
+         c: [ txt("This is a popup surface.", 17, 400, c_label) ]},
+        cg_note("CupertinoPopupSurface is the blurred backing the action sheet "
+                + "and alert are drawn on. The blur needs a backdrop filter the "
+                + "DSL cannot express."),
+    ])
+}
+
+// sheet_page.dart: a button, then a sheet titled "Sheet" with a close control
+// and the body "This is a sheet".
+fn screen_cg_sheet() {
+    return cg_detail("Sheet", [
+        cg_button("Show Sheet", 0, 1),
+        {t: "column", fillw: 1, bg: c_grouped, radius: 14, c: [
+            {t: "row", fillw: 1, h: 44, padx: 16, aligny: 0.5, c: [
+                txt("Sheet", 17, 500, c_label), spacer(),
+                icon(ic_ban, 15, c_blue),
+            ]},
+            rule(c_separator),
+            {t: "column", fillw: 1, pad: 24, alignx: 0.5,
+             c: [ txt("This is a sheet", 17, 400, c_label) ]},
+        ]},
+        cg_note("A CupertinoSheetRoute presents a stacked, draggable sheet — a "
+                + "route, not a widget in the tree."),
+    ])
+}
