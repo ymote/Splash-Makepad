@@ -105,7 +105,7 @@ pub fn with_state(route: &str, dark: bool, kit: &str) -> String {
 /// Hosts that never animate can keep calling [`with_state`], which pins t to 0.
 pub fn with_state_at(route: &str, dark: bool, t: f64, kit: &str) -> String {
     format!(
-        "let st = {{ route: {route:?}, dark: {}, t: {t} }}\n{kit}",
+        "let st = {{ route: {route:?}, dark: {}, t: {t}, backend: \"makepad\" }}\n{kit}",
         u8::from(dark)
     )
 }

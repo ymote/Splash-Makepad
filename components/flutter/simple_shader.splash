@@ -1,12 +1,56 @@
-// simple_shader — flutter/samples/simple_shader
-fn screen_simple_shader() {
-    return na_screen("simple_shader",
-        "The minimal Flutter fragment-shader sample: a GLSL shader declared in "
-        + "pubspec.yaml, loaded at runtime and painted across a box.",
-        [
-            "Same constraint as simple_sdf: makepad has MPSL and paints every widget with it, but no DSL node carries shader source.",
-            "Shaders compile at build time here. script_mod! compiles MPSL when the crate is built; a runtime string is never compiled, and a widget given one renders blank — verified on device by this repo's theming work.",
-        ],
-        "Not portable via the DSL. Reaching it means a compiled shader variant in splash-widgets that a DSL node selects by name.")
-}
+// Simple Shader — flutter/samples/simple_shader
+//
+// Status: **attempted, does not render.** Not "no analogue" any more — that was
+// too quick — but not working either, and the screen says so rather than
+// claiming a shader it cannot draw.
+//
+// The route is right in principle. MPSL compiles at build time, so a DSL node
+// cannot carry shader source; what it *can* do is name a shader that was
+// already compiled. `mod.widgets.FlutterShader` in `splash-widgets` holds
+// the sky -> blue -> navy diagonal gradient, transcribed from the sample's own GLSL, and `{t:"shader"}` is a
+// real NodeKind that emits `FlutterShader { width: Fill, height: 300 }`.
+//
+// What actually happens: the widget compiles, the node is emitted correctly,
+// and nothing draws. No shader error is logged. Two hypotheses were tested and
+// both were wrong — that the emitted `draw_bg +: { radius }` was clobbering the
+// pixel shader (the failure mode this repo documents for runtime overrides),
+// and that GLSL's single-argument vector constructors were failing to compile.
+// Removing both changed nothing.
+//
+// The remaining suspect is the isolate: `splash_widgets::widgets_mod` runs on
+// the app's main VM, while a mounted `Splash` allocates its own. Widgets that
+// upstream registers resolve there; one this crate *adds* to the prelude may
+// not. That is the same seam as the repo's one upstream PR, and it has not been
+// confirmed.
 
+fn screen_simple_shader() {
+    return page(m_surface, [
+        m_appbar("Simple Shader", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            {t: "row", bg: m_err_cont, radius: 8, fillw: 1, padx: 12, pady: 8,
+             spacing: 8, c: [
+                icon(ic_ban, 14, m_error),
+                txt("Attempted, does not render", 14, 500, m_error),
+            ]},
+            m_section("What was built", [
+                para("The sky to blue to navy diagonal gradient, transcribed from the sample's GLSL into MPSL "
+                     + "and compiled into splash-widgets as FlutterShader. "
+                     + "`{t:\"shader\"}` is a real node kind and emits it.",
+                     13, 400, m_on_surf_var),
+            ]),
+            m_section("What happens", [
+                para("The widget compiles, the node is emitted, and nothing "
+                     + "draws. No shader error is logged.", 13, 400, m_on_surf_var),
+                para("Two hypotheses were tested and both were wrong: that the "
+                     + "emitted draw_bg override was clobbering the pixel "
+                     + "shader, and that GLSL's single-argument vector "
+                     + "constructors were failing to compile. Removing both "
+                     + "changed nothing.", 13, 400, m_on_surf_var),
+                para("The remaining suspect is the isolate VM a mounted Splash "
+                     + "allocates: a widget this crate adds to the prelude may "
+                     + "not resolve there, which is the same seam as the repo's "
+                     + "one upstream PR. Unconfirmed.", 13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}

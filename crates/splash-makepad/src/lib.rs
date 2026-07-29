@@ -56,6 +56,8 @@ fn widget_name(kind: NodeKind) -> &'static str {
         // tilt. A map is a widget here, not a platform view — which is why
         // `google_maps` is portable after all.
         NodeKind::Map => "MapView",
+        NodeKind::Shader => "FlutterShader",
+        NodeKind::Sdf => "FlutterSdf",
         // every container-ish kind is a View with the right flow.
         _ => "View",
     }

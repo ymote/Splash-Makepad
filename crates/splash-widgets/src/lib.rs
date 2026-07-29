@@ -174,6 +174,66 @@ script_mod! {
         }
     }
     mod.prelude.widgets.LoadingMorph = mod.widgets.LoadingMorph
+
+    // ---- flutter/samples' two fragment-shader samples ------------------------
+    //
+    // `simple_shader` and `simple_sdf` were written off as unportable on the
+    // grounds that MPSL compiles at build time and no DSL node carries shader
+    // source. Both halves are true; the conclusion was not. A *compiled*
+    // variant here, selected by name from the DSL, is the way in — the same
+    // route this crate already uses to theme makepad's controls without a fork.
+    //
+    // Both are transcribed from the samples' own GLSL.
+
+    // simple_shader/shaders/simple.frag — a diagonal gradient through Flutter's
+    // sky -> blue -> navy.
+    mod.widgets.FlutterShader = View{
+        width: Fill
+        height: Fill
+        show_bg: true
+        draw_bg +: {
+            color: uniform(#0553B1)
+            pixel: fn() {
+                let sky  = vec3(2.0, 125.0, 253.0) / 255.0
+                let blue = vec3(5.0, 83.0, 177.0) / 255.0
+                let navy = vec3(4.0, 43.0, 89.0) / 255.0
+                let p = (self.pos.x + self.pos.y) * 0.5
+                let mut c = mix(sky, blue, p * 2.0)
+                if p >= 0.5 { c = mix(blue, navy, p * 2.0 - 1.0) }
+                return vec4(c, 1.0)
+            }
+        }
+    }
+    mod.prelude.widgets.FlutterShader = mod.widgets.FlutterShader
+
+    // simple_sdf/shaders/SDF.frag — sdHeart, pink on black, smoothstepped.
+    mod.widgets.FlutterSdf = View{
+        width: Fill
+        height: Fill
+        show_bg: true
+        draw_bg +: {
+            color: uniform(#FF69B4)
+            pixel: fn() {
+                let mut q = (self.pos - vec2(0.5, 0.5)) * 2.0
+                q.y = 0.0 - (q.y - 0.5)
+                q.x = abs(q.x)
+                let mut d = 0.0
+                if q.y + q.x > 1.0 {
+                    let u = q - vec2(0.25, 0.75)
+                    d = sqrt(dot(u, u)) - 1.41421356 / 4.0
+                } else {
+                    let a = q - vec2(0.0, 1.0)
+                    let m = max(q.x + q.y, 0.0)
+                    let b = q - 0.5 * m
+                    d = sqrt(min(dot(a, a), dot(b, b))) * sign(q.x - q.y)
+                }
+                let pink = vec3(255.0, 105.0, 180.0) / 255.0
+                let c = mix(pink, vec3(0.0, 0.0, 0.0), smoothstep(0.01, 0.02, d))
+                return vec4(c, 1.0)
+            }
+        }
+    }
+    mod.prelude.widgets.FlutterSdf = mod.widgets.FlutterSdf
 }
 
 // TODO(kits): Button touch-ripple as a `RippleButton` variant (it modifies the

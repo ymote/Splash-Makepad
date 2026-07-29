@@ -1,14 +1,56 @@
-// simple_sdf — flutter/samples/simple_sdf
-fn screen_simple_sdf() {
-    return na_screen("simple_sdf",
-        "Drawing signed distance functions with Flutter's FragmentShader API — "
-        + "a GLSL fragment shader loaded from an asset and painted by a "
-        + "CustomPainter.",
-        [
-            "makepad is the one place this is nearly the opposite of impossible: its widgets are drawn by MPSL shaders, and Sdf2d is a first-class SDF drawing API.",
-            "But it is unreachable from here. The Splash DSL has no shader node — NodeKind has 23 kinds and none of them carry source.",
-            "The translator emits a widget dialect string; a shader must be compiled at build time by script_mod!, which a runtime string never reaches. That is the same constraint this repo's fork-free theming is built on.",
-        ],
-        "Not portable via the DSL — but the capability is right there in makepad. An `sdf` node whose shader body compiles through splash-widgets is the obvious way in.")
-}
+// Simple SDF — flutter/samples/simple_sdf
+//
+// Status: **attempted, does not render.** Not "no analogue" any more — that was
+// too quick — but not working either, and the screen says so rather than
+// claiming a shader it cannot draw.
+//
+// The route is right in principle. MPSL compiles at build time, so a DSL node
+// cannot carry shader source; what it *can* do is name a shader that was
+// already compiled. `mod.widgets.FlutterSdf` in `splash-widgets` holds
+// sdHeart, transcribed from the sample's own GLSL, and `{t:"sdf"}` is a
+// real NodeKind that emits `FlutterSdf { width: Fill, height: 300 }`.
+//
+// What actually happens: the widget compiles, the node is emitted correctly,
+// and nothing draws. No shader error is logged. Two hypotheses were tested and
+// both were wrong — that the emitted `draw_bg +: { radius }` was clobbering the
+// pixel shader (the failure mode this repo documents for runtime overrides),
+// and that GLSL's single-argument vector constructors were failing to compile.
+// Removing both changed nothing.
+//
+// The remaining suspect is the isolate: `splash_widgets::widgets_mod` runs on
+// the app's main VM, while a mounted `Splash` allocates its own. Widgets that
+// upstream registers resolve there; one this crate *adds* to the prelude may
+// not. That is the same seam as the repo's one upstream PR, and it has not been
+// confirmed.
 
+fn screen_simple_sdf() {
+    return page(m_surface, [
+        m_appbar("Simple SDF", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            {t: "row", bg: m_err_cont, radius: 8, fillw: 1, padx: 12, pady: 8,
+             spacing: 8, c: [
+                icon(ic_ban, 14, m_error),
+                txt("Attempted, does not render", 14, 500, m_error),
+            ]},
+            m_section("What was built", [
+                para("sdHeart, pink on black, smoothstepped, transcribed from the sample's GLSL into MPSL "
+                     + "and compiled into splash-widgets as FlutterSdf. "
+                     + "`{t:\"sdf\"}` is a real node kind and emits it.",
+                     13, 400, m_on_surf_var),
+            ]),
+            m_section("What happens", [
+                para("The widget compiles, the node is emitted, and nothing "
+                     + "draws. No shader error is logged.", 13, 400, m_on_surf_var),
+                para("Two hypotheses were tested and both were wrong: that the "
+                     + "emitted draw_bg override was clobbering the pixel "
+                     + "shader, and that GLSL's single-argument vector "
+                     + "constructors were failing to compile. Removing both "
+                     + "changed nothing.", 13, 400, m_on_surf_var),
+                para("The remaining suspect is the isolate VM a mounted Splash "
+                     + "allocates: a widget this crate adds to the prelude may "
+                     + "not resolve there, which is the same seam as the repo's "
+                     + "one upstream PR. Unconfirmed.", 13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}

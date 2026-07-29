@@ -36,6 +36,11 @@ pub enum NodeKind {
     /// (`widgets/src/map`, ~12k lines) with rotation and tilt, so a real map is
     /// not a platform view here, it is a widget.
     Map,
+    /// The two fragment-shader samples, as compiled MPSL variants in
+    /// `splash-widgets`. A DSL node cannot carry shader source — MPSL compiles
+    /// at build time — but it can select a shader that was compiled.
+    Shader,
+    Sdf,
 }
 
 impl NodeKind {
@@ -66,6 +71,8 @@ impl NodeKind {
             "timepicker" => Self::TimePicker,
             "textpicker" => Self::TextPicker,
             "map" => Self::Map,
+            "shader" => Self::Shader,
+            "sdf" => Self::Sdf,
             _ => return None,
         })
     }
