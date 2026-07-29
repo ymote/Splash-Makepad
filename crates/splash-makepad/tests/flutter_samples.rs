@@ -142,11 +142,11 @@ fn cases() -> Vec<(String, &'static str)> {
     // The sixteen directories with no analogue. Each must reach its own note,
     // not the index — so assert on its verdict, not the shared banner.
     for (route, marker) in [
-        ("add_to_app", "FlutterEngine"),
+        ("add_to_app", "This screen is the embed"),
         ("analysis_defaults", "analysis_options.yaml"),
         ("android_splash_screen", "windowSplashScreenAnimatedIcon"),
-        ("asset_transformation", "SVG to PNG"),
-        ("background_isolate_channels", "BackgroundIsolateBinaryMessenger"),
+        ("asset_transformation", "splash:// resolves a request to bytes"),
+        ("background_isolate_channels", "without blocking"),
         ("docs", "compass_app"),
         ("google_maps", "OpenStreetMap vector tiles"),
         ("ios_app_clip", "entitlements"),
@@ -223,13 +223,37 @@ fn helper_calls_have_the_declared_arity() {
     // Comments are not code. A prose mention like "argb() then builds ..." was
     // being read as a zero-argument call to argb, which is a checker bug rather
     // than a kit one — strip line comments before scanning.
-    let kit: String = assembled()
-        .lines()
-        .map(|l| match l.find("//") {
-            Some(i) => format!("{}\n", &l[..i]),
-            None => format!("{l}\n"),
-        })
-        .collect();
+    // `//` only starts a comment outside a string literal. Cutting on the first
+    // occurrence truncated `m_section("splash:// resolves ...")` mid-call and
+    // reported it as taking fifteen arguments.
+    fn strip_comment(line: &str) -> String {
+        let (mut out, mut in_str, mut esc) = (String::new(), false, false);
+        let mut chars = line.chars().peekable();
+        while let Some(c) = chars.next() {
+            if in_str {
+                out.push(c);
+                match c {
+                    _ if esc => esc = false,
+                    '\\' => esc = true,
+                    '"' => in_str = false,
+                    _ => {}
+                }
+                continue;
+            }
+            if c == '"' {
+                in_str = true;
+                out.push(c);
+                continue;
+            }
+            if c == '/' && chars.peek() == Some(&'/') {
+                break;
+            }
+            out.push(c);
+        }
+        out.push('\n');
+        out
+    }
+    let kit: String = assembled().lines().map(strip_comment).collect();
 
     // Number of top-level arguments between the parens that follow `name(`.
     // An empty list is 0, and a trailing comma (legal in this DSL) is not an

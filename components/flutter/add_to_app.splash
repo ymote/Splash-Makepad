@@ -1,17 +1,40 @@
 // add_to_app — flutter/samples/add_to_app
-// Android and iOS host projects that import a Flutter module (fullscreen,
-// prebuilt_module, multiple_flutters, books, android_view, plugin).
-fn screen_add_to_app() {
-    return na_screen("add_to_app",
-        "Six Android/iOS host apps that embed a Flutter module — full-screen, "
-        + "prebuilt AAR/framework, multiple simultaneous engines, and a shared "
-        + "engine cached across activities.",
-        [
-            "The sample is mostly Kotlin, Swift and Gradle/CocoaPods wiring — the Dart is incidental.",
-            "There is no Splash equivalent of FlutterEngine, FlutterActivity or an engine cache to embed.",
-            "makepad owns its window and event loop; it is not a view you drop into a host activity.",
-            "Splash-OH is the closest thing this project has to add-to-app, and it inverts the relationship: ArkTS hands Rust one NodeContent and Rust drives the tree from there.",
-        ],
-        "Not portable. The sibling Splash-OH repo already answers the question this sample asks, from the other direction.")
-}
+//
+// Previously "no analogue": six Android/iOS host apps embedding a Flutter
+// module, mostly Kotlin, Swift and Gradle, with no FlutterEngine equivalent
+// here.
+//
+// The mistake was reading it as a sample about Flutter's embedding API rather
+// than about the shape of the problem. This app *is* add-to-app, inverted: an
+// ArkTS shell hands Rust exactly one NodeContent at startup, and every node
+// after that is created, configured, laid out and event-wired from Rust with no
+// per-widget and no per-frame ArkTS call.
+//
+// So rather than describe someone else's embed, this screen reports on its own.
 
+fn screen_add_to_app() {
+    return page(m_surface, [
+        m_appbar("Add to App", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("This screen is the embed", [
+                {t: "column", fillw: 1, bg: m_surf_lowest, radius: 8, pad: 12,
+                 spacing: 4, c: [
+                    txt("native nodes built from Rust", 13, 500, m_primary),
+                    para(invoke("embed.nodes"), 22, 500, m_on_surface),
+                ]},
+                para(invoke("embed.shape"), 13, 400, m_on_surf_var),
+            ]),
+            m_section("Same problem, opposite direction", [
+                para("Flutter's samples embed a Flutter module into a host that "
+                     + "owns the app. Here the host owns the app and hands over "
+                     + "a single surface, and the guest builds native widgets of "
+                     + "the host's own toolkit rather than painting its own.",
+                     13, 400, m_on_surf_var),
+                para("What has no counterpart: FlutterEngine, an engine cache, "
+                     + "multiple simultaneous engines, and the prebuilt "
+                     + "AAR/framework packaging that is most of the sample.",
+                     13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}

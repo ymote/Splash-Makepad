@@ -1,15 +1,40 @@
 // background_isolate_channels — flutter/samples/background_isolate_channels
-fn screen_background_isolate_channels() {
-    return na_screen("background_isolate_channels",
-        "Calling platform channels from a background isolate: passing a "
-        + "RootIsolateToken across and installing BackgroundIsolateBinaryMessenger "
-        + "so plugin calls work off the root isolate.",
-        [
-            "It exists because Flutter's platform channels are bound to the root isolate — a constraint with no counterpart here.",
-            "There are no platform channels in the Splash render pipeline to call from anywhere.",
-            "Rust threading is not isolate-shaped: no message-passing token is needed to call platform code off-thread.",
-            "The sibling Splash-OH repo does hold the real version of this problem — see its commit on doing no work on the sensor service's thread.",
-        ],
-        "Not portable. The constraint the sample teaches around does not exist in this stack.")
-}
+//
+// Previously "no analogue", on the grounds that the sample exists because
+// Flutter's platform channels are bound to the root isolate, a constraint with
+// no counterpart here.
+//
+// That is still true, and it made the wrong point. What the sample is really
+// about is doing platform work without blocking the UI, and this stack has the
+// same problem and a real answer to it — Splash-OH moved its sensor work off
+// the service's thread for exactly this reason.
 
+fn screen_background_isolate_channels() {
+    return page(m_surface, [
+        m_appbar("Background Work", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("A platform call that waits, without blocking", [
+                {t: "column", fillw: 1, bg: m_surf_lowest, radius: 8, pad: 12,
+                 spacing: 4, c: [
+                    txt("thread.offmain", 13, 500, m_primary),
+                    para(invoke("thread.offmain"), 12, 400, m_on_surf_var),
+                ]},
+                para("A sensor sample with a 250ms timeout. `blocked_ui_ms` is "
+                     + "how long this thread actually waited: the sampling runs "
+                     + "on the sensor service's own thread and the answer is "
+                     + "handed back, rather than the UI thread sitting on it.",
+                     13, 400, m_on_surf_var),
+            ]),
+            m_section("Why the sample's constraint does not exist here", [
+                para("Flutter binds platform channels to the root isolate, so "
+                     + "calling a plugin from a background isolate needs a "
+                     + "RootIsolateToken and BackgroundIsolateBinaryMessenger. "
+                     + "Rust threads have no such affinity — any thread can call "
+                     + "a capability.", 13, 400, m_on_surf_var),
+                para("The problem that remains is the ordinary one: not doing "
+                     + "slow work where the frame is drawn.",
+                     13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}

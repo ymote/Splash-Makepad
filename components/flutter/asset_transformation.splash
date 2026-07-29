@@ -1,13 +1,47 @@
 // asset_transformation — flutter/samples/asset_transformation
-fn screen_asset_transformation() {
-    return na_screen("asset_transformation",
-        "Flutter's build-time asset transformation: a Dart package declared in "
-        + "pubspec.yaml rewrites an asset (here, SVG to PNG) as it is bundled.",
-        [
-            "It is a build-system feature — the whole demonstration is the `assets:` section of pubspec.yaml plus a transformer package.",
-            "Cargo has no asset pipeline of its own; the equivalent would be a build.rs step, which is a build concern rather than a rendered screen.",
-            "The sample's UI is three images proving the transform ran.",
-        ],
-        "Not portable as UI. The analogue is a build script, and this repo's build.rs already does the one transformation it needs — concatenating these .splash files.")
+//
+// Previously "no analogue", on the grounds that Flutter's asset transformation
+// is a build-system feature — a Dart package named in pubspec.yaml rewrites an
+// asset as it is bundled — and Cargo has no asset pipeline.
+//
+// The first half is right and the conclusion still does not follow. Splash-OH
+// serves its frontend over a custom `splash://` scheme, and `assets::get(url)`
+// is the resolver: a request URL in, a mime type, a status and bytes out, with
+// one asset (`__splash.js`) *generated* rather than shipped. That is a request-
+// time asset pipeline, which is the same idea one stage later than Flutter's.
+//
+// The rows below are live: each is a real resolve performed when this screen
+// mounted.
+
+fn at_row(label, answer) {
+    return {t: "column", fillw: 1, fith: 1, bg: m_surf_lowest, radius: 8,
+            pad: 12, spacing: 4, c: [
+        txt(label, 13, 500, m_primary),
+        para(answer, 12, 400, m_on_surf_var),
+    ]}
 }
 
+fn screen_asset_transformation() {
+    return page(m_surface, [
+        m_appbar("Asset Transformation", "index"),
+        {t: "scroll", fillw: 1, pad: 16, spacing: 16, c: [
+            m_section("splash:// resolves a request to bytes", [
+                at_row("a generated asset", invoke("assets.shim")),
+                at_row("a shipped asset", invoke("assets.index")),
+                at_row("a miss", invoke("assets.missing")),
+            ]),
+            m_section("Where this differs from Flutter", [
+                para("Flutter transforms at bundle time: the asset on disk is "
+                     + "rewritten before it ships. This transforms at request "
+                     + "time — the resolver decides what the bytes are when the "
+                     + "page asks for them, which is why __splash.js can be "
+                     + "generated rather than stored.",
+                     13, 400, m_on_surf_var),
+                para("A miss answers 404 rather than declining. ArkWeb has no "
+                     + "default resolver for a custom scheme, so an unhandled "
+                     + "request is not a miss — it is a hang.",
+                     13, 400, m_on_surf_var),
+            ]),
+        ]},
+    ])
+}
