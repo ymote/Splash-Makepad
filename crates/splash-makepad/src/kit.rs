@@ -104,8 +104,31 @@ pub fn with_state(route: &str, dark: bool, kit: &str) -> String {
 ///
 /// Hosts that never animate can keep calling [`with_state`], which pins t to 0.
 pub fn with_state_at(route: &str, dark: bool, t: f64, kit: &str) -> String {
+    with_state_sized(route, dark, t, 0.0, 0.0, kit)
+}
+
+/// As [`with_state_at`], plus the viewport size in vp as `st.vw`/`st.vh`.
+///
+/// A page cannot ask to fill on this backend: `Splash` wraps whatever it mounts
+/// in `View{height:Fit, …}` (SPLASH_PREFIX, its own Rust source), so a root
+/// asking for `height: Fill` resolves against a Fit parent and collapses — the
+/// screen renders blank, measured on device. A Fit wrapper does size to its
+/// child, though, so a root with an explicit height fills the window and needs
+/// nothing changed upstream.
+///
+/// Zero means "not known yet" and the kit falls back to Fit, which is what the
+/// first mount gets before any window geometry has arrived.
+pub fn with_state_sized(
+    route: &str,
+    dark: bool,
+    t: f64,
+    vw: f64,
+    vh: f64,
+    kit: &str,
+) -> String {
     format!(
-        "let st = {{ route: {route:?}, dark: {}, t: {t}, backend: \"makepad\" }}\n{kit}",
+        "let st = {{ route: {route:?}, dark: {}, t: {t}, vw: {vw}, vh: {vh}, \
+         backend: \"makepad\" }}\n{kit}",
         u8::from(dark)
     )
 }

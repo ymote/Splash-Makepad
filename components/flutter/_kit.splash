@@ -369,6 +369,17 @@ fn page(bg_color, kids) {
     // stops being load-bearing.
     let c = [ {t: "text", id: "nav_signal", text: "", size: 1, h: 1, color: bg_color} ]
     for k in kids { c.push(k) }
+    // Fit, deliberately. Two things were tried and both are worse:
+    //
+    //   `fillh` — `Splash` wraps its mount in `View{height:Fit}` from its own
+    //   Rust source (SPLASH_PREFIX), so a root asking to fill resolves against
+    //   a Fit parent and collapses. Whole screen blank, measured on the 6T.
+    //
+    //   `h: st.vh` — a Fit wrapper does size to its child, so naming a height
+    //   should work. It does not yet: the viewport the host reports does not
+    //   match what the page needs, and the page came out roughly a third of the
+    //   screen with its content clipped. `st.vw`/`st.vh` are plumbed through
+    //   and correct in shape; the number is wrong. Left unused until measured.
     return {t: "column", bg: bg_color, fillw: 1, c: c}
 }
 

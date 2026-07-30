@@ -129,6 +129,11 @@ pub struct App {
     route: String,
     #[rust]
     dark: bool,
+    /// Viewport in vp, from WindowGeomChange. 0 until the first one arrives.
+    #[rust]
+    vw: f64,
+    #[rust]
+    vh: f64,
     #[rust]
     tick: u32,
     #[rust]
@@ -165,7 +170,9 @@ impl App {
             &self.route
         };
         let full =
-            splash_makepad::kit::with_state_at(route, self.dark, self.clock, &src);
+            splash_makepad::kit::with_state_sized(
+                route, self.dark, self.clock, self.vw, self.vh, &src,
+            );
         if let Some(node) = splash_render::build(&full, splash_makepad::kit::register_stub_capabilities) {
             let ui = splash_makepad::to_makepad_ui(&node);
             self.ui.widget(cx, ids!(host)).set_text(cx, &ui);
@@ -187,6 +194,23 @@ impl AppMain for App {
     }
 
     fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
+        // The viewport, so a page can name its own height. `Splash` wraps its
+        // mount in `View{height:Fit}`, so filling is not available — see
+        // `with_state_sized`. inner_size is physical; vp is what the kit's
+        // lengths are in.
+        if let Event::WindowGeomChange(e) = event {
+            let g = &e.new_geom;
+            let (vw, vh) = (
+                g.inner_size.x / g.dpi_factor,
+                g.inner_size.y / g.dpi_factor,
+            );
+            if (vw - self.vw).abs() > 0.5 || (vh - self.vh).abs() > 0.5 {
+                self.vw = vw;
+                self.vh = vh;
+                self.last_src.clear();
+                self.mount(cx);
+            }
+        }
         if matches!(event, Event::Startup) && !self.started {
             self.started = true;
             // Start on a named screen instead of the index, so one can be opened
