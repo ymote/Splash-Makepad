@@ -99,6 +99,14 @@ script_mod! {
                         // Upstream `Splash` always allocates an isolate VM; the
                         // light theme and the shared heap live on the app's main
                         // VM. See the repo README on the one upstream PR.
+                        // Fit, not Fill — and this is load-bearing.
+                        //
+                        // The kit's `{t: "scroll"}` emits a plain View on this
+                        // backend, so this ScrollYView is the only scrolling in
+                        // the app. A Fill child would exactly match it and
+                        // never scroll. See `page()` in `_kit.splash` for the
+                        // measurement, and why mapping Scroll to ScrollYView
+                        // makes it worse rather than better.
                         host := Splash{ width: Fill, height: Fit }
                     }
                     // The routing signal the mounted kit writes.

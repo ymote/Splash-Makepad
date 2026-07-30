@@ -327,11 +327,25 @@ fn rule(color) { return {t: "column", h: 1, bg: color, fillw: 1} }
 
 // A page root: full width, background painted, content stacked down.
 //
-// Deliberately does NOT set `fillh`. The host mounts the kit into
-// `Splash{ height: Fit }`, so a root asking for `height: Fill` resolves against
-// a Fit parent and collapses to nothing — every screen renders blank. The
-// enclosing ScrollYView in the host provides the scrolling instead. Same reason
-// the scroll bodies below are width-fill and height-fit.
+// Deliberately does NOT set `fillh`, and the reason is worth recording because
+// it looks like a bug and the obvious fix does not work.
+//
+// `{t: "scroll"}` emits a plain `View` on this backend — `NodeKind::Scroll`
+// falls through to `_ => "View"` in `widget_name` — so a kit scroll does not
+// scroll. The host's own ScrollYView is the only scrolling in the makepad
+// build, which needs its content taller than itself, so nothing inside may
+// fill. That is why every screen ends where its last child ends with bare
+// window below it, on all 108 routes.
+//
+// Mapping `NodeKind::Scroll => "ScrollYView"` is the apparent fix and it makes
+// things worse: the widget does not resolve inside the Splash isolate's
+// prelude, so it fails to instantiate and *every child of the scroll
+// disappears*. Measured — a Cupertino detail screen dropped from its full body
+// to 2649 bytes containing only its title. Same seam as `FlutterShader` and
+// `FlutterSdf`, which compile and never draw.
+//
+// So the real fix is upstream of the kit: register the scroll widget in the
+// isolate prelude. Until then Fit is correct, not lazy.
 fn page(bg_color, kids) {
     // The routing signal has to live INSIDE the mounted tree.
     //
