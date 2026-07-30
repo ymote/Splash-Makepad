@@ -553,3 +553,153 @@ fn probe2() {
 }
 
 
+
+/// Every control widget, asserted on the attribute makepad actually renders from.
+///
+/// `a_control_changes_what_the_screen_renders` only proves the output *differs*
+/// after a tap, which a stray label would satisfy. This pins the widget: a
+/// CheckBox/Toggle/RadioButton draws its state from `active`, a Slider from
+/// `default`, so those are the values that decide whether the control looks
+/// changed on screen. A test that does not name them cannot tell a working
+/// checkbox from a caption that happens to mention it.
+///
+/// Not a substitute for looking at the phone — this proves the dialect makepad is
+/// handed is correct, not that makepad paints it. Pixel confirmation needs an
+/// Android device; the only one here is off-limits.
+#[test]
+fn every_control_widget_flips_the_attribute_it_draws_from() {
+    let _serial = serial();
+    let kit = assembled();
+
+    // route, action, fragment required BEFORE, fragment required AFTER
+    let cases: &[(&str, &str, &str, &str)] = &[
+        // Toggles: on by default, so the tap must turn them off.
+        ("material_3_demo", "set:m3_switch=!", "active: true", "active: false"),
+        ("cupertino_gallery/switch", "set:cup_switch=!", "active: true", "active: false"),
+        ("form_app/form_widgets", "set:form_feature=!", "active: true", "active: false"),
+        // Checkboxes: off by default, so the tap must turn them on.
+        ("cupertino_gallery/checkbox", "set:cup_check=!", "active: false", "active: true"),
+        ("form_app/validation", "set:form_terms=!", "active: false", "active: true"),
+        ("date_planner/pagliacci", "set:plan_task_0=!", "active: false", "active: true"),
+        ("compass_app/activities", "set:ca_act_0=!", "active: false", "active: true"),
+        // Sliders draw from `default`. 2/4 -> 3/4.
+        ("cupertino_gallery/slider", "set:cup_slider=~5", "default: 0.5", "default: 0.75"),
+        ("form_app/form_widgets", "set:form_slider=~5", "default: 0.5", "default: 0.75"),
+        ("cupertino_gallery/settings", "set:cup_bright=~5", "default: 0.5", "default: 0.75"),
+        // The second M3 switch is off by default, so it must turn on.
+        ("material_3_demo", "set:m3_switch2=!", "active: false", "active: true"),
+        ("cupertino_gallery/settings", "set:cup_settings_dark=!", "active: false", "active: true"),
+        // A radio group is a set of RadioButtons reading one key, so selecting
+        // index 2 has to switch which one is active — not merely change
+        // something. Option 1 is the default, so `active: true` must survive
+        // while a third radio appears; the group is checked by the count below.
+        ("material_3_demo", "set:m3_radio=2", "active: true", "active: true"),
+        ("platform_design/profile", "set:pd_mood=2", "active: true", "active: true"),
+        // Steppers and cycles render their value as text.
+        ("compass_app/search", "set:ca_guests=+1", "text: \"2\"", "text: \"3\""),
+        ("simple_sdf", "set:sdf_res=~4", "22x22 cells", "33x33 cells"),
+        ("simple_shader", "set:sh_res=~4", "18x18 cells", "36x36 cells"),
+        ("google_maps", "set:gm_zoom=~4", "the sample's camera", "the harbour"),
+        ("dynamic_theme", "set:dt_scale=~3", "1x", "1.15x"),
+        ("platform_channels", "set:pc_one=!", "All channels", "One channel"),
+        ("asset_transformation", "set:at_one=!", "All three", "One request"),
+        ("platform_view_swift", "set:pvs_count=+1", "count 0", "count 1"),
+        ("testing_app", "set:testing_fav_1=!", "3 in favorites.", "4 in favorites."),
+        ("desktop_photo_search", "set:dps_query=~4", "mountains", "coffee"),
+    ];
+
+    let mut failures = Vec::new();
+    for (route, action, before_frag, after_frag) in cases {
+        splash_render::state::reset();
+        let before = render(&kit, route);
+        if !before.contains(before_frag) {
+            failures.push(format!(
+                "{route}: expected {before_frag:?} before {action:?} and it is absent — \
+                 the control is not rendering its default state"
+            ));
+        }
+        assert!(
+            splash_render::state::apply(action),
+            "{action:?} is not a state action"
+        );
+        let after = render(&kit, route);
+        if !after.contains(after_frag) {
+            failures.push(format!(
+                "{route}: {action:?} did not produce {after_frag:?} — the control \
+                 does not change the attribute makepad draws from"
+            ));
+        }
+    }
+    splash_render::state::reset();
+    assert!(failures.is_empty(), "\n{}", failures.join("\n"));
+}
+
+
+/// The controls that only do something once another control has been used.
+///
+/// `at_pick` and `pc_pick` step a selection that is not on screen until the
+/// screen has been switched to single-item mode, so they cannot be asserted from
+/// a reset state — the earlier table would have shown them as inert when they
+/// are not.
+#[test]
+fn a_control_behind_another_control_still_works() {
+    let _serial = serial();
+    let kit = assembled();
+    let cases: &[(&str, &str, &str, &str, &str)] = &[
+        // route, setup, action, absent before, present after
+        (
+            "asset_transformation",
+            "set:at_one=!",
+            "set:at_pick=~3",
+            "a generated asset — tap to step",
+            "a shipped asset — tap to step",
+        ),
+        (
+            "platform_channels",
+            "set:pc_one=!",
+            "set:pc_pick=~5",
+            "Channel 1 of 5",
+            "Channel 2 of 5",
+        ),
+    ];
+    let mut failures = Vec::new();
+    for (route, setup, action, before_frag, after_frag) in cases {
+        splash_render::state::reset();
+        assert!(splash_render::state::apply(setup), "{setup:?} is not an action");
+        let before = render(&kit, route);
+        if !before.contains(before_frag) {
+            failures.push(format!("{route}: {before_frag:?} missing after {setup:?}"));
+        }
+        assert!(splash_render::state::apply(action), "{action:?} is not an action");
+        let after = render(&kit, route);
+        if !after.contains(after_frag) {
+            failures.push(format!("{route}: {action:?} did not produce {after_frag:?}"));
+        }
+    }
+    splash_render::state::reset();
+    assert!(failures.is_empty(), "\n{}", failures.join("\n"));
+}
+
+/// A control whose tap changes nothing a viewer can see.
+///
+/// `pvs_reads` re-invokes `surface.state` and renders the answer. On this
+/// backend `invoke` is stubbed and returns the same string every time, so the
+/// tap is real, the rebuild happens, and the screen is identical. That is a
+/// property of the backend rather than a defect in the screen, and it is pinned
+/// here so it is a known quantity rather than something to rediscover as a
+/// "broken" control.
+#[test]
+fn a_capability_reread_is_inert_on_this_backend() {
+    let _serial = serial();
+    let kit = assembled();
+    splash_render::state::reset();
+    let before = render(&kit, "platform_view_swift");
+    assert!(splash_render::state::apply("set:pvs_reads=+1"));
+    let after = render(&kit, "platform_view_swift");
+    assert_eq!(
+        before, after,
+        "surface.state re-read now changes the screen — the stub must have gained \
+         a varying answer, so this expectation is stale"
+    );
+    splash_render::state::reset();
+}

@@ -288,3 +288,53 @@ The Material catalog never hit it because it only ever puts `elevation` on an
 empty tonal swatch. Child emission is now decided by the node's *kind* rather
 than by the concrete widget; `a_raised_container_keeps_its_children` in
 `crates/splash-makepad/src/lib.rs` pins it.
+
+## Running the kit on HarmonyOS (attempted, not working)
+
+`cargo makepad ohos` exists and the kit can be got as far as a signed HAP that
+installs and runs on a HarmonyOS phone (verified on a Mate 70 Air). It renders
+nothing but its background. This records how far it gets and what is in the way,
+so the next attempt does not rediscover it.
+
+**Working, verified from the device log:** XComponent callbacks registered, EGL
+context and window surface created, vsync registered, main loop entered, surface
+1320x2523 at density 3.25. `Event::Startup` fires, the kit evaluates
+(`built=true nodes=236 ui_len=71753`), and the `Splash` widget accepts the
+dialect and produces a view without error.
+
+**Not working:** no glyphs. `Cx::get_dependency` looks in a dependency map and,
+on a miss, falls back to a platform asset read. That map is never populated on
+any platform — Android satisfies every lookup through its
+`to_java_load_asset` fallback — and OpenHarmony has no such fallback, so every
+font request fails silently. With no font bytes, text measures zero, every `Fit`
+container collapses, and the window shows only whatever `Fill` background sits
+behind it. That single cause explains the blank screen, and it is why a plain
+`Label` placed in the host chrome is invisible too.
+
+**Nine build breaks had to be fixed before it would compile or package at all.**
+Four are the same mistake: OpenHarmony reports `target_os = "linux"`, so
+desktop-Linux paths get selected for it.
+
+| break | cause |
+|---|---|
+| `linux_video_playback` unresolved | call site gated `linux, not(android)`; module gated `not(ohos)` |
+| `no field opengl_cx` (x2) | `create_gl_render_bridge` compiled for OHOS, whose `CxOs` has no EGL context of its own |
+| `-lxkbcommon` not found | `build.rs` links it for OS `linux`; not in the OHOS sysroot |
+| `-lssl` / `-lcrypto` not found | the Linux network backend links OpenSSL by name. OHOS ships `libnet_ssl.so` / `libohcrypto.so`, which export none of the OpenSSL symbols — not a rename |
+| no hilog writer | `log_with_level` dispatches through a function pointer; nothing installed one for OHOS |
+| `Cx::init_log()` never called | desktop, Android and wasm entry points all call it; the OHOS napi entry did not |
+| `signingConfigs: []` | the generated DevEco project is unsigned |
+| bundle name mismatch | a provisioning profile is bound to one bundle name |
+| `PackageHap` needs a JRE | DevEco ships one at `Contents/jbr` |
+
+Until logging worked the platform was completely silent, which made every
+failure above indistinguishable from the next.
+
+**Also missing:** `WindowGeomChange` never fires on OHOS, so `st.vw`/`st.vh` stay
+0 and `page()` falls back to `Fit`; and the app sandbox blocks
+`/data/local/tmp`, so the host's hot-reload and route-override files are
+unreachable there.
+
+None of these fixes are in this repo — they were made in a local makepad fork and
+are not committed. Treat OpenHarmony support as its own piece of work rather than
+a step in porting a sample.

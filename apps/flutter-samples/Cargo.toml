@@ -10,6 +10,13 @@ splash-widgets = { path = "../../crates/splash-widgets" }
 splash-render = { path = "../../crates/splash-render" }
 splash-makepad = { path = "../../crates/splash-makepad" }
 
+# A cdylib for the OpenHarmony and Android builds, an rlib so the desktop binary
+# below can link it, and the binary itself for `cargo run`.
+[lib]
+name = "flutter_samples"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
 [[bin]]
 name = "flutter-samples"
 path = "src/main.rs"
