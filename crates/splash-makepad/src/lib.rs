@@ -161,16 +161,23 @@ fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
     content.attrs.tapto = None;
     emit_widget(&content, out, depth + 1);
 
-    // The hit target: an empty Button filling the wrapper.
+    // The hit target: an empty ButtonFlatter filling the wrapper.
     //
-    // Deliberately plain. An earlier version set `draw_bg +: { color:
-    // #00000000, border_size: 0.0 }` to hide the button's chrome, and the
-    // button stopped responding entirely — the themed `draw_bg` shader has no
+    // `ButtonFlatter`, not `Button`. A plain Button carries the theme's chrome,
+    // so every tappable row in the kit was drawn with a visible outline around
+    // it — on the index, every list row, every settings row. ButtonFlatter is
+    // upstream's own fully transparent variant: it sets colour and every border
+    // colour to `theme.color_u_hidden` rather than injecting properties the
+    // shader has no instance for.
+    //
+    // That last part is why the obvious fix failed before. An earlier version
+    // set `draw_bg +: { color: #00000000, border_size: 0.0 }` and the button
+    // stopped responding entirely — the themed `draw_bg` shader has no
     // `border_size` instance, and the bad merge takes the whole widget out.
     // One property per line for the same reason: the comma-joined form did not
-    // parse. Keep this shape unless a device check says otherwise.
+    // parse.
     let target = a.tapto.as_ref().expect("checked by needs_click_overlay");
-    let _ = writeln!(out, "{inner_ind}Button {{");
+    let _ = writeln!(out, "{inner_ind}ButtonFlatter {{");
     let _ = writeln!(out, "{inner_ind}    width: Fill");
     let _ = writeln!(out, "{inner_ind}    height: Fill");
     let _ = writeln!(out, "{inner_ind}    text: \"\"");
@@ -529,7 +536,14 @@ mod tests {
                ]}"#,
         ));
         assert!(ui.contains("flow: Overlay"), "needs an overlay wrapper:\n{ui}");
-        assert!(ui.contains("Button {"), "needs a real Button:\n{ui}");
+        // ButtonFlatter specifically: a plain `Button` carries the theme's
+        // chrome and drew a visible outline around every tappable row in the
+        // kit. Asserting the transparent variant is what keeps that from
+        // coming back.
+        assert!(
+            ui.contains("ButtonFlatter {"),
+            "the hit target must be the transparent Button variant:\n{ui}"
+        );
         assert!(
             ui.contains(r#"on_click: || { ui.nav_signal.set_text("date_planner") }"#),
             "the Button carries the handler:\n{ui}"
