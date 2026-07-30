@@ -59,6 +59,10 @@ fn widget_name(kind: NodeKind) -> &'static str {
         NodeKind::Shader => "FlutterShader",
         NodeKind::Sdf => "FlutterSdf",
         // No web surface on this backend; the screen branches on st.backend.
+        // A real scroll. Safe only once `is_container` stopped deciding
+        // child-emission by the mapped widget name — this arm dropped the
+        // children of every scroll in the kit before that.
+        NodeKind::Scroll => "ScrollYView",
         NodeKind::Web => "View",
         // every container-ish kind is a View with the right flow.
         _ => "View",
@@ -87,8 +91,34 @@ fn flow(kind: NodeKind) -> Option<&'static str> {
 /// Button owns the hit area and the callback; the content underneath is
 /// untouched. Verified on device — a plain row with `tapto` does nothing, the
 /// same row under this wrapper navigates.
+/// True for a node that holds children.
+///
+/// A real test on the kind, not `widget_name(kind) == "View"`. That test worked
+/// only by accident: every container mapped to the string "View", so comparing
+/// the mapped name happened to agree with asking about the kind. It stops
+/// agreeing the moment any container maps to something else — mapping `Scroll`
+/// to `ScrollYView` silently dropped the children of every scroll in the kit,
+/// which is the same failure the RoundedShadowView fix was supposed to have
+/// ended. Half-fixed then: the string compare survived behind a comment saying
+/// it had been removed.
+fn is_container(kind: NodeKind) -> bool {
+    matches!(
+        kind,
+        NodeKind::Column
+            | NodeKind::Row
+            | NodeKind::Stack
+            | NodeKind::Scroll
+            | NodeKind::List
+            | NodeKind::Grid
+            | NodeKind::Waterflow
+            | NodeKind::Refresh
+            | NodeKind::Swiper
+            | NodeKind::Web
+    )
+}
+
 fn needs_click_overlay(node: &UiNode) -> bool {
-    node.attrs.tapto.is_some() && widget_name(node.kind) == "View"
+    node.attrs.tapto.is_some() && is_container(node.kind)
 }
 
 fn emit(node: &UiNode, out: &mut String, depth: usize) {
@@ -165,12 +195,11 @@ fn emit_widget(node: &UiNode, out: &mut String, depth: usize) {
         }
     }
     emit_attrs(node, out, depth + 1);
-    // Only containers carry children — decided by the node's *kind*, not by the
-    // concrete widget it was promoted to. A container that carries a background,
-    // a corner or an elevation still renders as a container; keying off the
-    // widget name dropped the children of every raised card, because
-    // `RoundedShadowView` is not spelled `View`.
-    if widget_name(node.kind) == "View" {
+    // Only containers carry children — decided by the node's *kind*, and now
+    // actually so. This read `widget_name(node.kind) == "View"`, which is a
+    // question about the mapped name wearing the comment of a question about the
+    // kind. See `is_container`.
+    if is_container(node.kind) {
         for c in &node.children {
             emit(c, out, depth + 1);
         }

@@ -283,6 +283,13 @@ fn lerp_argb(c1, c2, t) {
 // Not on makepad. The host mounts Splash with `height: Fit`, and a Fill inside
 // a Fit is degenerate there — it collapsed every screen in this kit to nothing
 // once already. Both backends test `fillh` against 1, so 0 is a no-op on each.
+// 1 on ArkUI, 0 on makepad — and the makepad half is NOT the kit's fault.
+//
+// `Splash`'s own wrapper hardcodes `View{height:Fit, …}` around whatever it
+// mounts (SPLASH_PREFIX, widgets/src/splash.rs). So any page asking to fill
+// resolves against a Fit parent and collapses — the whole screen renders blank,
+// measured on the 6T. Until that wrapper takes its height from the widget, Fit
+// all the way down is the only thing that draws here.
 fn restfill() {
     if st.backend == "arkui" { return 1 }
     return 0
