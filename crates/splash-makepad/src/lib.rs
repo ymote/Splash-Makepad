@@ -278,6 +278,21 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         None if a.fith == Some(1) => {
             let _ = writeln!(out, "{ind}height: Fit");
         }
+        // A scroll fills unless told otherwise — that is what makes it scroll.
+        //
+        // Fit is right for a card, which hugs its content. It is wrong for a
+        // scroll: a Fit scroll is exactly as tall as what it holds, so there is
+        // no viewport smaller than the content and nothing to scroll. It read
+        // as "the screen is not scrollable", and it was not.
+        //
+        // Only visible once `page()` took the window height. Before that the
+        // page was Fit too, so it overflowed the window and the *host's*
+        // ScrollYView did the scrolling for every screen. Clamping the page
+        // removed that overflow and left the kit's own scrolls, still Fit, with
+        // nothing to do.
+        None if node.kind == NodeKind::Scroll => {
+            let _ = writeln!(out, "{ind}height: Fill");
+        }
         None if container => {
             let _ = writeln!(out, "{ind}height: Fit");
         }

@@ -290,10 +290,15 @@ fn lerp_argb(c1, c2, t) {
 // resolves against a Fit parent and collapses — the whole screen renders blank,
 // measured on the 6T. Until that wrapper takes its height from the widget, Fit
 // all the way down is the only thing that draws here.
-fn restfill() {
-    if st.backend == "arkui" { return 1 }
-    return 0
-}
+// 1 on both backends.
+//
+// It was 0 on makepad for as long as a kit scroll emitted a plain View there —
+// nothing inside a page could claim space. A scroll is a real ScrollYView now,
+// and once `page()` took the window height the inner scroll HAS to claim the
+// remainder: otherwise the page is exactly one window tall, its scroll is as
+// tall as its content, and everything past the fold is clipped with no way to
+// reach it. Measured — four full-screen swipes moved nothing.
+fn restfill() { return 1 }
 
 fn act_set(key, v)    { return "set:" + key + "=" + v }
 fn act_toggle(key)    { return "set:" + key + "=!" }
