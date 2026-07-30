@@ -230,6 +230,17 @@ impl AppMain for App {
                 self.ui.widget(cx, ids!(nav_signal)).set_text(cx, "");
                 if nav == "theme:toggle" {
                     self.dark = !self.dark;
+                } else if splash_render::state::apply(nav) {
+                    // A control, not a link. The kit names these `set:key=!`,
+                    // `set:key=+1`, `set:key=~n`, and `state::apply` is the same
+                    // parser the ArkUI backend uses, so a checkbox behaves
+                    // identically on both.
+                    //
+                    // Without this branch every control target fell through to
+                    // the route case below, matched no screen, and did nothing —
+                    // so on makepad no checkbox, toggle, radio, slider, chip or
+                    // stepper in the kit had ever worked. The state store was
+                    // only ever driven from the ArkUI side.
                 } else {
                     self.route = nav.to_string();
                 }

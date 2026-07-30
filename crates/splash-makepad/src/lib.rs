@@ -135,8 +135,31 @@ fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
     let inner_ind = "    ".repeat(depth + 1);
     let a = &node.attrs;
 
+    // A full-width tappable row hands most of itself back to the scroll.
+    //
+    // The hit target has to be a Button, because that is the only widget the
+    // dialect can attach a handler to. A Button captures the finger on
+    // touch-down, so a target covering the whole row leaves the enclosing scroll
+    // nothing to drag — and list rows cover nearly the whole screen, which made
+    // the catalog feel frozen. Measured: a swipe over a row moved 159 pixel rows
+    // of 2340, one clear of the rows moved 1608.
+    //
+    // So a row that fills its width gets a strip at its trailing edge instead of
+    // the whole area. That is where the chevron is on every list row in the kit,
+    // it stays comfortably past the 48dp a finger needs, and it leaves the rest
+    // of the row free to scroll. Anything with its own width — a chip, a button,
+    // a small card — is already narrower than a swipe wants to start on, so it
+    // keeps a full-size target.
+    //
+    // `SplashTap` in splash-widgets is the real answer and cannot be reached: a
+    // widget this workspace defines does not resolve inside the isolate VM a
+    // mounted Splash allocates. See that module.
+    let strip = a.w.is_none() && a.fillw == Some(1);
     let _ = writeln!(out, "{ind}View {{");
     let _ = writeln!(out, "{inner_ind}flow: Overlay");
+    if strip {
+        let _ = writeln!(out, "{inner_ind}align: Align{{x: 1.0}}");
+    }
     // The wrapper takes over the node's outer size so the Button, which fills
     // it, ends up exactly the size of the content it covers.
     match a.w {
@@ -178,7 +201,11 @@ fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
     // screen blank. See that module.
     let target = a.tapto.as_ref().expect("checked by needs_click_overlay");
     let _ = writeln!(out, "{inner_ind}ButtonFlatter {{");
-    let _ = writeln!(out, "{inner_ind}    width: Fill");
+    if strip {
+        let _ = writeln!(out, "{inner_ind}    width: 64");
+    } else {
+        let _ = writeln!(out, "{inner_ind}    width: Fill");
+    }
     let _ = writeln!(out, "{inner_ind}    height: Fill");
     let _ = writeln!(out, "{inner_ind}    text: \"\"");
     let _ = writeln!(
