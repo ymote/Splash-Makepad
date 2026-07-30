@@ -200,10 +200,12 @@ impl AppMain for App {
         // lengths are in.
         if let Event::WindowGeomChange(e) = event {
             let g = &e.new_geom;
-            let (vw, vh) = (
-                g.inner_size.x / g.dpi_factor,
-                g.inner_size.y / g.dpi_factor,
-            );
+            // `inner_size` is already in vp — measured on the 6T: 384x787.5
+            // against a 1080x2340 screen at dpi_factor 2.8125, and
+            // 384 * 2.8125 = 1080 exactly. Dividing by dpi_factor again gave
+            // 136x280, which is why the first attempt at a self-sized page came
+            // out about a third of the screen with its content clipped.
+            let (vw, vh) = (g.inner_size.x, g.inner_size.y);
             if (vw - self.vw).abs() > 0.5 || (vh - self.vh).abs() > 0.5 {
                 self.vw = vw;
                 self.vh = vh;
