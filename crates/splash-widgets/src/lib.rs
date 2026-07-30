@@ -25,11 +25,14 @@
 
 use makepad_widgets::*;
 
+pub mod tap;
+
 /// Register upstream makepad's widgets, then this crate's Material-3 variants,
 /// re-referencing them into the prelude the Splash mount resolves.
 pub fn widgets_mod(vm: &mut ScriptVm) {
     makepad_widgets::widgets_mod(vm);
     self::script_mod(vm);
+    self::tap::script_mod(vm);
 }
 
 script_mod! {

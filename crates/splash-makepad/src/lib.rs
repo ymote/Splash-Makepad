@@ -163,19 +163,19 @@ fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
 
     // The hit target: an empty ButtonFlatter filling the wrapper.
     //
-    // `ButtonFlatter`, not `Button`. A plain Button carries the theme's chrome,
-    // so every tappable row in the kit was drawn with a visible outline around
-    // it — on the index, every list row, every settings row. ButtonFlatter is
-    // upstream's own fully transparent variant: it sets colour and every border
-    // colour to `theme.color_u_hidden` rather than injecting properties the
-    // shader has no instance for.
-    //
-    // That last part is why the obvious fix failed before. An earlier version
-    // set `draw_bg +: { color: #00000000, border_size: 0.0 }` and the button
-    // stopped responding entirely — the themed `draw_bg` shader has no
-    // `border_size` instance, and the bad merge takes the whole widget out.
-    // One property per line for the same reason: the comma-joined form did not
+    // `ButtonFlatter`, upstream's fully transparent Button variant. A plain
+    // `Button` drew the theme's chrome as an outline round every tappable row,
+    // and hiding that with `draw_bg +: { border_size: 0.0 }` took the whole
+    // widget out, because the themed shader has no `border_size` instance. One
+    // property per line here for the same reason: the comma-joined form did not
     // parse.
+    //
+    // A Button is still the wrong widget: it captures the finger on touch-down
+    // via `event.hits`, which starves the enclosing scroll and makes the catalog
+    // feel frozen. `splash_widgets::tap::SplashTap` is the right one and is
+    // written, compiles, and cannot be used — a brand-new widget type does not
+    // resolve inside the Splash isolate's prelude, so emitting it renders the
+    // screen blank. See that module.
     let target = a.tapto.as_ref().expect("checked by needs_click_overlay");
     let _ = writeln!(out, "{inner_ind}ButtonFlatter {{");
     let _ = writeln!(out, "{inner_ind}    width: Fill");
