@@ -1,0 +1,193 @@
+// _kit.splash — the L0 theme.
+//
+// `ui-profile-l0.md` §1.1: an L0 card names ROLES and never presentation. This
+// file is a theme's answer to those roles — the layer the profile says must
+// exist between a card and a backend:
+//
+//     L0 card        names roles          TextHero, Panel, Chip, Tile
+//        ↓
+//     THIS FILE      role → presentation  l0_hero, l0_panel, l0_chip, l0_tile
+//        ↓
+//     splash-render  DSL → UiNode         renderer-free
+//        ↓
+//     backend                             splash-makepad · Splash-OH · Splash-Android
+//
+// WHY IT DID NOT EXIST UNTIL NOW. The profile said "lowering targets the
+// component kit" as though a kit answering L0's roles were sitting there. It was
+// not: `components/flutter` and `components/material` are ports of Flutter
+// samples, and against L0's 23 roles about four map loosely. What they DO
+// provide is the primitive layer — `txt`, `gap`, `rule`, `spacer` — and that is
+// what this is built from.
+//
+// THE PALETTE IS DELIBERATELY THE ONE ALREADY ON DEVICE. Every colour here is
+// lifted from `splash-ui-l0`'s `makepad::lower`, which four goldens on a
+// OnePlus 6T already assert. Changing the look and moving the layer at the same
+// time would make a golden failure ambiguous between "the theme moved" and "the
+// theme is wrong". Restyling comes after the move, against green goldens.
+//
+// EVERY ATTRIBUTE HERE IS ONE `splash-render` READS. Its `Attrs` is a fixed
+// struct, not an open bag, so an attribute it does not name is not a default —
+// it is silently discarded. A previous lowering attempt emitted roughly twenty
+// such attributes and was reverted.
+
+fn argb(a, r, g, b) { return ((a * 256 + r) * 256 + g) * 256 + b }
+
+// ---- palette ---------------------------------------------------------------
+// Hex from the shipped lowering, as ARGB. Note makepad writes #RRGGBBAA, so
+// `#ffffff12` is white at alpha 0x12 — a barely-there panel over a dark page,
+// not a near-white fill.
+let l0_base     = argb(255,  10,  14,  20)   // #0a0e14  page
+let l0_scrim    = argb(102,   0,   0,   0)   // #00000066 over a photo
+let l0_panel    = argb( 18, 255, 255, 255)   // #ffffff12 panel fill
+let l0_active   = argb( 56, 255, 255, 255)   // #ffffff38 selected chip
+let l0_hairline = argb( 26, 255, 255, 255)   // #ffffff1a divider
+let l0_text     = argb(255, 255, 255, 255)   // #ffffff   primary
+let l0_soft     = argb(230, 255, 255, 255)   // #ffffffe6 secondary
+let l0_dim      = argb(153, 255, 255, 255)   // #ffffff99 captions and labels
+let l0_up       = argb(255,  50, 215,  75)   // #32d74b   a rise
+let l0_down     = argb(255, 255,  69,  58)   // #ff453a   a fall
+
+// ---- primitives ------------------------------------------------------------
+// Self-contained rather than shared with the sample kits: those are ports of
+// someone else's design system and will move for reasons that have nothing to
+// do with L0.
+
+fn l0_txt(s, size, weight, color) {
+    return {t: "text", text: s, size: size, weight: weight, color: color, fith: 1}
+}
+
+// Text that may wrap. `fillw` is what lets it, and forcing it on a short hero
+// wrapped "Top Movers" one character per line on device — so it is opt-in.
+fn l0_para(s, size, weight, color) {
+    return {t: "text", text: s, size: size, weight: weight, color: color,
+            fillw: 1, fith: 1}
+}
+
+fn l0_gap(px)   { return {t: "column", h: px} }
+fn l0_spacer()  { return {t: "column", fillw: 1, h: 1} }
+
+// ---- text roles ------------------------------------------------------------
+// A role says what a thing IS; the size ramp here is this theme's answer.
+
+// The ONE number a card exists to show. Sized by how long it is, because a hero
+// is defined by dominating the card rather than by a point size: "18°" fits at
+// 62 where "$184.20" clipped off the right edge.
+//
+// The CALLER measures and passes `pt`, and that is not an accident of interface
+// design. Once a value lowers to a live backend call the drawn text is not in
+// the DSL at all — `"$" + sys.stock("NVDA", "price")` renders as six characters
+// and reads as thirty-three — so only the lowering knows what will be drawn.
+fn l0_hero(s, pt) { return l0_txt(s, pt, 700, l0_text) }
+
+fn l0_title(s)    { return l0_txt(s, 28, 700, l0_text) }
+fn l0_body(s)     { return l0_para(s, 16, 400, l0_text) }
+fn l0_row_text(s) { return l0_txt(s, 15, 400, l0_soft) }
+fn l0_caption(s)  { return l0_txt(s, 12, 400, l0_dim) }
+fn l0_value(s)    { return l0_txt(s, 20, 600, l0_text) }
+
+// A statistic, tinted by direction. `dir` is -1, 0 or 1 — the SIGN, decided by
+// the card, not the colour: red-versus-green is presentation, but "this value
+// fell" is meaning, and a lowering that dropped the attribute lost both.
+fn l0_tint(dir) {
+    if dir > 0 { return l0_up }
+    if dir < 0 { return l0_down }
+    return l0_text
+}
+fn l0_stat(s, dir) { return l0_txt(s, 20, 600, l0_tint(dir)) }
+
+// ---- containers ------------------------------------------------------------
+
+// The page. Padding clears the status bar at the top and the gesture bar below.
+fn l0_surface(kids) {
+    return {t: "column", fillw: 1, fillh: 1, bg: l0_base,
+            padx: 20, pady: 24, c: kids}
+}
+
+// A page whose background is a photo, with a scrim so text stays legible over
+// whatever the image turns out to be.
+fn l0_surface_photo(src, kids) {
+    return {t: "stack", fillw: 1, fillh: 1, c: [
+        {t: "image", src: src, fit: 2, fillw: 1, fillh: 1},
+        {t: "column", fillw: 1, fillh: 1, bg: l0_scrim},
+        {t: "column", fillw: 1, fillh: 1, padx: 20, pady: 24, c: kids}
+    ]}
+}
+
+fn l0_col(kids)      { return {t: "column", fillw: 1, c: kids} }
+fn l0_col_gap(g, kids) { return {t: "column", fillw: 1, spacing: g, c: kids} }
+fn l0_row(kids)      { return {t: "row", fillw: 1, spacing: 6, c: kids} }
+fn l0_row_gap(g, kids) { return {t: "row", fillw: 1, spacing: g, c: kids} }
+fn l0_grid(kids)     { return {t: "grid", fillw: 1, w: 2, spacing: 10, c: kids} }
+
+// A raised surface holding related content.
+fn l0_panel(kids) {
+    return {t: "card", fillw: 1, bg: l0_panel, radius: 14,
+            padx: 14, pady: 12, marginy: 16, c: kids}
+}
+
+fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
+
+// A labelled value — the unit a detail grid is made of.
+fn l0_tile(label, value) {
+    return {t: "card", fillw: 1, bg: l0_panel, radius: 12, padx: 12, pady: 10,
+            c: [ l0_caption(label), l0_gap(4), l0_value(value) ]}
+}
+
+// A selectable token. `on` is the card's own notion of selected — without it
+// every chip in a range picker rendered identically and the card could not show
+// which was chosen.
+fn l0_chip(s, on) {
+    let fill = l0_panel
+    let ink  = l0_dim
+    if on == 1 { fill = l0_active }
+    if on == 1 { ink = l0_text }
+    return {t: "chip", bg: fill, radius: 12, padx: 10, pady: 5, selected: on,
+            c: [ l0_txt(s, 14, 500, ink) ]}
+}
+
+fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
+
+// ---- interaction -----------------------------------------------------------
+// A tap target, carried as `tapto` — an arbitrary string this renderer does not
+// interpret. Its own `set:…` verbs are handled inside `splash-render`, and
+// anything else falls through to the host, which is what lets an L0 event keep
+// its instance key without any change to the VM.
+//
+// THE WRAPPER IS NOT DECORATION. A `card`, `chip` or `image` carrying `tapto`
+// renders and does nothing: the attribute is accepted and then dropped, so the
+// target string never reaches the UI at all. Only a container carries a tap. So
+// a tappable role is wrapped in one, which is uniform and provable — deciding
+// per role which kinds carry a tap natively is a second rule that rots the next
+// time this renderer changes.
+//
+// Two variants because the wrapper must size like what it wraps. A chip is
+// intrinsic and sits in a row of chips; wrapping it in a filling container makes
+// the first chip eat the row.
+
+fn l0_tap(target, node) {
+    return {t: "column", fillw: 1, tapto: target, c: [node]}
+}
+
+fn l0_tap_fit(target, node) {
+    return {t: "column", fitw: 1, fith: 1, tapto: target, c: [node]}
+}
+
+// ---- data visualisations ---------------------------------------------------
+// Six roles are small data visualisations rather than compositions of boxes and
+// text: a gradient temperature bar is a fragment shader parameterised by data.
+//
+// `weathericon` is the one this renderer already has a kind for. The other five
+// do NOT have one, and §1.1 records that as unsettled — `shader`/`sdf` with a
+// variant is the mechanism this renderer documents, and adding five kinds
+// obliges every backend at once.
+//
+// Until that is settled they render a VISIBLE marker. Returning nothing would
+// let a card lose its temperature bars and still look complete, which is the
+// failure mode §1.1 exists to prevent.
+
+fn l0_weathericon(cond) { return {t: "weathericon", variant: cond, w: 44, h: 44} }
+
+fn l0_unsupported(role) {
+    return {t: "card", fillw: 1, bg: l0_panel, radius: 8, padx: 10, pady: 8,
+            c: [ l0_caption("[" + role + " has no kind in this renderer]") ]}
+}

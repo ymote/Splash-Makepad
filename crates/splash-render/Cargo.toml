@@ -7,4 +7,7 @@ description = "Backend-agnostic Splash DSL renderer core: makepad-script VM -> U
 [dependencies]
 # The Splash VM only. Renderer-free by construction — no makepad-platform, no
 # draw, no widgets. Backends turn the resulting UiNode tree into their widgets.
-makepad-script = { git = "https://github.com/makepad/makepad.git", branch = "dev" }
+makepad-script = { path = "../../../makepad-splash/platform/script" }
+# The node model, which needs no VM. Split out so a host that already has a
+# VM can take the branch point without taking this crate's lineage.
+splash-node = { path = "../splash-node" }
