@@ -237,6 +237,156 @@ script_mod! {
         }
     }
     mod.prelude.widgets.FlutterSdf = mod.widgets.FlutterSdf
+
+    // ---- L0 data visualisations ---------------------------------------------
+    //
+    // `ui-profile-l0.md` §1.1: six roles are small data visualisations rather
+    // than compositions of boxes and text, and a DSL node cannot carry shader
+    // SOURCE because MPSL compiles at build time. It can name a shader that was
+    // compiled, which is what these are.
+    //
+    // THREE OF THE FIVE ARE PURE FUNCTIONS OF THEIR PARAMETERS and are drawn
+    // here in full. The other two are not: an air-quality field and a price
+    // series are DATA, and this backend has no fetch. They draw an explicit
+    // empty state rather than a plausible-looking curve — a card that looks
+    // right and is fiction is worse than one that says it has nothing, and §4's
+    // no-facts rule is the same instinct one layer down.
+
+    // A day's low and high as a segment of the week's range.
+    mod.widgets.L0TempBar = View{
+        width: Fill
+        height: 8
+        show_bg: true
+        draw_bg +: {
+            tlo:  uniform(0.0)
+            thi:  uniform(0.0)
+            wmin: uniform(0.0)
+            wmax: uniform(1.0)
+            pixel: fn() {
+                let span = max(self.wmax - self.wmin, 0.001)
+                let a = clamp((self.tlo - self.wmin) / span, 0.0, 1.0)
+                let b = clamp((self.thi - self.wmin) / span, 0.0, 1.0)
+                let x = self.pos.x
+                // The track, so an unfilled range still reads as a range.
+                let track = vec3(1.0, 1.0, 1.0) * 0.10
+                if x < a || x > b { return vec4(track, 1.0) }
+                // Cold to warm ACROSS THE SEGMENT, so a wide day reads warmer at
+                // its top than a narrow one at the same high.
+                let t = (x - a) / max(b - a, 0.001)
+                let cold = vec3(90.0, 160.0, 240.0) / 255.0
+                let warm = vec3(255.0, 170.0, 60.0) / 255.0
+                return vec4(mix(cold, warm, t), 1.0)
+            }
+        }
+    }
+    mod.prelude.widgets.L0TempBar = mod.widgets.L0TempBar
+
+    // The sun's path, with now marked on it. Hours are fractional: 18.9 is 18:54.
+    mod.widgets.L0SunArc = View{
+        width: Fill
+        height: 90
+        show_bg: true
+        draw_bg +: {
+            rise: uniform(6.0)
+            set:  uniform(18.0)
+            now:  uniform(12.0)
+            pixel: fn() {
+                let p = self.pos
+                // A half-ellipse across the width, sitting on the baseline.
+                let ax = p.x
+                let ay = 1.0 - sin(ax * 3.14159265)
+                let d = abs(p.y - ay)
+                let ink = vec3(1.0, 1.0, 1.0) * 0.35
+                let mut c = vec3(0.0, 0.0, 0.0)
+                let mut a = 0.0
+                if d < 0.035 { c = ink; a = 1.0 - smoothstep(0.02, 0.035, d) }
+                // Where the sun is now, clamped so a pre-dawn or post-dusk time
+                // sits at the horizon rather than off the arc.
+                let span = max(self.set - self.rise, 0.001)
+                let t = clamp((self.now - self.rise) / span, 0.0, 1.0)
+                let sx = t
+                let sy = 1.0 - sin(sx * 3.14159265)
+                let sd = length(vec2(p.x - sx, p.y - sy))
+                if sd < 0.06 {
+                    let sun = vec3(255.0, 200.0, 80.0) / 255.0
+                    let sa = 1.0 - smoothstep(0.035, 0.06, sd)
+                    c = mix(c, sun, sa)
+                    a = max(a, sa)
+                }
+                return vec4(c, a)
+            }
+        }
+    }
+    mod.prelude.widgets.L0SunArc = mod.widgets.L0SunArc
+
+    // A disc with its terminator at `phase`, 0..1 through the cycle.
+    mod.widgets.L0MoonPhase = View{
+        width: 64
+        height: 64
+        show_bg: true
+        draw_bg +: {
+            phase: uniform(0.5)
+            pixel: fn() {
+                let q = (self.pos - vec2(0.5, 0.5)) * 2.0
+                let r = length(q)
+                if r > 1.0 { return vec4(0.0, 0.0, 0.0, 0.0) }
+                let edge = 1.0 - smoothstep(0.94, 1.0, r)
+                let dark = vec3(1.0, 1.0, 1.0) * 0.12
+                let lit  = vec3(1.0, 1.0, 1.0) * 0.92
+                // The terminator is an ellipse whose width tracks the phase; at
+                // 0 and 1 it covers the disc, at 0.5 it is a straight edge.
+                let k = cos(self.phase * 6.2831853)
+                let tx = q.x - k * sqrt(max(1.0 - q.y * q.y, 0.0))
+                let mut c = dark
+                if self.phase < 0.5 {
+                    if tx < 0.0 { c = lit }
+                } else {
+                    if tx > 0.0 { c = lit }
+                }
+                return vec4(c, edge)
+            }
+        }
+    }
+    mod.prelude.widgets.L0MoonPhase = mod.widgets.L0MoonPhase
+
+    // An air-quality field. This backend cannot fetch one, so it says so.
+    //
+    // Drawing a plausible gradient here would be inventing data — the card would
+    // look complete and be fiction, which is the failure §1.1 wants a missing
+    // visualisation to avoid, and worse than the marker it replaced.
+    mod.widgets.L0AqiContour = View{
+        width: Fill
+        height: 190
+        show_bg: true
+        draw_bg +: {
+            pixel: fn() {
+                // A hatched empty state: unmistakably "no data", not a field.
+                let s = (self.pos.x + self.pos.y) * 22.0
+                let h = abs(fract(s) - 0.5) * 2.0
+                let bg = vec3(1.0, 1.0, 1.0) * 0.05
+                let ln = vec3(1.0, 1.0, 1.0) * 0.11
+                return vec4(mix(ln, bg, smoothstep(0.35, 0.5, h)), 1.0)
+            }
+        }
+    }
+    mod.prelude.widgets.L0AqiContour = mod.widgets.L0AqiContour
+
+    // A price series. Same reasoning: no fetch here, so no invented curve.
+    mod.widgets.L0StockPlot = View{
+        width: Fill
+        height: 180
+        show_bg: true
+        draw_bg +: {
+            pixel: fn() {
+                let s = (self.pos.x + self.pos.y) * 22.0
+                let h = abs(fract(s) - 0.5) * 2.0
+                let bg = vec3(1.0, 1.0, 1.0) * 0.05
+                let ln = vec3(1.0, 1.0, 1.0) * 0.11
+                return vec4(mix(ln, bg, smoothstep(0.35, 0.5, h)), 1.0)
+            }
+        }
+    }
+    mod.prelude.widgets.L0StockPlot = mod.widgets.L0StockPlot
 }
 
 // TODO(kits): Button touch-ripple as a `RippleButton` variant (it modifies the

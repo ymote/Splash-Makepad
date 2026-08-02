@@ -63,6 +63,12 @@ pub fn to_makepad_ui(root: &UiNode) -> String {
 }
 
 /// The makepad widget a kind renders as.
+///
+/// Public so a test can check every name this emits is one the kit defines —
+/// the mapping and the definitions live in different crates, and five dangling
+/// names shipped because nothing tied them together.
+pub fn widget_name_of(kind: NodeKind) -> &'static str { widget_name(kind) }
+
 fn widget_name(kind: NodeKind) -> &'static str {
     match kind {
         NodeKind::Text => "Label",
@@ -786,6 +792,30 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         let _ = writeln!(out, "{ind}source: {src:?}");
     }
 
+    // Data-visualisation uniforms. The names are the shader's, not the model's:
+    // a mismatch draws the bar against zero, which looks like data rather than
+    // like a bug.
+    match node.kind {
+        NodeKind::TempBar => {
+            let f = |v: Option<f32>| v.unwrap_or(0.0);
+            let _ = writeln!(out, "{ind}draw_bg.tlo: {}", f(a.lo));
+            let _ = writeln!(out, "{ind}draw_bg.thi: {}", f(a.hi));
+            let _ = writeln!(out, "{ind}draw_bg.wmin: {}", f(a.min));
+            let _ = writeln!(out, "{ind}draw_bg.wmax: {}", f(a.max));
+        }
+        NodeKind::SunArc => {
+            let f = |v: Option<f32>| v.unwrap_or(0.0);
+            let _ = writeln!(out, "{ind}draw_bg.rise: {}", f(a.rise));
+            let _ = writeln!(out, "{ind}draw_bg.set: {}", f(a.set));
+            let _ = writeln!(out, "{ind}draw_bg.now: {}", f(a.now));
+        }
+        NodeKind::MoonPhase => {
+            let _ = writeln!(out, "{ind}draw_bg.phase: {}", a.phase.unwrap_or(0.0));
+        }
+        // AqiContour and StockPlot take none: this backend cannot fetch their
+        // data, so they draw an explicit empty state rather than a curve.
+        _ => {}
+    }
     // Map camera. Field names are MapView's own (widgets/src/map/view.rs).
     if node.kind == NodeKind::Map {
         if let Some(v) = a.lat {

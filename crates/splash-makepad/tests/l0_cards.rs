@@ -241,3 +241,49 @@ fn the_data_visualisations_reach_the_tree_as_themselves() {
     );
     assert!(out.iter().any(|k| k == "StockPlot"), "StockPlot missing: {out:?}");
 }
+
+/// Every widget name this backend emits must be one the kit DEFINES.
+///
+/// This exists because it did not. `widget_name` mapped the five data
+/// visualisations to `L0TempBar` and friends, and none of them were written —
+/// five dangling names, passing every test, because nothing here renders a card
+/// to pixels. The mapping and the definition live in different crates and
+/// nothing tied them together.
+#[test]
+fn every_emitted_widget_name_is_defined_in_the_kit() {
+    const PRELUDE: &str = include_str!("../../splash-widgets/src/lib.rs");
+
+    let mut emitted: Vec<String> = Vec::new();
+    for tree in [
+        build(NEWS, news_data()),
+        build(STOCK, stock_data()),
+        build(WEATHER, weather_data()),
+    ] {
+        fn names(n: &splash_render::UiNode, out: &mut Vec<String>) {
+            out.push(splash_makepad::widget_name_of(n.kind).to_owned());
+            for c in &n.children {
+                names(c, out);
+            }
+        }
+        names(&tree, &mut emitted);
+    }
+    emitted.sort();
+    emitted.dedup();
+
+    // makepad's own widgets are not the kit's to define; only the ones this
+    // repository adds have to appear in the prelude.
+    let missing: Vec<&String> = emitted
+        .iter()
+        .filter(|w| w.starts_with("L0") || w.starts_with("Flutter"))
+        .filter(|w| !PRELUDE.contains(&format!("mod.widgets.{w} =")))
+        .collect();
+    assert!(
+        missing.is_empty(),
+        "these widget names are emitted and never defined: {missing:?}"
+    );
+    // And the check is not vacuous: the cards must reach the L0 widgets at all.
+    assert!(
+        emitted.iter().any(|w| w.starts_with("L0")),
+        "no L0 widget was emitted, so this asserted nothing: {emitted:?}"
+    );
+}
