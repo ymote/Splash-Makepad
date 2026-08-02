@@ -1,0 +1,26 @@
+# L0 conformance: what a reference card must evaluate to.
+#
+# There are two evaluators for the same contract. `splash-render` walks the DSL
+# with the makepad-splash VM; octos-one walks it with its own, because taking
+# `splash-render` there fails the lockfile on `makepad-error-log v1.0.0` existing
+# at two paths. The model (`splash-node`) is shared; only the walk is duplicated.
+#
+# A duplicated walk drifts unless something checks it. Neither repository can run
+# the other's evaluator — that is the whole reason there are two — so the check
+# is this file: a number both test suites read and compare their own result to.
+#
+# WHY NOT HARDCODE IT. An earlier version of octos-one's test carried these
+# counts as literals copied from a note, and they were three commits stale the
+# first time they were run: they predated the tap wrappers, which add a node per
+# declared tap. The test reported a divergence between the two evaluators that
+# did not exist. A shared number cannot do that — when the tree legitimately
+# changes, both suites fail together and one edit here fixes both.
+#
+# The counts are for the fixtures in Splash/crates/splash-ui-l0/tests/fixtures,
+# realized against the data in each suite's own helper, lowered by `kit::lower`,
+# concatenated with `_kit.splash`, and evaluated.
+#
+#   card     nodes
+news         27
+stock        12
+weather      64

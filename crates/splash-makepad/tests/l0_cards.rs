@@ -69,10 +69,29 @@ fn weather_data() -> serde_json::Value {
     })
 }
 
-/// Every reference card builds through the kit into a real tree.
+/// The counts both evaluators must agree on.
+const CONFORMANCE: &str = include_str!("../../../components/l0/conformance.txt");
+
+fn expected(card: &str) -> usize {
+    CONFORMANCE
+        .lines()
+        .filter(|l| !l.trim_start().starts_with('#') && !l.trim().is_empty())
+        .find_map(|l| {
+            let (name, n) = l.split_once(char::is_whitespace)?;
+            (name == card).then(|| n.trim().parse().ok())?
+        })
+        .unwrap_or_else(|| panic!("no conformance entry for {card:?}"))
+}
+
+/// Every reference card builds through the kit into the tree the contract says.
 ///
-/// The node count is the point: a card that evaluated to a single empty node
-/// would still be `Some` and would still render as a blank screen.
+/// An exact count, not a floor. A card that evaluated to one empty node would
+/// still be `Some` and would still render as a blank screen — but more than
+/// that, this number is the ONLY thing holding the two evaluators together.
+/// octos-one walks the same DSL with its own VM, because taking this crate
+/// there fails the lockfile, and neither repository can run the other's walk. So
+/// both read this file and compare against it; a drift fails on both sides, and
+/// a legitimate change to the tree is one edit that fixes both.
 #[test]
 fn every_reference_card_builds_through_the_kit() {
     for (name, tree) in [
@@ -80,10 +99,12 @@ fn every_reference_card_builds_through_the_kit() {
         ("stock", build(STOCK, stock_data())),
         ("weather", build(WEATHER, weather_data())),
     ] {
-        assert!(
-            tree.count() > 10,
-            "{name} produced a {}-node tree — too small to be a card",
-            tree.count()
+        assert_eq!(
+            tree.count(),
+            expected(name),
+            "{name} produced {} nodes, the contract says {}",
+            tree.count(),
+            expected(name)
         );
     }
 }
