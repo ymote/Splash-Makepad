@@ -187,6 +187,40 @@ fn l0_tap_fit(target, node) {
 
 fn l0_weathericon(cond) { return {t: "weathericon", variant: cond, w: 44, h: 44} }
 
+// The five that used to be markers.
+//
+// Each is a shader parameterised by data, so the kit chooses the SIZE — a
+// theme's business — and the card supplies the numbers. Height matters here in a
+// way it does not for text: a temperature bar is 8px of gradient and a contour
+// field is a map, and neither has an intrinsic size to fit to.
+
+// A day's low and high against the week's range, as a gradient segment.
+fn l0_tempbar(lo, hi, min, max) {
+    return {t: "tempbar", fillw: 1, h: 8, marginx: 10,
+            lo: lo, hi: hi, min: min, max: max}
+}
+
+// The sun's path, with now marked on it. Hours are fractional — 18.9 is 18:54.
+fn l0_sunarc(rise, set, now) {
+    return {t: "sunarc", fillw: 1, h: 90, rise: rise, set: set, now: now}
+}
+
+// 0..1 through the cycle, and percent illuminated.
+fn l0_moonphase(phase, illum) {
+    return {t: "moonphase", w: 64, h: 64, phase: phase, illum: illum}
+}
+
+// An air-quality field around a point. The widget fetches it: the card names
+// WHERE, never the sixteen scalars a field would otherwise need.
+fn l0_aqicontour(lat, lon, span) {
+    return {t: "aqicontour", fillw: 1, h: 190, lat: lat, lon: lon, span: span}
+}
+
+// A price series. Likewise: the card names WHICH series and over what window.
+fn l0_stockplot(symbol, range) {
+    return {t: "stockplot", fillw: 1, h: 180, symbol: symbol, range: range}
+}
+
 fn l0_unsupported(role) {
     return {t: "card", fillw: 1, bg: l0_panel, radius: 8, padx: 10, pady: 8,
             c: [ l0_caption("[" + role + " has no kind in this renderer]") ]}
