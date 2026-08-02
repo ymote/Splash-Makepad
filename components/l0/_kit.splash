@@ -147,6 +147,31 @@ fn l0_chip(s, on) {
 
 fn l0_photo(src) { return {t: "image", src: src, fit: 2, fillw: 1} }
 
+// ---- interaction -----------------------------------------------------------
+// A tap target, carried as `tapto` — an arbitrary string this renderer does not
+// interpret. Its own `set:…` verbs are handled inside `splash-render`, and
+// anything else falls through to the host, which is what lets an L0 event keep
+// its instance key without any change to the VM.
+//
+// THE WRAPPER IS NOT DECORATION. A `card`, `chip` or `image` carrying `tapto`
+// renders and does nothing: the attribute is accepted and then dropped, so the
+// target string never reaches the UI at all. Only a container carries a tap. So
+// a tappable role is wrapped in one, which is uniform and provable — deciding
+// per role which kinds carry a tap natively is a second rule that rots the next
+// time this renderer changes.
+//
+// Two variants because the wrapper must size like what it wraps. A chip is
+// intrinsic and sits in a row of chips; wrapping it in a filling container makes
+// the first chip eat the row.
+
+fn l0_tap(target, node) {
+    return {t: "column", fillw: 1, tapto: target, c: [node]}
+}
+
+fn l0_tap_fit(target, node) {
+    return {t: "column", fitw: 1, fith: 1, tapto: target, c: [node]}
+}
+
 // ---- data visualisations ---------------------------------------------------
 // Six roles are small data visualisations rather than compositions of boxes and
 // text: a gradient temperature bar is a fragment shader parameterised by data.

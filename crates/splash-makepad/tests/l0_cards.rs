@@ -121,12 +121,35 @@ fn the_lowered_card_names_roles_and_no_presentation() {
     let report = realize(STOCK, &stock_data(), RealizeLimits::default());
     let src = kit::lower(&report.root.expect("root"));
 
-    for forbidden in ["#", "draw_bg", "draw_text", "SolidView", "RoundedView", "Inset{"] {
+    for forbidden in ["draw_bg", "draw_text", "SolidView", "RoundedView", "Inset{"] {
         assert!(
             !src.contains(forbidden),
             "{forbidden:?} is presentation and belongs to the theme:\n{src}"
         );
     }
+
+    // A hex COLOUR, specifically — not any `#`.
+    //
+    // The first version of this forbade `#` outright and failed the moment taps
+    // were added, because an instance key contains them: `for#0[NVDA]`,
+    // `when#0`. A crude check that fires on correct output is worse than no
+    // check, because the fix under pressure is to delete it.
+    let hex: Vec<&str> = src
+        .match_indices('#')
+        .map(|(i, _)| &src[i + 1..])
+        .filter(|rest| {
+            let digits = rest
+                .chars()
+                .take_while(|c| c.is_ascii_hexdigit())
+                .count();
+            matches!(digits, 3 | 6 | 8)
+        })
+        .collect();
+    assert!(
+        hex.is_empty(),
+        "a hex colour is presentation and belongs to the theme: {:?}\n{src}",
+        hex.iter().map(|h| &h[..8.min(h.len())]).collect::<Vec<_>>()
+    );
     assert!(src.contains("l0_panel("), "roles must be named:\n{src}");
 }
 
@@ -157,5 +180,47 @@ fn an_unanswerable_role_survives_as_a_marker() {
     assert!(
         out.iter().any(|w| w.contains("TempBar")),
         "and the marker must reach the tree, naming the role: {out:?}"
+    );
+}
+
+/// A declared tap must reach the rendered UI as a live target.
+///
+/// This is the assertion the whole interaction path rests on, and it is easy to
+/// pass falsely: `tapto` on a `card`, `chip` or `image` is accepted by the node
+/// model and then DROPPED — the string never reaches the UI, and the card
+/// renders looking perfectly correct while every row is dead. Only a container
+/// carries a tap, which is why the lowering wraps.
+#[test]
+fn a_declared_tap_reaches_the_rendered_ui() {
+    let tree = build(STOCK, stock_data());
+    let ui = splash_makepad::to_makepad_ui(&tree);
+
+    assert!(
+        ui.contains("on_click"),
+        "the card declares taps and none reached the UI:\n{ui}"
+    );
+    // The INSTANCE KEY must survive, or a tap cannot say which row was hit —
+    // §5.1 identity is the whole basis of dispatch.
+    assert!(
+        ui.contains("for#0[NVDA]"),
+        "the tap target lost its instance key:\n{ui}"
+    );
+    // And the event, and the payload.
+    assert!(ui.contains("open_quote"), "the event name is missing:\n{ui}");
+}
+
+/// A node with no declared tap gets no target.
+///
+/// Without this the test above passes for an implementation that makes the
+/// whole card one hit area, which is worse than none.
+#[test]
+fn only_declared_taps_become_targets() {
+    let report = realize(STOCK, &stock_data(), RealizeLimits::default());
+    let src = kit::lower(&report.root.expect("root"));
+    let wrappers = src.matches("l0_tap").count();
+    // stock.card's list view declares exactly one tap per mover row.
+    assert_eq!(
+        wrappers, 1,
+        "one wrapper per declared tap, no more — got {wrappers}:\n{src}"
     );
 }
