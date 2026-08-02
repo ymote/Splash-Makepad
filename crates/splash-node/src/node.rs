@@ -264,6 +264,14 @@ pub struct Attrs {
     /// horizontal / 6dp vertical padding that a uniform `pad` can't express.
     pub padx: Option<f32>,
     pub pady: Option<f32>,
+    /// Asymmetric vertical padding, where `pady` cannot say it.
+    ///
+    /// A page's top padding clears the status bar and its bottom clears the
+    /// gesture bar, and those are different numbers on every device. Expressed
+    /// as one symmetric `pady` the page sat 30px too high, which shifted every
+    /// row below it and read as a layout bug rather than as a missing inset.
+    pub padtop: Option<f32>,
+    pub padbottom: Option<f32>,
     pub spacing: Option<f32>,
     pub margin: Option<f32>,
     /// Per-axis margin, overriding `margin` on its axis. Every section heading in
@@ -271,6 +279,13 @@ pub struct Attrs {
     /// little tighter than the reference and drift further down the page.
     pub marginx: Option<f32>,
     pub marginy: Option<f32>,
+    /// Asymmetric vertical margin, for the same reason as `padtop`.
+    ///
+    /// A panel separates itself from what is ABOVE it; repeating that below
+    /// doubles the gap between two stacked panels and leaves a dead strip under
+    /// the last one.
+    pub margintop: Option<f32>,
+    pub marginbottom: Option<f32>,
     pub border: Option<f32>,
     pub bordercolor: Option<u32>,
     /// Which Material variant this node is — `filled`/`tonal`/`outlined`/`text`/
