@@ -1,0 +1,25 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Elevated"),
+  {t:"card", variant:"elevated", c:[ {t:"col", pad: 16, spacing: 8, c:[
+    {t:"text", variant:"titleMedium", text:"Elevated card"},
+    {t:"text", variant:"bodyMedium", text:"Cards hold content and actions about a single subject."},
+    {t:"flow", spacing: 8, c:[ {t:"button", variant:"text", label:"Action", key:"cd1", tap:1} ]},
+  ]}]},
+  section("Filled"),
+  {t:"card", variant:"filled", c:[ {t:"col", pad: 16, spacing: 8, c:[
+    {t:"text", variant:"titleMedium", text:"Filled card"},
+    {t:"text", variant:"bodyMedium", text:"A lower-emphasis container."},
+  ]}]},
+  section("Outlined"),
+  {t:"card", variant:"outlined", c:[ {t:"col", pad: 16, spacing: 8, c:[
+    {t:"text", variant:"titleMedium", text:"Outlined card"},
+    {t:"text", variant:"bodyMedium", text:"A card with a visible boundary."},
+  ]}]},
+  section("Checkable"),
+  {t:"card", variant:"outlined", key:"cdc", checkable: 1, on: N("cdc", 0), c:[
+    {t:"col", pad: 16, spacing: 4, c:[
+      {t:"text", variant:"titleMedium", text:"Tap to select"},
+      {t:"text", variant:"bodyMedium", text:"Checkable cards show a selected state."},
+    ]}]}
+]} ]}

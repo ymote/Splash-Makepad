@@ -1,0 +1,27 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Assist"),
+  group([
+    {t:"chip", variant:"assist", text:"Directions", icon:"place", key:"ca1", tap: 1},
+    {t:"chip", variant:"assist", text:"Call",       icon:"call",  key:"ca2", tap: 1},
+  ]),
+  section("Filter"),
+  caption("Toggleable, with a leading check when selected."),
+  group([
+    {t:"chip", variant:"filter", text:"Coffee",  key:"cf1", on: N("cf1", 1)},
+    {t:"chip", variant:"filter", text:"Tea",     key:"cf2", on: N("cf2", 0)},
+    {t:"chip", variant:"filter", text:"Juice",   key:"cf3", on: N("cf3", 0)},
+  ]),
+  section("Input"),
+  group([
+    {t:"chip", variant:"input", text:"Alice", closeable: 1, key:"ci1"},
+    {t:"chip", variant:"input", text:"Bob",   closeable: 1, key:"ci2"},
+  ]),
+  section("Suggestion"),
+  group([
+    {t:"chip", variant:"suggestion", text:"Add to cart", key:"cs1", tap: 1},
+    {t:"chip", variant:"suggestion", text:"Buy now",     key:"cs2", tap: 1},
+  ]),
+  section("Disabled"),
+  group([ {t:"chip", variant:"assist", text:"Disabled", enabled: 0} ])
+]} ]}

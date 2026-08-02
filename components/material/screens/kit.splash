@@ -1,0 +1,32 @@
+// ---------------------------------------------------------------------------
+// Shared kit: helpers every catalog screen composes from. Pure Splash DSL —
+// evaluated on device by the makepad-script VM, walked into Material views.
+// ---------------------------------------------------------------------------
+
+fn num(s, dflt) { if s == "" { return dflt } return s + 0 }
+fn is(s, v) { if s == v { return 1 } return 0 }
+
+// (page() removed: a top-level fn CALL cannot be the module result — see notes)
+fn page(kids) {
+    return {t:"scroll", c:[ {t:"col", pad: 16, spacing: 16, c: kids} ]}
+}
+
+// Section header — M3 "title medium" over a group of demos.
+// 4, not 8. The reference does sit ~13px lower below a header and ~21px lower
+// above the next one, but widening this margin is worse *everywhere*, `button`
+// included (11.4 -> 14.0, and 40 routes under 9.0 -> 26). The margin applies
+// above the first header too, so it shifts the one section that already lands
+// exactly; the drift further down is not paid for by breaking the top.
+fn section(title) {
+    return {t:"text", variant:"titleMedium", text: title, marginy: 4}
+}
+
+// A labelled row of demo widgets that wraps.
+fn group(kids) {
+    return {t:"flow", spacing: 8, c: kids}
+}
+
+// Caption under a demo.
+fn caption(s) {
+    return {t:"text", variant:"bodySmall", text: s}
+}

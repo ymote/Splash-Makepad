@@ -1,0 +1,11 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Menus"),
+  caption("PopupMenu and exposed dropdown."),
+  {t:"col", spacing: 12, c:[
+    {t:"button", variant:"outlined", label:"Show popup menu", key:"menu", action:"popup", tap: 1},
+    {t:"dropdown", hint:"Exposed dropdown", items:"Apple;Banana;Cherry;Dragonfruit", key:"dd", text: S("dd")},
+    {t:"dropdown", hint:"Editable dropdown", items:"Small;Medium;Large", key:"dd2", text: S("dd2"), action:"editable"},
+  ]},
+  caption("Last selection: " + S("menu_result"))
+]} ]}

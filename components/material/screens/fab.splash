@@ -1,0 +1,21 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Sizes"),
+  group([
+    {t:"fab", variant:"small",   icon:"add", key:"fb1", tap: 1},
+    {t:"fab", variant:"regular", icon:"add", key:"fb2", tap: 1},
+    {t:"fab", variant:"large",   icon:"add", key:"fb3", tap: 1},
+  ]),
+  section("Colours"),
+  group([
+    {t:"fab", variant:"regular", icon:"edit", group:"primary",   key:"fb4", tap: 1},
+    {t:"fab", variant:"regular", icon:"edit", group:"secondary", key:"fb5", tap: 1},
+    {t:"fab", variant:"regular", icon:"edit", group:"tertiary",  key:"fb6", tap: 1},
+    {t:"fab", variant:"regular", icon:"edit", group:"surface",   key:"fb7", tap: 1},
+  ]),
+  section("Extended"),
+  group([
+    {t:"fab", variant:"extended", icon:"add",  label:"Create",  key:"fb8", tap: 1},
+    {t:"fab", variant:"extended", label:"No icon", key:"fb9", tap: 1},
+  ])
+]} ]}

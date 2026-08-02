@@ -1,0 +1,13 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Bottom navigation"),
+  caption("Three to five destinations; the live bar is pinned at the bottom of this screen."),
+  {t:"navbar", items:"Home;Search;Alerts;Profile", icon:"home,search,notifications,person",
+   key:"bn", selected: N("bn", 0), badge:",,7,"},
+  section("Three destinations"),
+  {t:"navbar", items:"Songs;Albums;Artists", icon:"music_note,album,person",
+   key:"bn2", selected: N("bn2", 1)},
+  section("Labels visible when inactive"),
+  {t:"navbar", items:"One;Two;Three;Four;Five", icon:"star,star,star,star,star",
+   key:"bn3", selected: N("bn3", 0)}
+]} ]}

@@ -1,0 +1,12 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Top app bar"),
+  caption("The bar above is a real MaterialToolbar; these show the four M3 sizes."),
+  {t:"appbardemo", variant:"small",  title:"Small",  key:"ab1"},
+  {t:"appbardemo", variant:"medium", title:"Medium", key:"ab2"},
+  {t:"appbardemo", variant:"large",  title:"Large",  key:"ab3"},
+  {t:"appbardemo", variant:"center", title:"Centred", key:"ab4"},
+  section("Actions"),
+  caption("Overflow and action icons are wired to a real menu."),
+  {t:"button", variant:"outlined", label:"Toggle bar actions", key:"abact", action:"toggle", tap: 1}
+]} ]}

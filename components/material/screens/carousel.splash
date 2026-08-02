@@ -1,0 +1,11 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Hero carousel"),
+  {t:"carousel", variant:"hero", count: 8, key:"cr1"},
+  section("Multi-browse"),
+  {t:"carousel", variant:"multibrowse", count: 10, key:"cr2"},
+  section("Uncontained"),
+  {t:"carousel", variant:"uncontained", count: 10, key:"cr3"},
+  section("Full screen"),
+  {t:"carousel", variant:"fullscreen", count: 5, key:"cr4"}
+]} ]}

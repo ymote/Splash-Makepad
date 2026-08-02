@@ -1,0 +1,37 @@
+// octos-one's own makepad widgets, rendered as native Android views.
+// Previously documented as having "no android.widget equivalent".
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("WeatherIcon"),
+  caption("A port of the 96px SDF shader: all eight conditions, animated."),
+  {t:"row", spacing: 4, h: 96, c:[
+    {t:"weathericon", value: 0, w: 88}, {t:"weathericon", value: 1, w: 88},
+    {t:"weathericon", value: 2, w: 88}, {t:"weathericon", value: 3, w: 88}
+  ]},
+  {t:"row", spacing: 4, h: 96, c:[
+    {t:"weathericon", value: 4, w: 88}, {t:"weathericon", value: 5, w: 88},
+    {t:"weathericon", value: 6, w: 88}, {t:"weathericon", value: 7, w: 88}
+  ]},
+  caption("sunny · partly · cloudy · rain / storm · snow · wind · fog"),
+
+  section("MapView — 3D chase"),
+  caption("The same pinhole ground-plane projection as the makepad vertex shader, with the route ribbon, standing pins and vehicle puck."),
+  {t:"navmap", value: 1, h: 300},
+
+  section("MapView — heading-up 2D"),
+  {t:"navmap", value: 2, h: 200},
+
+  section("Glass panels"),
+  caption("The AppleGlassRoundedView uniforms, pass for pass."),
+  {t:"glasspanel", variant:"panel", c:[
+    {t:"text", variant:"titleMedium", text:"glass.Panel", color: 1},
+    {t:"text", variant:"bodySmall", text:"tint · lensing · specular · diffraction · shadow"}
+  ]},
+  {t:"glasspanel", variant:"clear", c:[
+    {t:"text", variant:"titleMedium", text:"glass.ClearPanel"},
+    {t:"text", variant:"bodySmall", text:"higher lensing, lower tint"}
+  ]},
+  {t:"glasspanel", variant:"card", radius: 18, c:[
+    {t:"text", variant:"titleMedium", text:"glass.Card"}
+  ]}
+]} ]}

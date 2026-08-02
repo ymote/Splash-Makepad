@@ -20,9 +20,34 @@
 //! and unit-tested so it needs no window to verify.
 
 pub mod kit;
+pub mod material;
 
-use splash_render::{NodeKind, UiNode};
+use splash_render::{Attrs, NodeKind, UiNode};
 use std::fmt::Write as _;
+
+/// The Material colour scheme the semantic components resolve against. The
+/// reference states components by role, not by colour, so the roles live here;
+/// this is how a host says which set to use.
+static SCHEME: std::sync::Mutex<Option<material::Roles>> = std::sync::Mutex::new(None);
+
+pub fn set_scheme(roles: material::Roles) {
+    if let Ok(mut s) = SCHEME.lock() {
+        *s = Some(roles);
+    }
+}
+
+/// Convenience for the two built-in schemes.
+pub fn set_dark(dark: bool) {
+    set_scheme(if dark {
+        material::Roles::dark()
+    } else {
+        material::Roles::light()
+    });
+}
+
+fn theme() -> material::Roles {
+    SCHEME.lock().ok().and_then(|s| *s).unwrap_or_else(material::Roles::light)
+}
 
 /// Translate a `UiNode` tree into makepad component-script UI source.
 ///
@@ -31,6 +56,7 @@ use std::fmt::Write as _;
 /// `Image`, text inputs → `TextInput`. Attributes map to makepad props
 /// (`bg` → `show_bg`+`draw_bg.color`, `size` → `draw_text` font size, etc.).
 pub fn to_makepad_ui(root: &UiNode) -> String {
+    material::reset_slider_index();
     let mut out = String::new();
     emit(root, &mut out, 0);
     out
@@ -51,7 +77,10 @@ fn widget_name(kind: NodeKind) -> &'static str {
         // spins off draw_pass.time). `bg` recolours the arc via draw_bg.color.
         NodeKind::Loading => "LoadingSpinner",
         // The M3 loading indicator: a solid shape that morphs + rotates.
-        NodeKind::Progress => "LoadingMorph",
+        // A ring, as the reference's circular progress draws. `LoadingMorph` is
+        // splash-widgets' shape-morph blob — it renders nothing on an isolate and
+        // a morphing blob on the main VM, neither of which is a progress ring.
+        NodeKind::Progress => "LoadingSpinner",
         // makepad ships an OpenStreetMap vector-tile renderer with rotation and
         // tilt. A map is a widget here, not a platform view — which is why
         // `google_maps` is portable after all.
@@ -122,6 +151,20 @@ fn needs_click_overlay(node: &UiNode) -> bool {
 }
 
 fn emit(node: &UiNode, out: &mut String, depth: usize) {
+    // A Material node is desugared into primitives first, so it picks up the
+    // same corner-radius, colour-role and text handling as everything else.
+    // Re-enter rather than emit directly: lowering is where a component gains
+    // its `tapto`, and going straight to `emit_widget` skipped the click overlay
+    // and left every lowered component inert. This terminates because a lowered
+    // node is primitive, and a resolved text role clears the `variant`.
+    if let Some(lowered) = material::lower(node, &theme()) {
+        emit(&lowered, out, depth);
+        return;
+    }
+    if needs_vertical_pad_wrapper(node) {
+        emit_vertical_pad(node, out, depth);
+        return;
+    }
     if needs_click_overlay(node) {
         emit_click_overlay(node, out, depth);
         return;
@@ -129,7 +172,110 @@ fn emit(node: &UiNode, out: &mut String, depth: usize) {
     emit_widget(node, out, depth);
 }
 
+/// Vertical-only padding (`pady` with no `padx`) on a node that has no fixed
+/// height.
+///
+/// This is the shape the screens use for a list row — `padding: {top: 12,
+/// bottom: 12}` — and it is exactly the shape this dialect cannot express: the
+/// per-side object is inert, and the scalar form would indent the text
+/// horizontally by the same 12dp. Both were measured on device.
+///
+/// So the inset is built structurally instead, as spacer rows above and below.
+/// Without this every row in the app rendered at its bare text height, which is
+/// the compression that made long screens drift ~24px per row against the
+/// reference.
+fn needs_vertical_pad_wrapper(node: &UiNode) -> bool {
+    let a = &node.attrs;
+    let vertical_only = a.padx.or(a.pad).unwrap_or(0.0) == 0.0
+        && a.marginx.or(a.margin).unwrap_or(0.0) == 0.0;
+    // Margin is emitted through the same inert object form, so a section
+    // header's `margin: {top: 4, bottom: 4}` was dropped exactly like the row
+    // padding was. Both are made up structurally, and both at once when a node
+    // carries them together.
+    // A text node with no stated inset still gets one: `padding: 0` above kills
+    // makepad's `Label` default on *both* axes, and only the horizontal half of
+    // it was wrong. Restoring the vertical half here is what decouples the two —
+    // the axes cannot be set independently through the padding property itself.
+    // A text node with no stated inset still gets a small one: Android's TextView
+    // font padding is what makes the reference's card rows measure 19dp where
+    // these measure 15, and `line_spacing` alone cannot close that without
+    // costing the toolbars. 2dp, measured: 3 is clearly worse (36 routes under
+    // 9.0 drops to 31) because every box whose padding was derived against 2
+    // then needs re-deriving, `shape_box` first.
+    let text_default = node.kind == NodeKind::Text
+        && a.pady.is_none()
+        && a.marginy.is_none()
+        && a.pad.is_none();
+    (a.h.is_none() && vertical_only && (a.pady.unwrap_or(0.0) + a.marginy.unwrap_or(0.0)) > 0.0)
+        || text_default
+}
+
+fn emit_vertical_pad(node: &UiNode, out: &mut String, depth: usize) {
+    let ind = "    ".repeat(depth);
+    let inner_ind = "    ".repeat(depth + 1);
+    // The widget already carries makepad's own `theme.mspace_1` inset (~4dp), so
+    // the spacers make up only the remainder. Adding the full `pady` on top
+    // overshot the reference's row pitch by exactly twice that default.
+    // The Label default (`theme.mspace_1`) already supplies ~4dp inside a text
+    // node, so the spacers make up only the remainder. A View has no such
+    // default and takes the full inset.
+    // No padding beyond what the DSL states. The reference does leave 173px
+    // around a section header where this leaves 162 — measured on `color`, whose
+    // offset collapses by exactly 11px at each section boundary — but adding
+    // 2dp a side to every stated margin is far worse (38 routes under 9.0 drops
+    // to 27): screens carry many section headers and it compounds.
+    let stated = node.attrs.pady.unwrap_or(0.0) + node.attrs.marginy.unwrap_or(0.0);
+    // 4dp per side is what the zeroed `Label` default was contributing. 6 was
+    // tried — it closes the slider screen's ~7dp-per-section shortfall but costs
+    // six other routes more than it gains, so the shortfall stays.
+    let py = if stated > 0.0 { stated } else { 2.0 };
+    // Hug by default. Defaulting to Fill collapsed every label that sits inside
+    // a hug-content row — the button labels all vanished while the pixel metric
+    // barely moved, which is why this is checked on screen and not only scored.
+    let width = if node.attrs.fillw == Some(1) { "Fill" } else { "Fit" };
+    let _ = writeln!(out, "{ind}View {{");
+    let _ = writeln!(out, "{inner_ind}flow: Down");
+    let _ = writeln!(out, "{inner_ind}width: {width}");
+    let _ = writeln!(out, "{inner_ind}height: Fit");
+    // Symmetric. `color` wants 11px more *above* its section headers and the
+    // same below, but giving every stated margin an asymmetric top is far worse
+    // (38 routes under 9.0 -> 26): the extra belongs to the widget above the
+    // header, not to the header.
+    // Symmetric. `button`'s section-header blocks do measure 13px shorter than
+    // the reference's, but giving a stated margin more above than below is far
+    // worse — re-tested under the aligned layout and still 40 routes under 9.0
+    // drops to 36, `color` 4.1 -> 19.5. Unlike the alignment itself, this one
+    // does not come good once the layout beneath it is right.
+    // A section header takes 4dp more above than below -- but only one that
+    // material.rs marked, which is every header except the first on its screen.
+    // Emitting it here rather than as a sibling matters: a child of the page's
+    // `spacing: 16` column would cost 4dp *plus another 16dp*, 56px where 11 is
+    // wanted. These spacers sit inside the wrapper's own `flow: Down`, so 4dp
+    // is 4dp.
+    let top = if node.attrs.group.as_deref() == Some("sechead") {
+        py + 4.0
+    } else {
+        py
+    };
+    let _ = writeln!(out, "{inner_ind}View {{ height: {top} }}");
+    let mut bare = node.clone();
+    // Zero rather than clear, so the rule above does not fire again on re-entry.
+    bare.attrs.pady = Some(0.0);
+    bare.attrs.pad = None;
+    bare.attrs.marginy = Some(0.0);
+    bare.attrs.margin = None;
+    emit(&bare, out, depth + 1);
+    let _ = writeln!(out, "{inner_ind}View {{ height: {py} }}");
+    let _ = writeln!(out, "{ind}}}");
+}
+
 /// `Overlay{ <content>, Button{…on_click} }` — see [`needs_click_overlay`].
+///
+/// The handler calls `NAV`, a global the host registers, rather than reaching
+/// through `ui.nav_signal`. `ui` is injected by `Splash::eval_body`, so a body
+/// mounted anywhere else — notably on the app's main VM, which is what gets this
+/// crate's fonts and a widget kit's theming into reach — had every tap silently
+/// do nothing. A global works on either VM.
 fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
     let ind = "    ".repeat(depth);
     let inner_ind = "    ".repeat(depth + 1);
@@ -154,17 +300,30 @@ fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
     // `SplashTap` in splash-widgets is the real answer and cannot be reached: a
     // widget this workspace defines does not resolve inside the isolate VM a
     // mounted Splash allocates. See that module.
-    let strip = a.w.is_none() && a.fillw == Some(1);
+    // No edge strip, and no need for one. The target below is `SplashTap`,
+    // which never calls `event.hits` and so never captures the finger: it
+    // hit-tests itself on `TouchUpdate` and ignores a press that travelled more
+    // than its slop. The scroll therefore sees the whole gesture even under a
+    // full-width target, and a tap and a swipe can share the same pixels.
+    //
+    // Both earlier settings were wrong, in opposite directions. A strip on
+    // everything shrank Material buttons to a 64dp sliver and an audit called 16
+    // of 18 interactions inert. A strip on nothing left a screen of full-width
+    // rows -- the catalog index -- with no free pixels for the scroll, so the
+    // list would not move and the failed swipe opened whatever row it ended on.
+    let target = a.tapto.as_ref().expect("checked by needs_click_overlay");
     let _ = writeln!(out, "{ind}View {{");
     let _ = writeln!(out, "{inner_ind}flow: Overlay");
-    if strip {
-        let _ = writeln!(out, "{inner_ind}align: Align{{x: 1.0}}");
-    }
     // The wrapper takes over the node's outer size so the Button, which fills
     // it, ends up exactly the size of the content it covers.
+    // A hug-content target has to stay hugging: forcing Fill made three tabs
+    // each claim the whole row, and the strip collapsed to nothing.
     match a.w {
         Some(w) => {
             let _ = writeln!(out, "{inner_ind}width: {w}");
+        }
+        None if a.fitw == Some(1) => {
+            let _ = writeln!(out, "{inner_ind}width: Fit");
         }
         None => {
             let _ = writeln!(out, "{inner_ind}width: Fill");
@@ -193,24 +352,17 @@ fn emit_click_overlay(node: &UiNode, out: &mut String, depth: usize) {
     // property per line here for the same reason: the comma-joined form did not
     // parse.
     //
-    // A Button is still the wrong widget: it captures the finger on touch-down
-    // via `event.hits`, which starves the enclosing scroll and makes the catalog
-    // feel frozen. `splash_widgets::tap::SplashTap` is the right one and is
-    // written, compiles, and cannot be used — a brand-new widget type does not
-    // resolve inside the Splash isolate's prelude, so emitting it renders the
-    // screen blank. See that module.
-    let target = a.tapto.as_ref().expect("checked by needs_click_overlay");
-    let _ = writeln!(out, "{inner_ind}ButtonFlatter {{");
-    if strip {
-        let _ = writeln!(out, "{inner_ind}    width: 64");
-    } else {
-        let _ = writeln!(out, "{inner_ind}    width: Fill");
-    }
+    // `SplashTap` — reachable now. A Splash isolate takes makepad's own script
+    // mods and nothing else, so this type used to be unnameable from a body and
+    // the target had to be a `Button`, which captures on touch-down and starved
+    // the scroll. The host registers this crate's mod into every isolate
+    // through `register_splash_isolate_mod`, so the right widget can be used.
+    let _ = writeln!(out, "{inner_ind}SplashTap {{");
+    let _ = writeln!(out, "{inner_ind}    width: Fill");
     let _ = writeln!(out, "{inner_ind}    height: Fill");
-    let _ = writeln!(out, "{inner_ind}    text: \"\"");
     let _ = writeln!(
         out,
-        "{inner_ind}    on_click: || {{ ui.nav_signal.set_text({target:?}) }}"
+        "{inner_ind}    on_click: || {{ NAV(t: {target:?}) }}"
     );
     let _ = writeln!(out, "{inner_ind}}}");
     let _ = writeln!(out, "{ind}}}");
@@ -253,12 +405,101 @@ fn widget_for(node: &UiNode) -> &'static str {
         if a.elevation.is_some() {
             return "RoundedShadowView";
         }
-        if a.bg.is_some() || a.radius.is_some() || a.border.is_some() {
+        if a.bg.is_some() || a.bg2.is_some() || a.radius.is_some() || a.border.is_some() {
             return "RoundedView";
         }
     }
     base
 }
+
+/// Whether this widget's label carries per-state colours (`draw_text.color_*`).
+/// A `Label` has only the base colour; every interactive widget mixes.
+fn has_text_states(kind: NodeKind) -> bool {
+    matches!(
+        kind,
+        NodeKind::Button
+            | NodeKind::Checkbox
+            | NodeKind::Radio
+            | NodeKind::Toggle
+            | NodeKind::Slider
+            | NodeKind::Input
+            | NodeKind::Textarea
+    )
+}
+
+/// The Material state colours for a native control, as `draw_bg` keys.
+///
+/// A control is drawn by its own shader, so `bg`/`color` alone cannot describe
+/// it. They cannot come from a widget kit either: `Splash` mounts its body on an
+/// isolate VM that receives only makepad's own `script_mod`, so variants
+/// registered on the app VM are absent there and every control fell back to
+/// upstream's grey. A per-instance merge *does* arrive, so the roles travel with
+/// the node — and default from the active scheme, because the reference states a
+/// control semantically and carries no colour at all.
+fn control_roles(kind: NodeKind, a: &Attrs) -> Vec<String> {
+    let th = theme();
+    let error = a.error.is_some() || a.variant.as_deref() == Some("error");
+    let accent = a.accent.or(Some(if error { th.error } else { th.primary }));
+    let mark = a.markcolor.or(Some(if error { th.on_error } else { th.on_primary }));
+    let outline = a.bordercolor.or(Some(if error { th.error } else { th.on_surface_variant }));
+    // Disabled is a whole section per component in the reference.
+    let (accent, mark, outline) = if a.enabled.unwrap_or(1) == 0 {
+        let d = |c: Option<u32>| c.map(|c| (c & 0x00FF_FFFF) | 0x61000000);
+        (d(accent), d(mark), d(outline))
+    } else {
+        (accent, mark, outline)
+    };
+    let roles: &[(&str, Option<u32>)] = match kind {
+        NodeKind::Checkbox => &[
+            ("border_color", if a.bordercolor.is_none() { outline } else { None }),
+            ("color_active", accent),
+            ("border_color_active", accent),
+            ("mark_color_active", mark),
+        ],
+        // M3's radio is a ring: the dot and the selected ring carry the accent.
+        NodeKind::Radio => &[
+            ("border_color", if a.bordercolor.is_none() { outline } else { None }),
+            ("border_color_active", accent),
+            ("mark_color_active", accent),
+        ],
+        NodeKind::Toggle => &[
+            ("color_active", accent),
+            ("border_color_active", accent),
+            ("mark_color", outline),
+            ("mark_color_active", mark),
+        ],
+        NodeKind::Slider => &[
+            ("val_color", accent),
+            ("val_color_hover", accent),
+            ("handle_color", accent),
+            ("handle_color_hover", accent),
+        ],
+        // A field's fill is state-keyed: `color` alone leaves an *empty* field
+        // grey, and empty is the state a catalog screenshot actually shows.
+        NodeKind::Input | NodeKind::Textarea => &[
+            ("color_empty", a.bg),
+            ("color_focus", a.bg),
+            ("border_color_empty", outline),
+            ("border_color_focus", accent),
+        ],
+        _ => &[],
+    };
+    let mut p = Vec::new();
+    for (k, v) in roles {
+        if let Some(c) = v {
+            p.push(format!("{k}: {}", hex_rgba(*c)));
+        }
+    }
+    p
+}
+
+/// A stated dp renders ~0.7% smaller here than on the reference: its 56dp row
+/// measures 158px where this one measures 157 (2.82 px/dp against 2.80). Small
+/// per element, but it accumulates — eight pixels down a screen of twelve
+/// swatches — so explicit sizes are scaled to match. Sizes only: extending this
+/// to padding and spacing costs two routes (38 under 9.0 drops to 36), so
+/// makepad evidently resolves those on a different rounding path.
+const DP_SCALE: f32 = 157.7 / 157.0;
 
 fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
     let ind = "    ".repeat(depth);
@@ -269,11 +510,24 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
     }
     // Explicit alignment wins; otherwise a row centres its children vertically
     // (a widget and its label line up), matching how ArkUI lays a row out.
-    if a.alignx.is_some() || a.aligny.is_some() {
-        let x = a.alignx.unwrap_or(0.0);
-        let y = a.aligny.unwrap_or(0.0);
+    // `align` is the DSL's cross-axis alignment — 0 start, 1 centre, 2 end. It
+    // was parsed into `Attrs` and then never read by this backend, so `align: 1`
+    // did nothing: the music player's album art sat left where the reference
+    // centres it. Cross axis is horizontal in a column, vertical in a row.
+    let cross = a.align.and_then(|v| match v {
+        0 => Some(0.0),
+        1 => Some(0.5),
+        2 => Some(1.0),
+        _ => None,
+    });
+    let is_row = node.kind == NodeKind::Row;
+    let ax = a.alignx.or(if is_row { None } else { cross });
+    let ay = a.aligny.or(if is_row { cross } else { None });
+    if ax.is_some() || ay.is_some() {
+        let x = ax.unwrap_or(0.0);
+        let y = ay.unwrap_or(if is_row { 0.5 } else { 0.0 });
         let _ = writeln!(out, "{ind}align: Align{{x: {x}, y: {y}}}");
-    } else if node.kind == NodeKind::Row {
+    } else if is_row {
         let _ = writeln!(out, "{ind}align: Align{{y: 0.5}}");
     }
     // makepad containers default to Fill on both axes, which makes a card
@@ -282,7 +536,7 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
     let container = flow(node.kind).is_some();
     match a.w {
         Some(w) => {
-            let _ = writeln!(out, "{ind}width: {w}");
+            let _ = writeln!(out, "{ind}width: {}", w * DP_SCALE);
         }
         None if a.fillw == Some(1) => {
             let _ = writeln!(out, "{ind}width: Fill");
@@ -296,8 +550,14 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         None => {}
     }
     match a.h {
+        // A label's `h` is its Material *line height*, a typographic metric, not
+        // a box. Pinning the walk to it cropped the font's real line box and
+        // sliced descenders across the whole kit. `h: 0` still means hidden.
+        Some(h) if node.kind == NodeKind::Text && h > 0.0 => {
+            let _ = writeln!(out, "{ind}height: Fit");
+        }
         Some(h) => {
-            let _ = writeln!(out, "{ind}height: {h}");
+            let _ = writeln!(out, "{ind}height: {}", h * DP_SCALE);
         }
         None if a.fillh == Some(1) => {
             let _ = writeln!(out, "{ind}height: Fill");
@@ -325,18 +585,41 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         }
         None => {}
     }
-    // Padding: asymmetric padx/pady (each overriding pad on its axis) emit a
-    // per-side object; otherwise a uniform pad. Enables M3's asymmetric insets
-    // (e.g. a button's 24dp horizontal / 6dp vertical padding).
+    // Padding. Only the *scalar* form lands in this dialect: the per-side object
+    // `{left: .., top: ..}` parses and silently resolves to nothing, as do
+    // `Inset{..}` (declared in mod.draw, out of scope in a mounted body) and
+    // makepad's own base-with-override `0{left: ..}`. All three were tried on
+    // device. That no-op is why every control rendered hugging its label — a
+    // button measured 46dp wide against the reference's 89dp.
+    //
+    // So when the two axes differ, one has to win. A node with a fixed height
+    // cannot use vertical padding anyway, which makes the horizontal inset the
+    // one that matters: it is what gives a button its 24dp sides. Anything else
+    // keeps the (inert) object form rather than gaining a horizontal inset it
+    // never asked for, which would indent every list row's text.
     if a.padx.is_some() || a.pady.is_some() {
         let px = a.padx.or(a.pad).unwrap_or(0.0);
         let py = a.pady.or(a.pad).unwrap_or(0.0);
-        let _ = writeln!(
-            out,
-            "{ind}padding: {{left: {px}, right: {px}, top: {py}, bottom: {py}}}"
-        );
+        if (px - py).abs() < 0.01 || (a.h.is_some() && px > 0.0) {
+            let _ = writeln!(out, "{ind}padding: {px}");
+        } else {
+            let _ = writeln!(
+                out,
+                "{ind}padding: {{left: {px}, right: {px}, top: {py}, bottom: {py}}}"
+            );
+        }
     } else if let Some(p) = a.pad {
         let _ = writeln!(out, "{ind}padding: {p}");
+    } else if node.kind == NodeKind::Text {
+        let _ = writeln!(out, "{ind}padding: 0");
+    }
+    let (mx, my) = (a.marginx.or(a.margin), a.marginy.or(a.margin));
+    if mx.is_some() || my.is_some() {
+        let (mx, my) = (mx.unwrap_or(0.0), my.unwrap_or(0.0));
+        let _ = writeln!(
+            out,
+            "{ind}margin: {{left: {mx}, right: {mx}, top: {my}, bottom: {my}}}"
+        );
     }
     if let Some(sp) = a.spacing {
         let _ = writeln!(out, "{ind}spacing: {sp}");
@@ -344,7 +627,14 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
     // bg / radius / border share one draw_bg block. A RoundedView defaults to a
     // transparent fill, so a border with no bg paints a clean outline (Material
     // "outlined" components); a border needs show_bg so the outline is painted.
-    if a.bg.is_some() || a.radius.is_some() || a.border.is_some() || a.elevation.is_some() {
+    let roles = control_roles(node.kind, a);
+    if a.bg.is_some()
+        || a.bg2.is_some()
+        || a.radius.is_some()
+        || a.border.is_some()
+        || a.elevation.is_some()
+        || !roles.is_empty()
+    {
         if a.bg.is_some() || a.border.is_some() || a.elevation.is_some() {
             let _ = writeln!(out, "{ind}show_bg: true");
         }
@@ -352,11 +642,34 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         if let Some(bg) = a.bg {
             parts.push(format!("color: {}", hex_rgba(bg)));
         }
+        // A second stop turns the fill into a gradient (`color_2`).
+        if let Some(bg2) = a.bg2 {
+            parts.push(format!("color_2: {}", hex_rgba(bg2)));
+            // `group: "gradh"` asks for the horizontal axis. Layering a
+            // half-alpha horizontal gradient over a vertical one averages to a
+            // true diagonal, which is what the reference draws and what this
+            // shader cannot do in one pass.
+            if a.group.as_deref() == Some("gradh") {
+                parts.push("gradient_fill_horizontal: 1.0".to_string());
+            }
+        }
         if let Some(r) = a.radius {
-            parts.push(format!("radius: {r}"));
+            // makepad calls this `border_radius` — a bare `radius` silently
+            // missed, so every corner fell back to its 2.5 default. It is also
+            // *half* the corner it draws (`Sdf2d.box` works in `2. * r`), so a
+            // Material dp is emitted halved, which also puts a full corner
+            // exactly on the SDF's capsule limit instead of past it.
+            let mut r = r;
+            for side in [a.h, a.w].into_iter().flatten() {
+                r = r.min(side * 0.5);
+            }
+            parts.push(format!("border_radius: {}", (r * 0.5).max(0.0)));
         }
         if let Some(b) = a.border {
-            parts.push(format!("border_size: {b}"));
+            // Halved, like `border_radius` above: the shader draws the stroke to
+            // both sides of the edge, so a 1dp border measured 6px against the
+            // reference's 3px on the same outlined card.
+            parts.push(format!("border_size: {}", b * 0.5));
         }
         if let Some(bc) = a.bordercolor {
             parts.push(format!("border_color: {}", hex_rgba(bc)));
@@ -370,6 +683,7 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
             parts.push(format!("shadow_radius: {radius}"));
             parts.push(format!("shadow_offset: vec2(0.0, {dy})"));
         }
+        parts.extend(roles);
         // `draw_bg +:` merges onto the widget's draw shader (makepad convention).
         let _ = writeln!(out, "{ind}draw_bg +: {{ {} }}", parts.join(", "));
     }
@@ -386,15 +700,47 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
     if let Some(target) = a.tapto.as_ref() {
         let _ = writeln!(
             out,
-            "{ind}on_click: || {{ ui.nav_signal.set_text({target:?}) }}"
+            "{ind}on_click: || {{ NAV(t: {target:?}) }}"
         );
     }
     if let Some(s) = a.size {
+        // The DSL states type sizes in sp, as Material does; makepad's font_size
+        // is in points. Measured against the reference the same string came out
+        // ~1.33x too tall on every screen (toolbar title 66px vs 47, heading 45
+        // vs 34, button label 39 vs 29) — 72/96 exactly.
+        const SP_TO_PT: f32 = 0.75;
+        let s = s * SP_TO_PT;
         // icon selects the theme's Font-Awesome face (monochrome icons);
         // else weight >= 500 selects the Medium (bold) face — M3's label / title /
         // emphasis weight; else just set the size (Regular). Each swaps the whole
         // text_style for the theme style at this size.
-        if a.icon == Some(1) {
+        // Name the host's Roboto, at the weight the type role asks for.
+        //
+        // The reference renders in Android's Roboto and makepad bundles IBM
+        // Plex, so text could not match while the letterforms differed. `self:`
+        // resolves against the `cargo_manifest_path` of the script_mod that
+        // evaluates this — the host's, now that the body mounts on the main VM
+        // rather than a `Splash` isolate (whose empty manifest path blanked
+        // every label).
+        //
+        // The device ships Roboto as a *variable* font with no separate Medium —
+        // `fonts.xml` maps weight 500 onto the same file via the `wght` axis — so
+        // the emphasis weight comes from `FontMember.weight`, which makepad maps
+        // to that axis. Without it every heading and label rendered regular.
+        if a.icon != Some(1) {
+            // 1.45, not makepad's 1.2: Android's TextView adds font padding that
+            // this does not, so a card's two text rows measured 12dp each against
+            // the reference's 16.5. Tested at 1.2 / 1.32 / 1.45 on verified
+            // sweeps — all within 0.02 of each other on the mean, and 1.45 takes
+            // `adaptive` from 10.2 to 9.6. It costs the toolbars a little
+            // (topappbar 8.0 -> 8.7), which stays comfortably in range. 1.6 was
+            // also tried and is marginally worse without moving `adaptive`.
+            let w = a.weight.unwrap_or(400).max(1) as f32;
+            let _ = writeln!(
+                out,
+                "{ind}draw_text.text_style: TextStyle{{ font_family: FontFamily{{ latin := FontMember{{res: crate_resource(\"self:resources/Roboto-Regular.ttf\") asc: -0.1 desc: 0.0 weight: {w}}} }} line_spacing: 1.45 font_size: {s} }}"
+            );
+        } else if a.icon == Some(1) {
             let _ = writeln!(
                 out,
                 "{ind}draw_text.text_style: mod.theme.font_icons{{ font_size: {s} }}"
@@ -409,7 +755,22 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
         }
     }
     if let Some(c) = a.color {
-        let _ = writeln!(out, "{ind}draw_text.color: {}", hex_rgba(c));
+        let hex = hex_rgba(c);
+        let _ = writeln!(out, "{ind}draw_text.color: {hex}");
+        // An interactive widget's label mixes toward the theme on
+        // hover/press/focus/select, so setting only the base colour held for an
+        // idle control and vanished the moment one was selected. The stated
+        // colour is meant to be *the* colour.
+        if has_text_states(node.kind) {
+            for state in ["color_hover", "color_down", "color_focus", "color_active"] {
+                let _ = writeln!(out, "{ind}draw_text.{state}: {hex}");
+            }
+            // A field's placeholder is a separate role again, and empty is the
+            // state a catalog screenshot shows.
+            if matches!(node.kind, NodeKind::Input | NodeKind::Textarea) {
+                let _ = writeln!(out, "{ind}draw_text.color_empty: {hex}");
+            }
+        }
     }
     if let Some(src) = &a.src {
         let _ = writeln!(out, "{ind}source: {src:?}");
@@ -445,20 +806,91 @@ fn emit_attrs(node: &UiNode, out: &mut String, depth: usize) {
     // Field names are makepad's, not invented: `CheckBox` (and `Toggle`, which
     // is a CheckBox variant — see widgets/src/check_box.rs) exposes
     // `active: Option<bool>`; `Slider` has min/max/step/`default` and no `value`.
-    if let Some(on) = a.on {
+    let on = a.on.or_else(|| a.indeterminate.map(|i| (i != 0) as i32));
+    if let Some(on) = on {
         if matches!(
             node.kind,
             NodeKind::Checkbox | NodeKind::Toggle | NodeKind::Radio
         ) {
             let _ = writeln!(out, "{ind}active: {}", on != 0);
         }
+        // `RadioButton` is the one control with no live `active` field — it has
+        // only `active()`/`set_active()`, so the line above is dropped and a
+        // selected radio drew as unselected. Writing the shader instance does
+        // not survive either; the animator rewrites it next frame. Its animator
+        // *is* live, so move that block's default. `animator +:` is the merge
+        // form makepad's own variants use; plain `animator:` is ignored.
+        if node.kind == NodeKind::Radio && on != 0 {
+            let _ = writeln!(out, "{ind}animator +: {{ active: {{ default: @on }} }}");
+        }
+    }
+    // A determinate circular indicator: the spinner shader, held still with its
+    // gap pinned so it draws a fixed arc rather than an animated one.
+    if node.kind == NodeKind::Progress && a.group.as_deref() == Some("arc") {
+        let frac = match (a.value, a.total) {
+            (Some(v), Some(t)) if t > 0.0 => (v / t).clamp(0.0, 1.0),
+            (Some(v), None) => (v / 100.0).clamp(0.0, 1.0),
+            _ => 1.0,
+        };
+        let gap = (1.0 - frac).clamp(0.0, 0.98);
+        let _ = writeln!(out, "{ind}draw_bg.rotation_speed: 0.0");
+        let _ = writeln!(out, "{ind}draw_bg.max_gap_ratio: {gap}");
+        let _ = writeln!(out, "{ind}draw_bg.min_gap_ratio: {gap}");
+        let _ = writeln!(out, "{ind}draw_bg.stroke_width: 4.5");
+    }
+    if node.kind == NodeKind::Slider {
+        // makepad's Slider prints its value through a nested `text_input`, so a
+        // `draw_text.color` on the slider itself never reaches it. Material shows
+        // no inline readout — the reference's screens carry a "Value: N" caption
+        // from the DSL instead — so hide the widget's own.
+        // Every state, not just the base: focusing the widget (which a drag
+        // does) brought its "1.00" readout and a caret back on screen over the
+        // drawn track.
+        for f in ["", "_hover", "_focus", "_down", "_active", "_empty"] {
+            let _ = writeln!(out, "{ind}text_input.draw_text.color{f}: #00000000");
+            let _ = writeln!(out, "{ind}text_input.draw_bg.color{f}: #00000000");
+        }
+        let _ = writeln!(out, "{ind}text_input.draw_cursor.color: #00000000");
+        let _ = writeln!(out, "{ind}text_input.draw_selection.color: #00000000");
+
+        // The widget draws its own active/inactive split — `val_color` up to the
+        // handle, `color` past it — which is exactly the Material track. Earlier
+        // this was covered with drawn bars because upstream's default paints the
+        // whole track alike; the real cause was that only `color` had been set,
+        // leaving 20-odd sibling state colours (`color_2`, five `border_color*`,
+        // the `val_*` and `handle_*` families) still on the bevelled theme. Pin
+        // the family and the native split shows through, and it tracks the drag.
+        let t = theme();
+        let enabled = a.enabled != Some(0);
+        // `accent: 0` is how the Material lowering asks for an invisible widget:
+        // it draws the Expressive track itself and keeps this one for the drag.
+        let (track, val) = if a.accent == Some(0) {
+            (0, 0)
+        } else if enabled {
+            (t.secondary_container, a.accent.unwrap_or(t.primary))
+        } else {
+            (material::dim(t.on_surface, 0.12), material::dim(t.on_surface, 0.38))
+        };
+        for f in ["", "_hover", "_focus", "_drag", "_disabled"] {
+            let _ = writeln!(out, "{ind}draw_bg.color{f}: {}", hex_rgba(track));
+            let _ = writeln!(out, "{ind}draw_bg.color_2{f}: {}", hex_rgba(track));
+            let _ = writeln!(out, "{ind}draw_bg.val_color{f}: {}", hex_rgba(val));
+            let _ = writeln!(out, "{ind}draw_bg.handle_color{f}: {}", hex_rgba(val));
+            // Material's track is flat; upstream's bevel reads as a stray outline.
+            let _ = writeln!(out, "{ind}draw_bg.border_color{f}: #00000000");
+            let _ = writeln!(out, "{ind}draw_bg.border_color_2{f}: #00000000");
+        }
+        let _ = writeln!(out, "{ind}draw_bg.border_size: 0.0");
     }
     if let Some(v) = a.value {
         if node.kind == NodeKind::Slider {
             // The kit expresses slider positions as a 0..1 fraction, so pin the
-            // range unless the caller gave an explicit `total`.
-            let _ = writeln!(out, "{ind}min: 0.0");
-            let _ = writeln!(out, "{ind}max: {}", a.total.unwrap_or(1.0));
+            // range unless the caller gave an explicit one -- which the Material
+            // lowering does, to tag each slider with its own band.
+            let lo = a.min.unwrap_or(0.0);
+            let hi = a.max.unwrap_or_else(|| lo + a.total.unwrap_or(1.0));
+            let _ = writeln!(out, "{ind}min: {lo}");
+            let _ = writeln!(out, "{ind}max: {hi}");
             let _ = writeln!(out, "{ind}default: {v}");
         }
     }
@@ -519,7 +951,7 @@ mod tests {
         assert!(ui.contains("color: #141414ff"));
         assert!(ui.contains("Label {"));
         assert!(ui.contains("text: \"Hi\""));
-        assert!(ui.contains("font_size: 20"));
+        assert!(ui.contains("font_size: 15"), "sp is converted to points");
     }
 
     #[test]
@@ -550,6 +982,70 @@ mod tests {
     }
 
     #[test]
+    fn shape_attrs_use_the_names_makepad_draws_from() {
+        // The route sweep proves a screen *translates*; it cannot catch a
+        // correctly-shaped block whose keys makepad does not read. `radius` was
+        // one: makepad calls it `border_radius` and defaults it to 2.5, so every
+        // corner in the kit silently rendered at 2.5dp on device.
+        let ui = to_makepad_ui(&tree(
+            r#"{t:"column", bg: 4294901760, radius: 28, border: 1, bordercolor: 4278190080}"#,
+        ));
+        assert!(ui.contains("border_radius: 14"), "halved, and named:\n{ui}");
+        assert!(!ui.contains(" radius: "), "no bare `radius` key:\n{ui}");
+        assert!(ui.contains("border_size: 0.5"), "{ui}");
+    }
+
+    #[test]
+    fn a_radius_is_bounded_by_its_box() {
+        // makepad's `border_radius` is half the corner it draws (`Sdf2d.box`
+        // works in `2. * r`), so a Material dp is emitted halved and a full
+        // corner lands exactly on the SDF's capsule limit.
+        let ui = to_makepad_ui(&tree(r#"{t:"column", bg: 4294901760, radius: 20, h: 40}"#));
+        assert!(ui.contains("border_radius: 10"), "{ui}");
+        let ui = to_makepad_ui(&tree(r#"{t:"column", bg: 4294901760, radius: 12, h: 56}"#));
+        assert!(ui.contains("border_radius: 6"), "{ui}");
+    }
+
+    #[test]
+    fn a_control_carries_its_material_roles() {
+        // A control's shader colours cannot come from a widget kit: `Splash`
+        // mounts its body on an isolate VM that never receives one. They have to
+        // travel with the node — and default from the scheme, because the
+        // reference's screens carry no colour at all.
+        let ui = to_makepad_ui(&tree(r#"{t:"slider"}"#));
+        assert!(ui.contains("val_color: #6750a4ff"), "themed by default:\n{ui}");
+        let ui = to_makepad_ui(&tree(r#"{t:"checkbox", enabled: 0}"#));
+        assert!(ui.contains("color_active: #6750a461"), "dimmed:\n{ui}");
+    }
+
+    #[test]
+    fn a_selected_radio_says_so_through_its_animator() {
+        // `RadioButton` alone has no live `active` field, so the selected state
+        // has to come from moving its animator's default — via `animator +:`,
+        // the merge form; plain `animator:` is ignored.
+        let ui = to_makepad_ui(&tree(r#"{t:"radio", on: 1}"#));
+        assert!(ui.contains("animator +: { active: { default: @on } }"), "{ui}");
+        let ui = to_makepad_ui(&tree(r#"{t:"radio"}"#));
+        assert!(!ui.contains("animator +:"), "{ui}");
+        let ui = to_makepad_ui(&tree(r#"{t:"checkbox", on: 1}"#));
+        assert!(!ui.contains("animator +:"), "only the radio needs it:\n{ui}");
+    }
+
+    #[test]
+    fn a_field_keeps_its_input_inside_the_chrome() {
+        // A Material field is a label, a supporting or error line and an
+        // affordance around an editable box. The native TextInput draws none of
+        // that, so the chrome is composed — but must still hold a real Input.
+        let ui = to_makepad_ui(&tree(
+            r#"{t:"textfield", variant:"outlined", hint:"Email", error:"Not valid", text:"x"}"#,
+        ));
+        assert!(ui.contains("TextInput {"), "still editable:\n{ui}");
+        assert!(ui.contains("Not valid") && ui.contains("Email"), "{ui}");
+        let ui = to_makepad_ui(&tree(r#"{t:"input", placeholder:"plain"}"#));
+        assert_eq!(ui.matches("TextInput {").count(), 1, "no chrome:\n{ui}");
+    }
+
+    #[test]
     fn control_state_reaches_the_widget() {
         // Declared state used to be dropped on the floor: the attribute existed
         // and nothing emitted it.
@@ -569,26 +1065,32 @@ mod tests {
     }
 
     #[test]
-    fn a_tappable_container_gets_a_button_over_it() {
+    fn a_tappable_container_gets_a_non_capturing_target_over_it() {
         // A View ignores `on_click`, so a row carrying `tapto` must be wrapped in
-        // an Overlay with a real Button on top or the tap is silently dropped.
+        // an Overlay with a real widget on top or the tap is silently dropped.
         let ui = to_makepad_ui(&tree(
             r#"{t:"row", h: 56, tapto:"date_planner", c:[
                    {t:"text", text:"Date Planner", h: 20}
                ]}"#,
         ));
         assert!(ui.contains("flow: Overlay"), "needs an overlay wrapper:\n{ui}");
-        // ButtonFlatter specifically: a plain `Button` carries the theme's
-        // chrome and drew a visible outline around every tappable row in the
-        // kit. Asserting the transparent variant is what keeps that from
-        // coming back.
+        // `SplashTap`, not a Button. Any Button captures the finger on
+        // touch-down through `event.hits`, which starves the enclosing scroll --
+        // a screen of full-width tappable rows would not scroll at all, and the
+        // swipe that failed to scroll fired navigation on release. `SplashTap`
+        // hit-tests itself and ignores a press that travelled. Asserting the
+        // type is what keeps a Button from coming back.
         assert!(
-            ui.contains("ButtonFlatter {"),
-            "the hit target must be the transparent Button variant:\n{ui}"
+            ui.contains("SplashTap {"),
+            "the hit target must not capture the finger:\n{ui}"
         );
         assert!(
-            ui.contains(r#"on_click: || { ui.nav_signal.set_text("date_planner") }"#),
-            "the Button carries the handler:\n{ui}"
+            !ui.contains("ButtonFlatter"),
+            "a Button target starves the scroll:\n{ui}"
+        );
+        assert!(
+            ui.contains(r#"on_click: || { NAV(t: "date_planner") }"#),
+            "the target carries the handler:\n{ui}"
         );
         // The content survives, and does not itself carry a dead handler.
         assert!(ui.contains("text: \"Date Planner\""), "{ui}");

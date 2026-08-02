@@ -1,0 +1,22 @@
+fn swatch(name, role) {
+  return {t:"row", h: 56, c:[ {t:"colorswatch", text: name, group: role, w: 999, h: 56} ]}
+}
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Primary"),
+  {t:"col", spacing: 0, c:[ swatch("Primary","primary"), swatch("On Primary","onPrimary"),
+      swatch("Primary Container","primaryContainer"), swatch("On Primary Container","onPrimaryContainer") ]},
+  section("Secondary"),
+  {t:"col", spacing: 0, c:[ swatch("Secondary","secondary"), swatch("On Secondary","onSecondary"),
+      swatch("Secondary Container","secondaryContainer"), swatch("On Secondary Container","onSecondaryContainer") ]},
+  section("Tertiary"),
+  {t:"col", spacing: 0, c:[ swatch("Tertiary","tertiary"), swatch("On Tertiary","onTertiary"),
+      swatch("Tertiary Container","tertiaryContainer"), swatch("On Tertiary Container","onTertiaryContainer") ]},
+  section("Error"),
+  {t:"col", spacing: 0, c:[ swatch("Error","error"), swatch("On Error","onError"),
+      swatch("Error Container","errorContainer"), swatch("On Error Container","onErrorContainer") ]},
+  section("Surface"),
+  {t:"col", spacing: 0, c:[ swatch("Surface","surface"), swatch("On Surface","onSurface"),
+      swatch("Surface Variant","surfaceVariant"), swatch("On Surface Variant","onSurfaceVariant"),
+      swatch("Outline","outline") ]}
+]} ]}

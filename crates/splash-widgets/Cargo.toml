@@ -14,4 +14,4 @@ description = "Themed native-widget kits for makepad (M3 / iOS / liquid-glass) a
 [dependencies]
 # Upstream makepad — fork-free. The makepad-script rev pulled transitively here
 # must match the one splash-render pins (align both when wiring an app).
-makepad-widgets = { git = "https://github.com/makepad/makepad.git", branch = "dev" }
+makepad-widgets = { path = "../../../makepad-splash/widgets" }

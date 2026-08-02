@@ -1,0 +1,25 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Music player"),
+  caption("A composed screen, built from the same primitives."),
+  {t:"card", variant:"filled", c:[ {t:"col", pad: 20, spacing: 16, align: 1, c:[
+    {t:"image", variant:"rounded", w: 200, h: 200, src:"grad2"},
+    {t:"col", spacing: 2, align: 1, c:[
+      {t:"text", variant:"titleLarge",  text:"Nocturne in E-flat"},
+      {t:"text", variant:"bodyMedium",  text:"Frederic Chopin"},
+    ]},
+    {t:"slider", key:"mp", value: N("mp", 35), min: 0, max: 100},
+    {t:"row", spacing: 8, h: 28, c:[
+      {t:"text", variant:"labelSmall", text:"1:12"},
+      {t:"spacer"},
+      {t:"text", variant:"labelSmall", text:"3:24"},
+    ]},
+    {t:"row", spacing: 16, align: 1, h: 88, c:[
+      {t:"iconbutton", variant:"standard", icon:"shuffle",     key:"mp1", tap: 1},
+      {t:"iconbutton", variant:"standard", icon:"skip_previous", key:"mp2", tap: 1},
+      {t:"fab", variant:"regular", icon:"play_arrow", key:"mpp", tap: 1},
+      {t:"iconbutton", variant:"standard", icon:"skip_next",   key:"mp3", tap: 1},
+      {t:"iconbutton", variant:"standard", icon:"repeat",      key:"mp4", tap: 1},
+    ]},
+  ]}]}
+]} ]}

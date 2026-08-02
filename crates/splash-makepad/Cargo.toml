@@ -17,3 +17,11 @@ path = "examples/translate.rs"
 [[example]]
 name = "assemble"
 path = "examples/assemble.rs"
+
+[dev-dependencies]
+# The L0 profile, to verify its KIT LOWERING against the renderer that consumes
+# it. Safe as a dependency only because the profile was extracted from
+# splash-core: it depends on serde_json alone, so it drags in neither makepad
+# lineage and cannot collide with this workspace's in the lockfile.
+splash-ui-l0 = { path = "../../../Splash/crates/splash-ui-l0" }
+serde_json  = "1"
