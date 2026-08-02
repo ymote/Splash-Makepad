@@ -1,0 +1,17 @@
+[package]
+name = "splash-node"
+version = "0.1.0"
+edition = "2021"
+description = "The Splash UI node model: the branch point every render backend consumes"
+
+# NOTHING. Not a VM, not a renderer, not serde.
+#
+# This is the whole point of the crate. `ui-profile-l0.md` §1.1 names `UiNode`
+# as the branch point where one card reaches three backends — and a branch point
+# that drags a VM lineage with it cannot be adopted by a host that already has
+# one. `octos-one` could not depend on `splash-render` for exactly that reason:
+# `makepad-error-log v1.0.0` exists at two different paths and Cargo refuses to
+# write the lockfile.
+#
+# The same split, for the same reason, made `splash-ui-l0` adoptable.
+[dependencies]

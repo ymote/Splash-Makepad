@@ -2,6 +2,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/splash-node",
     "crates/splash-render",
     "crates/splash-makepad",
     "crates/splash-widgets",

@@ -13,11 +13,17 @@
 //! ```
 
 mod eval;
-mod node;
-pub mod state;
 
 pub use eval::{add_global_fn, build, num_prop, prop, string_prop};
-pub use node::{Attrs, NodeKind, UiNode};
+
+/// The node model, re-exported.
+///
+/// It lives in `splash-node` now, which depends on nothing at all: a branch
+/// point that drags a VM lineage with it cannot be adopted by a host that
+/// already has one, and octos-one could not take this crate for exactly that
+/// reason. Re-exported so every existing consumer of `splash_render::UiNode`
+/// keeps working — the split is a packaging change, not an API one.
+pub use splash_node::{state, Attrs, NodeKind, UiNode};
 
 /// Re-exported so backends and hosts can name VM types (for capability
 /// registration) without taking their own makepad-script dependency/version.

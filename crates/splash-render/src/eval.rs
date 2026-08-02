@@ -2,7 +2,7 @@
 //! [`UiNode`] tree. This module owns the **only** makepad-script dependency in
 //! the render path — backends never touch the VM, they consume `UiNode`.
 
-use crate::node::{Attrs, NodeKind, UiNode};
+use splash_node::{Attrs, NodeKind, UiNode};
 use makepad_script::apply::*;
 use makepad_script::array::ScriptArrayStorage;
 use makepad_script::makepad_live_id::*;
