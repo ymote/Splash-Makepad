@@ -136,7 +136,17 @@ fn index_source() -> String {
             title_of(name)
         ));
     }
-    format!("{{t:\"scroll\", c:[ {{t:\"col\", pad: 16, spacing: 0, c: [\n{rows}]}} ]}}")
+    // The L0 routes, at the top: they are the reason this host exists now, and
+    // burying them under fifty catalog screens makes them unfindable on a phone.
+    let mut l0_rows = String::new();
+    for (route, title) in crate::l0::ROUTES {
+        l0_rows.push_str(&format!(
+            "  {{t:\"row\", tapto:\"{route}\", h: 56, aligny: 0.5, fillw: 1, c:[ \
+             {{t:\"text\", size: 16, text:\"{title}\", fillw: 1}}, \
+             {{t:\"text\", size: 16, icon: 1, text:\"\\u{{f054}}\"}} ]}},\n"
+        ));
+    }
+    format!("{{t:\"scroll\", c:[ {{t:\"col\", pad: 16, spacing: 0, c: [\n{l0_rows}{rows}]}} ]}}")
 }
 
 /// The full source for a route: shared kit first, then the screen.
