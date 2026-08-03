@@ -1,0 +1,10 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Floating toolbar"),
+  caption("A floating, rounded toolbar over the content."),
+  {t:"toolbardemo", variant:"floating", key:"ft1"},
+  section("With a FAB"),
+  {t:"toolbardemo", variant:"floatingfab", key:"ft2"},
+  section("Vertical"),
+  {t:"toolbardemo", variant:"vertical", key:"ft3"}
+]} ]}

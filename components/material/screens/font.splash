@@ -1,0 +1,19 @@
+fn row(name, v, sample) {
+  return {t:"col", spacing: 2, pady: 6, c:[
+    {t:"text", variant:"labelSmall", text: name},
+    {t:"text", variant: v, text: sample},
+  ]}
+}
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Display"),
+  {t:"col", spacing: 0, c:[ row("Display Large","displayLarge","Aa"), row("Display Medium","displayMedium","Aa"), row("Display Small","displaySmall","Aa") ]},
+  section("Headline"),
+  {t:"col", spacing: 0, c:[ row("Headline Large","headlineLarge","Headline"), row("Headline Medium","headlineMedium","Headline"), row("Headline Small","headlineSmall","Headline") ]},
+  section("Title"),
+  {t:"col", spacing: 0, c:[ row("Title Large","titleLarge","Title"), row("Title Medium","titleMedium","Title"), row("Title Small","titleSmall","Title") ]},
+  section("Body"),
+  {t:"col", spacing: 0, c:[ row("Body Large","bodyLarge","The quick brown fox"), row("Body Medium","bodyMedium","The quick brown fox"), row("Body Small","bodySmall","The quick brown fox") ]},
+  section("Label"),
+  {t:"col", spacing: 0, c:[ row("Label Large","labelLarge","LABEL"), row("Label Medium","labelMedium","LABEL"), row("Label Small","labelSmall","LABEL") ]}
+]} ]}

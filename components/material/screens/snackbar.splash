@@ -1,0 +1,12 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Snackbars"),
+  caption("Real com.google.android.material.snackbar.Snackbar."),
+  {t:"col", spacing: 8, c:[
+    {t:"button", variant:"tonal", label:"Short",           key:"snk", action:"short",  tap: 1},
+    {t:"button", variant:"tonal", label:"Long",            key:"snk", action:"long",   tap: 1},
+    {t:"button", variant:"tonal", label:"With action",     key:"snk", action:"action", tap: 1},
+    {t:"button", variant:"tonal", label:"Two lines",       key:"snk", action:"two",    tap: 1},
+    {t:"button", variant:"tonal", label:"Indefinite",      key:"snk", action:"indef",  tap: 1},
+  ]}
+]} ]}

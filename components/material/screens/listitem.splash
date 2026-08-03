@@ -1,0 +1,25 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("One line"),
+  {t:"card", variant:"outlined", c:[ {t:"col", spacing: 0, c:[
+    {t:"listitem", text:"Headline", key:"li1", tap: 1},
+    {t:"divider"},
+    {t:"listitem", text:"Headline", icon:"person", key:"li2", tap: 1},
+  ]}]},
+  section("Two line"),
+  {t:"card", variant:"outlined", c:[ {t:"col", spacing: 0, c:[
+    {t:"listitem", text:"Headline", supporting:"Supporting text", icon:"person", key:"li3", tap: 1},
+    {t:"divider"},
+    {t:"listitem", text:"Headline", supporting:"Supporting text", icon:"person", icon2:"more_vert", key:"li4", tap: 1},
+  ]}]},
+  section("Three line"),
+  {t:"card", variant:"outlined", c:[ {t:"col", spacing: 0, c:[
+    {t:"listitem", text:"Headline", supporting:"Supporting text that is long enough to wrap onto a second line of the list item", icon:"mail", lines: 3, key:"li5", tap: 1},
+  ]}]},
+  section("With controls"),
+  {t:"card", variant:"outlined", c:[ {t:"col", spacing: 0, c:[
+    {t:"listitem", text:"Checkbox", key:"lc1", action:"checkbox", on: N("lc1", 1)},
+    {t:"divider"},
+    {t:"listitem", text:"Switch",   key:"lc2", action:"switch",   on: N("lc2", 0)},
+  ]}]}
+]} ]}

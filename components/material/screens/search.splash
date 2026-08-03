@@ -1,0 +1,7 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Search bar"),
+  caption("SearchBar + SearchView; tapping expands to the full-screen search view."),
+  {t:"searchbar", hint:"Search the catalog", key:"sb", text: S("sb")},
+  caption("Last query: " + S("sb_result"))
+]} ]}

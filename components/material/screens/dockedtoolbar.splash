@@ -1,0 +1,10 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Docked toolbar"),
+  caption("A toolbar docked to the bottom, holding icon actions."),
+  {t:"toolbardemo", variant:"docked", key:"dt1"},
+  section("Floating toolbar"),
+  {t:"toolbardemo", variant:"floating", key:"dt2"},
+  section("Vertical floating toolbar"),
+  {t:"toolbardemo", variant:"vertical", key:"dt3"}
+]} ]}

@@ -1,0 +1,11 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Radio buttons"),
+  caption("A single-choice group."),
+  {t:"radiogroup", key:"rg", selected: N("rg", 0), items:"Option one;Option two;Option three"},
+  section("Disabled"),
+  {t:"col", spacing: 0, c:[
+    {t:"radio", text:"Disabled unselected", enabled: 0, on: 0},
+    {t:"radio", text:"Disabled selected",   enabled: 0, on: 1},
+  ]}
+]} ]}

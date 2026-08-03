@@ -1,0 +1,13 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Badges"),
+  caption("Numberless, numbered and overflowing badges on icons."),
+  {t:"row", spacing: 32, pady: 8, c:[
+    {t:"badgeicon", icon:"mail",          key:"bg1"},
+    {t:"badgeicon", icon:"notifications", badge:"7",   key:"bg2"},
+    {t:"badgeicon", icon:"shopping_cart", badge:"99",  key:"bg3"},
+    {t:"badgeicon", icon:"chat",          badge:"1234",key:"bg4"},
+  ]},
+  section("On a button"),
+  {t:"badgeicon", icon:"inbox", badge:"3", key:"bg5"}
+]} ]}

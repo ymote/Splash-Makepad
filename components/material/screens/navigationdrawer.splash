@@ -1,0 +1,9 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Navigation drawer"),
+  caption("A real DrawerLayout + NavigationView. Swipe from the left edge, or:"),
+  {t:"button", variant:"tonal", label:"Open drawer", key:"drw", action:"open", tap: 1},
+  section("Modal drawer"),
+  caption("The drawer holds grouped destinations with a header and a divider."),
+  caption("Last selection: " + S("drw_result"))
+]} ]}

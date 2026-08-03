@@ -1,0 +1,14 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Loading indicator"),
+  caption("The M3 contained and uncontained loading indicators."),
+  {t:"row", spacing: 32, pady: 16, c:[
+    {t:"loading", variant:"uncontained"},
+    {t:"loading", variant:"contained"},
+  ]},
+  section("Circular progress (legacy)"),
+  {t:"row", spacing: 32, c:[
+    {t:"progress", variant:"circular", indeterminate: 1},
+    {t:"progress", variant:"circular", value: 70, total: 100},
+  ]}
+]} ]}

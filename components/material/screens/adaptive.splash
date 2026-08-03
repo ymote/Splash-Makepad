@@ -1,0 +1,16 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Adaptive layouts"),
+  caption("The catalog's adaptive demos switch navigation and panes by width."),
+  {t:"card", variant:"outlined", c:[ {t:"col", pad: 16, spacing: 6, c:[
+    {t:"text", variant:"titleMedium", text:"Current window class"},
+    {t:"text", variant:"bodyMedium", text: S("win_class")},
+    {t:"text", variant:"bodySmall",  text:"Rotate the device to see this change."},
+  ]}]},
+  section("List / detail"),
+  {t:"adaptivedemo", variant:"listdetail", key:"ad1"},
+  section("Supporting pane"),
+  {t:"adaptivedemo", variant:"supporting", key:"ad2"},
+  section("Feed"),
+  {t:"adaptivedemo", variant:"feed", key:"ad3"}
+]} ]}

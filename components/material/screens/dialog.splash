@@ -1,0 +1,14 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Dialogs"),
+  caption("Each button opens a real MaterialAlertDialogBuilder dialog."),
+  {t:"col", spacing: 8, c:[
+    {t:"button", variant:"tonal", label:"Alert dialog",         key:"dlg", action:"alert",  tap: 1},
+    {t:"button", variant:"tonal", label:"With icon + title",    key:"dlg", action:"icon",   tap: 1},
+    {t:"button", variant:"tonal", label:"Single choice",        key:"dlg", action:"single", tap: 1},
+    {t:"button", variant:"tonal", label:"Multi choice",         key:"dlg", action:"multi",  tap: 1},
+    {t:"button", variant:"tonal", label:"Long message (scroll)",key:"dlg", action:"long",   tap: 1},
+    {t:"button", variant:"tonal", label:"Full-screen",          key:"dlg", action:"full",   tap: 1},
+  ]},
+  caption("Last result: " + S("dlg_result"))
+]} ]}
