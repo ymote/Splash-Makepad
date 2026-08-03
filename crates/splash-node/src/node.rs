@@ -101,6 +101,23 @@ pub enum NodeKind {
     TransitionHost,
     /// octos-one's own widgets, ported to Android views in the reference.
     WeatherIcon,
+    // ---- data visualisations -------------------------------------------------
+    // `ui-profile-l0.md` §1.1: six roles are small data visualisations rather
+    // than compositions of boxes and text. A gradient temperature bar is a
+    // fragment shader parameterised by data, and a DSL node cannot carry shader
+    // SOURCE — MPSL compiles at build time — but it can select a shader that was
+    // compiled.
+    //
+    // Adding kinds obliges every backend at once, which is why §1.1 left this
+    // unsettled for so long. It is settled this way because the alternative —
+    // `Shader` plus a `variant` string — makes the parameters untyped: a
+    // temperature bar and a moon phase would ride the same anonymous fields, and
+    // nothing would catch a card that passed a latitude where a phase belongs.
+    TempBar,
+    SunArc,
+    MoonPhase,
+    AqiContour,
+    StockPlot,
     NavMap,
     GlassPanel,
     /// A web surface positioned into the native tree. The host reserves the
@@ -173,6 +190,11 @@ impl NodeKind {
             "adaptivedemo" => Self::AdaptiveDemo,
             "transitionhost" => Self::TransitionHost,
             "weathericon" => Self::WeatherIcon,
+            "tempbar" => Self::TempBar,
+            "sunarc" => Self::SunArc,
+            "moonphase" => Self::MoonPhase,
+            "aqicontour" => Self::AqiContour,
+            "stockplot" => Self::StockPlot,
             "navmap" => Self::NavMap,
             "glasspanel" => Self::GlassPanel,
             "web" => Self::Web,
@@ -242,6 +264,14 @@ pub struct Attrs {
     /// horizontal / 6dp vertical padding that a uniform `pad` can't express.
     pub padx: Option<f32>,
     pub pady: Option<f32>,
+    /// Asymmetric vertical padding, where `pady` cannot say it.
+    ///
+    /// A page's top padding clears the status bar and its bottom clears the
+    /// gesture bar, and those are different numbers on every device. Expressed
+    /// as one symmetric `pady` the page sat 30px too high, which shifted every
+    /// row below it and read as a layout bug rather than as a missing inset.
+    pub padtop: Option<f32>,
+    pub padbottom: Option<f32>,
     pub spacing: Option<f32>,
     pub margin: Option<f32>,
     /// Per-axis margin, overriding `margin` on its axis. Every section heading in
@@ -249,6 +279,13 @@ pub struct Attrs {
     /// little tighter than the reference and drift further down the page.
     pub marginx: Option<f32>,
     pub marginy: Option<f32>,
+    /// Asymmetric vertical margin, for the same reason as `padtop`.
+    ///
+    /// A panel separates itself from what is ABOVE it; repeating that below
+    /// doubles the gap between two stacked panels and leaves a dead strip under
+    /// the last one.
+    pub margintop: Option<f32>,
+    pub marginbottom: Option<f32>,
     pub border: Option<f32>,
     pub bordercolor: Option<u32>,
     /// Which Material variant this node is — `filled`/`tonal`/`outlined`/`text`/
@@ -329,6 +366,27 @@ pub struct Attrs {
     /// tree does not know where a node lands, so a screen that wants one says.
     pub x: Option<f64>,
     pub y: Option<f64>,
+
+    // ---- data-visualisation parameters ---------------------------------------
+    // Named, not generic. A `Shader` kind with anonymous slots would let a card
+    // pass a latitude where a moon phase belongs and nothing would notice.
+    // `min`/`max` (a bar's range) and `lat`/`lon` (a contour's centre) already
+    // exist above and mean exactly this, so they are reused rather than doubled.
+    /// TempBar: the day's low and high, against `min`/`max` for the week.
+    pub lo: Option<f32>,
+    pub hi: Option<f32>,
+    /// SunArc: sunrise, sunset and now, as fractional hours.
+    pub rise: Option<f32>,
+    pub set: Option<f32>,
+    pub now: Option<f32>,
+    /// MoonPhase: 0..1 through the cycle, and percent illuminated.
+    pub phase: Option<f32>,
+    pub illum: Option<f32>,
+    /// AqiContour: degrees of latitude the field covers, around `lat`/`lon`.
+    pub span: Option<f32>,
+    /// StockPlot: which series, and over what window.
+    pub symbol: Option<String>,
+    pub range: Option<String>,
 }
 
 /// One node in the backend-agnostic tree.

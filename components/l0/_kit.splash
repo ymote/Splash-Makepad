@@ -79,10 +79,17 @@ fn l0_spacer()  { return {t: "column", fillw: 1, h: 1} }
 // and reads as thirty-three — so only the lowering knows what will be drawn.
 fn l0_hero(s, pt) { return l0_txt(s, pt, 700, l0_text) }
 
-fn l0_title(s)    { return l0_txt(s, 28, 700, l0_text) }
-fn l0_body(s)     { return l0_para(s, 16, 400, l0_text) }
-fn l0_row_text(s) { return l0_txt(s, 15, 400, l0_soft) }
-fn l0_caption(s)  { return l0_txt(s, 12, 400, l0_dim) }
+// The type scale, TAKEN FROM THE WIDGETS THIS REPLACES rather than chosen.
+//
+// These are the sizes `octos-one`'s `TextTitle`, `TextBody`, `TextRow`,
+// `TextCaption` and `TextValue` already carry, and four device goldens assert
+// them. Moving the layer and restyling at once would make a golden failure
+// ambiguous between "the theme moved" and "the theme is wrong" — so the theme
+// does not move yet. Restyling comes after, against green goldens.
+fn l0_title(s)    { return l0_txt(s, 26, 700, l0_text) }
+fn l0_body(s)     { return l0_para(s, 17, 400, l0_text) }
+fn l0_row_text(s) { return l0_txt(s, 14, 400, l0_soft) }
+fn l0_caption(s)  { return l0_txt(s, 11, 400, l0_dim) }
 fn l0_value(s)    { return l0_txt(s, 20, 600, l0_text) }
 
 // A statistic, tinted by direction. `dir` is -1, 0 or 1 — the SIGN, decided by
@@ -93,14 +100,30 @@ fn l0_tint(dir) {
     if dir < 0 { return l0_down }
     return l0_text
 }
-fn l0_stat(s, dir) { return l0_txt(s, 20, 600, l0_tint(dir)) }
+fn l0_stat(s, dir) { return l0_txt(s, 14, 600, l0_tint(dir)) }
+
+// Recolour any text by DIRECTION, composed around the role rather than folded
+// into it.
+//
+// Every text role may carry a tint — the stock list tints a `TextValue`, the
+// detail a `TextStat` — so the alternative was a direction parameter on all
+// seven, six of which would pass 0 forever. `dir` of 0 leaves the role's own
+// colour alone, which is what an untinted card gets.
+fn l0_tinted(node, dir) {
+    if dir != 0 { node.color = l0_tint(dir) }
+    return node
+}
 
 // ---- containers ------------------------------------------------------------
 
 // The page. Padding clears the status bar at the top and the gesture bar below.
+// The page. `fith`, not `fillh`: a card is as tall as its content, and the host
+// surface shows below it. Filling the height painted the whole screen in the
+// card's base colour and covered the app's own background — 94% of the lower
+// half differed, on a card whose content was correct.
 fn l0_surface(kids) {
-    return {t: "column", fillw: 1, fillh: 1, bg: l0_base,
-            padx: 20, pady: 24, c: kids}
+    return {t: "column", fillw: 1, fith: 1, bg: l0_base,
+            padx: 20, padtop: 54, padbottom: 24, c: kids}
 }
 
 // A page whose background is a photo, with a scrim so text stays legible over
@@ -109,7 +132,7 @@ fn l0_surface_photo(src, kids) {
     return {t: "stack", fillw: 1, fillh: 1, c: [
         {t: "image", src: src, fit: 2, fillw: 1, fillh: 1},
         {t: "column", fillw: 1, fillh: 1, bg: l0_scrim},
-        {t: "column", fillw: 1, fillh: 1, padx: 20, pady: 24, c: kids}
+        {t: "column", fillw: 1, fillh: 1, padx: 20, padtop: 54, padbottom: 24, c: kids}
     ]}
 }
 
@@ -122,7 +145,7 @@ fn l0_grid(kids)     { return {t: "grid", fillw: 1, w: 2, spacing: 10, c: kids} 
 // A raised surface holding related content.
 fn l0_panel(kids) {
     return {t: "card", fillw: 1, bg: l0_panel, radius: 14,
-            padx: 14, pady: 12, marginy: 16, c: kids}
+            padx: 14, pady: 12, margintop: 16, c: kids}
 }
 
 fn l0_rule() { return {t: "divider", fillw: 1, h: 1, bg: l0_hairline} }
@@ -186,6 +209,40 @@ fn l0_tap_fit(target, node) {
 // failure mode §1.1 exists to prevent.
 
 fn l0_weathericon(cond) { return {t: "weathericon", variant: cond, w: 44, h: 44} }
+
+// The five that used to be markers.
+//
+// Each is a shader parameterised by data, so the kit chooses the SIZE — a
+// theme's business — and the card supplies the numbers. Height matters here in a
+// way it does not for text: a temperature bar is 8px of gradient and a contour
+// field is a map, and neither has an intrinsic size to fit to.
+
+// A day's low and high against the week's range, as a gradient segment.
+fn l0_tempbar(lo, hi, min, max) {
+    return {t: "tempbar", fillw: 1, h: 8, marginx: 10,
+            lo: lo, hi: hi, min: min, max: max}
+}
+
+// The sun's path, with now marked on it. Hours are fractional — 18.9 is 18:54.
+fn l0_sunarc(rise, set, now) {
+    return {t: "sunarc", fillw: 1, h: 90, rise: rise, set: set, now: now}
+}
+
+// 0..1 through the cycle, and percent illuminated.
+fn l0_moonphase(phase, illum) {
+    return {t: "moonphase", w: 64, h: 64, phase: phase, illum: illum}
+}
+
+// An air-quality field around a point. The widget fetches it: the card names
+// WHERE, never the sixteen scalars a field would otherwise need.
+fn l0_aqicontour(lat, lon, span) {
+    return {t: "aqicontour", fillw: 1, h: 190, lat: lat, lon: lon, span: span}
+}
+
+// A price series. Likewise: the card names WHICH series and over what window.
+fn l0_stockplot(symbol, range) {
+    return {t: "stockplot", fillw: 1, h: 180, symbol: symbol, range: range}
+}
 
 fn l0_unsupported(role) {
     return {t: "card", fillw: 1, bg: l0_panel, radius: 8, padx: 10, pady: 8,
