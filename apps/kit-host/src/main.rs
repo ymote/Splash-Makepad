@@ -8,6 +8,7 @@
 pub use makepad_widgets;
 use makepad_widgets::*;
 
+mod l0;
 mod screens;
 
 app_main!(App);
@@ -145,7 +146,7 @@ impl App {
         use splash_render::{Attrs, NodeKind, UiNode};
         let n = |kind| UiNode { kind, attrs: Attrs::default(), children: Vec::new() };
         // The reference's own screen titles.
-        let title = screens::title_of(route);
+        let title = l0::title_of(route).unwrap_or_else(|| screens::title_of(route));
 
         // Aligned to the reference: title 69px against its 67, body 228 against
         // 229. This was wrong until the swatch-group gap and DP_SCALE went in —
@@ -443,10 +444,17 @@ impl App {
         if let Ok(pushed) = std::fs::read_to_string(DEVICE_PATH) {
             return pushed;
         }
+        if l0::has(&self.screen) {
+            return l0::source_for(&self.screen);
+        }
         if screens::has(&self.screen) {
             return screens::source_for(&self.screen);
         }
-        screens::source_for(&Self::current_route())
+        let route = Self::current_route();
+        if l0::has(&route) {
+            return l0::source_for(&route);
+        }
+        screens::source_for(&route)
     }
 
     /// Translate + mount the active screen: inject app state as one `st = {…}`

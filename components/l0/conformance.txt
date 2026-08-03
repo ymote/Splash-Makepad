@@ -20,7 +20,12 @@
 # realized against the data in each suite's own helper, lowered by `kit::lower`,
 # concatenated with `_kit.splash`, and evaluated.
 #
+# weather dropped from 64 to 60 when the five data visualisations stopped being
+# markers. A marker was a card wrapping a label — two nodes — and a real widget
+# is one. Both suites failed together and this line fixed both, which is the
+# workflow this file exists for.
+#
 #   card     nodes
 news         27
 stock        12
-weather      64
+weather      60

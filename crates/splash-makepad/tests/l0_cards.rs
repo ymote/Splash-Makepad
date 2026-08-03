@@ -174,74 +174,116 @@ fn the_lowered_card_names_roles_and_no_presentation() {
     assert!(src.contains("l0_panel("), "roles must be named:\n{src}");
 }
 
-/// A role the kit cannot draw becomes a VISIBLE marker, never nothing.
+/// The marker mechanism still works, though nothing now needs it.
 ///
-/// Five of the six data visualisations have no kind in this renderer. A card
-/// that silently loses its temperature bars still looks complete, which is the
-/// failure `ui-profile-l0.md` §1.1 exists to prevent.
+/// Every one of L0's 23 roles has a kit answer since the five data
+/// visualisations stopped being markers — so no reference card exercises this,
+/// and it is asserted directly instead of through one.
+///
+/// Kept because the failure it prevents is the worst kind: a role with no answer
+/// that renders as an ABSENCE leaves a card looking complete while missing its
+/// temperature bars. The next role added to the catalog will have no kit
+/// function on the day it is added, and this is what stands between that and a
+/// silently short card.
 #[test]
-fn an_unanswerable_role_survives_as_a_marker() {
-    let report = realize(WEATHER, &weather_data(), RealizeLimits::default());
-    let src = kit::lower(&report.root.expect("root"));
-    assert!(
-        src.contains("l0_unsupported(\"TempBar\")"),
-        "TempBar has no kit answer and must lower to a named marker:\n{src}"
-    );
+fn a_role_with_no_kit_answer_is_visible_rather_than_absent() {
+    let src = format!(r#"{KIT}
+let node = l0_unsupported("Hologram")
+node
+"#);
+    let tree = splash_render::build(&src, |_vm| {}).expect("the marker evaluates");
 
-    fn words(n: &splash_render::UiNode, out: &mut Vec<String>) {
+    fn words(n: &splash_render::UiNode, out: &mut String) {
         if let Some(t) = n.attrs.text.as_deref() {
-            out.push(t.to_owned());
+            out.push_str(t);
         }
         for c in &n.children {
             words(c, out);
         }
     }
+    let mut text = String::new();
+    words(&tree, &mut text);
+    assert!(
+        text.contains("Hologram"),
+        "the marker must NAME the role it stands in for, got {text:?}"
+    );
+}
+
+/// And the five that used to be markers now draw.
+///
+/// The weather card carries four of them and the stock card the fifth. This
+/// asserts they reach the tree as their own kinds — the whole point of adding
+/// kinds rather than routing them through an anonymous `Shader` with a variant.
+#[test]
+fn the_data_visualisations_reach_the_tree_as_themselves() {
+    fn kinds(n: &splash_render::UiNode, out: &mut Vec<String>) {
+        out.push(format!("{:?}", n.kind));
+        for c in &n.children {
+            kinds(c, out);
+        }
+    }
     let mut out = Vec::new();
-    words(&build(WEATHER, weather_data()), &mut out);
-    assert!(
-        out.iter().any(|w| w.contains("TempBar")),
-        "and the marker must reach the tree, naming the role: {out:?}"
+    kinds(&build(WEATHER, weather_data()), &mut out);
+    for expected in ["TempBar", "SunArc", "MoonPhase", "AqiContour"] {
+        assert!(out.iter().any(|k| k == expected), "{expected} missing: {out:?}");
+    }
+    let mut out = Vec::new();
+    let mut store = splash_ui_l0::InstanceStore::default();
+    splash_ui_l0::dispatch_with(
+        STOCK, &mut store, "root", "open_quote",
+        Some(&serde_json::Value::String("NVDA".into())));
+    let report = splash_ui_l0::realize_with_state(
+        STOCK, &stock_data(), &store, RealizeLimits::default());
+    let src = format!("{KIT}\n{}", kit::lower(&report.root.expect("root")));
+    kinds(
+        &splash_render::build(&src, |_vm| {}).expect("detail evaluates"),
+        &mut out,
     );
+    assert!(out.iter().any(|k| k == "StockPlot"), "StockPlot missing: {out:?}");
 }
 
-/// A declared tap must reach the rendered UI as a live target.
+/// Every widget name this backend emits must be one the kit DEFINES.
 ///
-/// This is the assertion the whole interaction path rests on, and it is easy to
-/// pass falsely: `tapto` on a `card`, `chip` or `image` is accepted by the node
-/// model and then DROPPED — the string never reaches the UI, and the card
-/// renders looking perfectly correct while every row is dead. Only a container
-/// carries a tap, which is why the lowering wraps.
+/// This exists because it did not. `widget_name` mapped the five data
+/// visualisations to `L0TempBar` and friends, and none of them were written —
+/// five dangling names, passing every test, because nothing here renders a card
+/// to pixels. The mapping and the definition live in different crates and
+/// nothing tied them together.
 #[test]
-fn a_declared_tap_reaches_the_rendered_ui() {
-    let tree = build(STOCK, stock_data());
-    let ui = splash_makepad::to_makepad_ui(&tree);
+fn every_emitted_widget_name_is_defined_in_the_kit() {
+    const PRELUDE: &str = include_str!("../../splash-widgets/src/lib.rs");
 
-    assert!(
-        ui.contains("on_click"),
-        "the card declares taps and none reached the UI:\n{ui}"
-    );
-    // The INSTANCE KEY must survive, or a tap cannot say which row was hit —
-    // §5.1 identity is the whole basis of dispatch.
-    assert!(
-        ui.contains("for#0[NVDA]"),
-        "the tap target lost its instance key:\n{ui}"
-    );
-    // And the event, and the payload.
-    assert!(ui.contains("open_quote"), "the event name is missing:\n{ui}");
-}
+    let mut emitted: Vec<String> = Vec::new();
+    for tree in [
+        build(NEWS, news_data()),
+        build(STOCK, stock_data()),
+        build(WEATHER, weather_data()),
+    ] {
+        fn names(n: &splash_render::UiNode, out: &mut Vec<String>) {
+            out.push(splash_makepad::widget_name_of(n.kind).to_owned());
+            for c in &n.children {
+                names(c, out);
+            }
+        }
+        names(&tree, &mut emitted);
+    }
+    emitted.sort();
+    emitted.dedup();
 
-/// A node with no declared tap gets no target.
-///
-/// Without this the test above passes for an implementation that makes the
-/// whole card one hit area, which is worse than none.
-#[test]
-fn only_declared_taps_become_targets() {
-    let report = realize(STOCK, &stock_data(), RealizeLimits::default());
-    let src = kit::lower(&report.root.expect("root"));
-    let wrappers = src.matches("l0_tap").count();
-    // stock.card's list view declares exactly one tap per mover row.
-    assert_eq!(
-        wrappers, 1,
-        "one wrapper per declared tap, no more — got {wrappers}:\n{src}"
+    // makepad's own widgets are not the kit's to define; only the ones this
+    // repository adds have to appear in the prelude.
+    let missing: Vec<&String> = emitted
+        .iter()
+        .filter(|w| w.starts_with("L0") || w.starts_with("Flutter"))
+        .filter(|w| !PRELUDE.contains(&format!("mod.widgets.{w} =")))
+        .collect();
+    assert!(
+        missing.is_empty(),
+        "these widget names are emitted and never defined: {missing:?}"
+    );
+    // And the check is not vacuous: the cards must reach the L0 widgets at all.
+    assert!(
+        emitted.iter().any(|w| w.starts_with("L0")),
+        "no L0 widget was emitted, so this asserted nothing: {emitted:?}"
     );
 }
