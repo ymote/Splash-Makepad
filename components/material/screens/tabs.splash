@@ -1,0 +1,14 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Fixed tabs"),
+  {t:"tabs", items:"Recents;Favourites;Nearby", key:"tb1", selected: N("tb1", 0)},
+  {t:"card", variant:"filled", c:[ {t:"col", pad: 24, c:[
+    {t:"text", variant:"bodyLarge", text:"Content for tab " + N("tb1", 0)},
+  ]}]},
+  section("Scrollable tabs"),
+  {t:"tabs", items:"Mon;Tue;Wed;Thu;Fri;Sat;Sun", key:"tb2", selected: N("tb2", 0), scrollable: 1},
+  section("With icons"),
+  {t:"tabs", items:"Home;Search;Profile", key:"tb3", selected: N("tb3", 0), icon:"home,search,person"},
+  section("With badges"),
+  {t:"tabs", items:"Inbox;Sent;Drafts", key:"tb4", selected: N("tb4", 0), badge:"3,,12"}
+]} ]}

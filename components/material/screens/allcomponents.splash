@@ -1,0 +1,35 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("All components"),
+  caption("One screen exercising every widget family at once."),
+  group([
+    {t:"button", variant:"filled",   label:"Filled",   key:"ac1", tap: 1},
+    {t:"button", variant:"outlined", label:"Outlined", key:"ac2", tap: 1},
+    {t:"button", variant:"text",     label:"Text",     key:"ac3", tap: 1},
+  ]),
+  {t:"row", spacing: 16, c:[
+    {t:"checkbox", text:"Check", key:"ac4", on: N("ac4", 1)},
+    {t:"switch",   text:"Switch", key:"ac5", on: N("ac5", 1)},
+    {t:"radio",    text:"Radio",  key:"ac6", on: N("ac6", 1)},
+  ]},
+  group([
+    {t:"chip", variant:"filter", text:"Filter", key:"ac7", on: N("ac7", 1)},
+    {t:"chip", variant:"assist", text:"Assist", icon:"star", key:"ac8", tap: 1},
+  ]),
+  {t:"textfield", variant:"outlined", hint:"Outlined field", key:"ac9", text: S("ac9")},
+  {t:"slider", key:"ac10", value: N("ac10", 50), min: 0, max: 100},
+  {t:"progress", variant:"linear", value: N("ac10", 50), total: 100},
+  {t:"tabs", items:"One;Two;Three", key:"ac11", selected: N("ac11", 0)},
+  {t:"card", variant:"elevated", c:[ {t:"col", pad: 16, c:[
+    {t:"text", variant:"titleMedium", text:"Card"},
+    {t:"text", variant:"bodyMedium",  text:"With a headline and supporting text."},
+  ]}]},
+  {t:"card", variant:"outlined", c:[ {t:"col", spacing: 0, c:[
+    {t:"listitem", text:"List item", supporting:"Supporting text", icon:"person", key:"ac12", tap: 1},
+  ]}]},
+  group([
+    {t:"fab", variant:"small",    icon:"add", key:"ac13", tap: 1},
+    {t:"fab", variant:"extended", icon:"edit", label:"Extended", key:"ac14", tap: 1},
+  ]),
+  {t:"navbar", items:"Home;Search;Profile", icon:"home,search,person", key:"ac15", selected: N("ac15", 0)}
+]} ]}

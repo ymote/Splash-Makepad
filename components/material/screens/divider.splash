@@ -1,0 +1,21 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Full width"),
+  {t:"col", spacing: 0, c:[
+    {t:"text", variant:"bodyLarge", text:"Above", pady: 12},
+    {t:"divider"},
+    {t:"text", variant:"bodyLarge", text:"Below", pady: 12},
+  ]},
+  section("Inset"),
+  {t:"col", spacing: 0, c:[
+    {t:"text", variant:"bodyLarge", text:"Above", pady: 12},
+    {t:"divider", marginx: 16},
+    {t:"text", variant:"bodyLarge", text:"Below", pady: 12},
+  ]},
+  section("Vertical"),
+  {t:"row", h: 64, spacing: 16, c:[
+    {t:"text", variant:"bodyLarge", text:"Left"},
+    {t:"divider", variant:"vertical"},
+    {t:"text", variant:"bodyLarge", text:"Right"},
+  ]}
+]} ]}

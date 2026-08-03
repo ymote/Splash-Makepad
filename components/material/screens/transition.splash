@@ -1,0 +1,28 @@
+// Transitions — real Material motion. The host area below is animated with
+// MaterialContainerTransform / MaterialSharedAxis / MaterialFadeThrough via
+// TransitionManager, and the buttons drive it.
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Container transform"),
+  caption("Tap the card: it expands into a detail surface and back."),
+  {t:"transitionhost", variant:"container", key:"trx", h: 96, max: 240},
+
+  section("Shared axis"),
+  caption("Directional motion pairing an outgoing and incoming pane."),
+  {t:"flow", spacing: 8, c:[
+    {t:"button", variant:"tonal", label:"X axis", key:"trx", action:"axisx", tap: 1},
+    {t:"button", variant:"tonal", label:"Y axis", key:"trx", action:"axisy", tap: 1},
+    {t:"button", variant:"tonal", label:"Z axis", key:"trx", action:"axisz", tap: 1}
+  ]},
+
+  section("Fade through / Fade"),
+  caption("For content with no strong spatial relationship."),
+  {t:"flow", spacing: 8, c:[
+    {t:"button", variant:"tonal", label:"Fade through", key:"trx", action:"fadethrough", tap: 1},
+    {t:"button", variant:"tonal", label:"Fade",         key:"trx", action:"fade",        tap: 1}
+  ]},
+
+  section("Stage"),
+  caption("The shared-axis and fade demos animate this pane."),
+  {t:"transitionhost", variant:"stage", key:"trxstage", h: 180}
+]} ]}

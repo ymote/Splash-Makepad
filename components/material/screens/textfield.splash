@@ -1,0 +1,15 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Filled"),
+  {t:"textfield", variant:"filled", hint:"Label", helper:"Supporting text", key:"tf1", text: S("tf1")},
+  {t:"textfield", variant:"filled", hint:"Password", key:"tf2", action:"password", helper:"At least 8 characters"},
+  section("Outlined"),
+  {t:"textfield", variant:"outlined", hint:"Label", helper:"Supporting text", key:"tf3", text: S("tf3")},
+  {t:"textfield", variant:"outlined", hint:"Amount", icon:"attach_money", key:"tf4", action:"number"},
+  section("Error"),
+  {t:"textfield", variant:"outlined", hint:"Email", error:"Not a valid email address", key:"tf5", text:"not-an-email"},
+  section("Multiline"),
+  {t:"textfield", variant:"outlined", hint:"Message", lines: 4, key:"tf6"},
+  section("Disabled"),
+  {t:"textfield", variant:"filled", hint:"Disabled", enabled: 0, text:"Read only"}
+]} ]}

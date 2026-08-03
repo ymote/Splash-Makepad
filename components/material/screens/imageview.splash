@@ -1,0 +1,16 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Shapeable image"),
+  caption("ShapeableImageView with M3 corner treatments."),
+  {t:"row", spacing: 16, c:[
+    {t:"image", variant:"rounded", w: 96, h: 96, src:"grad1"},
+    {t:"image", variant:"circle",  w: 96, h: 96, src:"grad2"},
+    {t:"image", variant:"cut",     w: 96, h: 96, src:"grad3"},
+  ]},
+  section("Sizes"),
+  {t:"row", spacing: 16, c:[
+    {t:"image", variant:"rounded", w: 56,  h: 56,  src:"grad2"},
+    {t:"image", variant:"rounded", w: 80,  h: 80,  src:"grad3"},
+    {t:"image", variant:"rounded", w: 120, h: 120, src:"grad1"},
+  ]}
+]} ]}

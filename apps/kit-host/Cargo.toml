@@ -5,7 +5,13 @@ edition = "2021"
 description = "Generic app shell rendering a Splash component kit as native makepad widgets (fork-free, upstream makepad)"
 
 [dependencies]
-makepad-widgets = { git = "https://github.com/makepad/makepad.git", branch = "dev" }
+# The L0 profile, so this host can realize and lower a card at runtime. Depends
+# on serde_json alone — it carries no makepad lineage, which is what makes it
+# safe here and is why it was extracted from splash-core.
+splash-ui-l0 = { path = "../../../Splash/crates/splash-ui-l0" }
+serde_json = "1"
+
+makepad-widgets = { path = "../../../makepad-splash/widgets" }
 splash-widgets = { path = "../../crates/splash-widgets" }
 splash-render = { path = "../../crates/splash-render" }
 splash-makepad = { path = "../../crates/splash-makepad" }

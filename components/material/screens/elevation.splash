@@ -1,0 +1,17 @@
+// Elevation — the six M3 levels. Built with a push loop (an array *literal*
+// bound to a `let` loses its elements in this VM rev; push does not).
+let kids = []
+kids.push(section("Elevation levels"))
+kids.push(caption("Material 3 defines six elevation levels."))
+let i = 0
+while i < 6 {
+    kids.push({t:"card", variant:"elevated", elevation: i, c:[
+        {t:"col", pad: 20, spacing: 2, c:[
+            {t:"text", variant:"titleMedium", text:"Level " + i},
+            {t:"text", variant:"bodySmall",  text:"Surface at elevation level " + i}
+        ]}
+    ]})
+    i = i + 1
+}
+
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 12, c: kids} ]}

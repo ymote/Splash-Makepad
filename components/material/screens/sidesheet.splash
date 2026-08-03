@@ -1,0 +1,10 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Side sheets"),
+  caption("SideSheetDialog, anchored to an edge."),
+  {t:"col", spacing: 8, c:[
+    {t:"button", variant:"tonal", label:"Modal side sheet (right)", key:"ss", action:"right", tap: 1},
+    {t:"button", variant:"tonal", label:"Modal side sheet (left)",  key:"ss", action:"left",  tap: 1},
+    {t:"button", variant:"tonal", label:"Detached side sheet",      key:"ss", action:"detached", tap: 1},
+  ]}
+]} ]}

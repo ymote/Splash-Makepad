@@ -1,0 +1,13 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Continuous"),
+  {t:"slider", key:"s1", value: N("s1", 50), min: 0, max: 100},
+  caption("Value: " + N("s1", 50)),
+  section("Discrete"),
+  {t:"slider", key:"s2", value: N("s2", 3), min: 0, max: 10, step: 1},
+  caption("Value: " + N("s2", 3)),
+  section("Range"),
+  {t:"rangeslider", key:"s3", value: N("s3", 20), value2: N("s3b", 80), min: 0, max: 100},
+  section("Disabled"),
+  {t:"slider", value: 40, min: 0, max: 100, enabled: 0}
+]} ]}

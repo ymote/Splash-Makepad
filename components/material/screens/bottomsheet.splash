@@ -1,0 +1,10 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Bottom sheets"),
+  caption("Modal and standard BottomSheetDialog."),
+  {t:"col", spacing: 8, c:[
+    {t:"button", variant:"tonal", label:"Modal bottom sheet",     key:"bs", action:"modal",  tap: 1},
+    {t:"button", variant:"tonal", label:"Modal with list",        key:"bs", action:"list",   tap: 1},
+    {t:"button", variant:"tonal", label:"Expanded (tall) sheet",  key:"bs", action:"tall",   tap: 1},
+  ]}
+]} ]}

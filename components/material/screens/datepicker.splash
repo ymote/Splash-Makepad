@@ -1,0 +1,11 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Date pickers"),
+  caption("MaterialDatePicker, shown as a modal."),
+  {t:"col", spacing: 8, c:[
+    {t:"button", variant:"tonal", label:"Date picker",          key:"dp", action:"date",  tap: 1},
+    {t:"button", variant:"tonal", label:"Date range picker",    key:"dp", action:"range", tap: 1},
+    {t:"button", variant:"tonal", label:"Input mode",           key:"dp", action:"input", tap: 1},
+  ]},
+  caption("Selected: " + S("dp_result"))
+]} ]}

@@ -1,0 +1,19 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Shape scale"),
+  caption("M3 corner sizes applied to the same surface."),
+  {t:"col", spacing: 12, c:[
+    {t:"shapebox", text:"None - 0dp",         radius: 0},
+    {t:"shapebox", text:"Extra small - 4dp",  radius: 4},
+    {t:"shapebox", text:"Small - 8dp",        radius: 8},
+    {t:"shapebox", text:"Medium - 12dp",      radius: 12},
+    {t:"shapebox", text:"Large - 16dp",       radius: 16},
+    {t:"shapebox", text:"Extra large - 28dp", radius: 28},
+    {t:"shapebox", text:"Full",               radius: 999},
+  ]},
+  section("Cut corners"),
+  {t:"col", spacing: 12, c:[
+    {t:"shapebox", text:"Cut - 8dp",  radius: 8,  variant:"cut"},
+    {t:"shapebox", text:"Cut - 16dp", radius: 16, variant:"cut"},
+  ]}
+]} ]}

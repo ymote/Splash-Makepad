@@ -1,0 +1,16 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Preferences"),
+  caption("Catalog display settings, backed by real state."),
+  {t:"card", variant:"outlined", c:[ {t:"col", spacing: 0, c:[
+    {t:"listitem", text:"Dark theme",       supporting:"Follow system when off", key:"pf1", action:"switch", on: N("pf1", 0)},
+    {t:"divider"},
+    {t:"listitem", text:"Dynamic colour",   supporting:"Use the wallpaper palette", key:"pf2", action:"switch", on: N("pf2", 0)},
+    {t:"divider"},
+    {t:"listitem", text:"Right-to-left",    supporting:"Force RTL layout", key:"pf3", action:"switch", on: N("pf3", 0)},
+    {t:"divider"},
+    {t:"listitem", text:"Show captions",    supporting:"Explanatory text under demos", key:"pf4", action:"switch", on: N("pf4", 1)},
+  ]}]},
+  section("Theme colour"),
+  {t:"segmented", items:"Default;Pink;Green;Blue", key:"pfcolor", selected: N("pfcolor", 0)}
+]} ]}

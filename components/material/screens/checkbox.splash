@@ -1,0 +1,19 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Checkboxes"),
+  caption("Unchecked, checked and indeterminate states."),
+  {t:"col", spacing: 0, c:[
+    {t:"checkbox", text:"Option one",   key:"cb1", on: N("cb1", 1)},
+    {t:"checkbox", text:"Option two",   key:"cb2", on: N("cb2", 0)},
+    {t:"checkbox", text:"Option three", key:"cb3", on: N("cb3", 0)},
+  ]},
+  section("Indeterminate"),
+  {t:"checkbox", text:"Select all", key:"cbi", indeterminate: 1},
+  section("Error"),
+  {t:"checkbox", text:"Required", key:"cbe", error:"Must be accepted", on: N("cbe", 0)},
+  section("Disabled"),
+  {t:"col", spacing: 0, c:[
+    {t:"checkbox", text:"Disabled unchecked", enabled: 0, on: 0},
+    {t:"checkbox", text:"Disabled checked",   enabled: 0, on: 1},
+  ]}
+]} ]}

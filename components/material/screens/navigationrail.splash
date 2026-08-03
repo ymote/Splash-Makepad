@@ -1,0 +1,13 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Navigation rail"),
+  caption("A vertical rail for larger screens."),
+  {t:"row", h: 420, spacing: 0, c:[
+    {t:"navrail", items:"Home;Search;Alerts;Profile", icon:"home,search,notifications,person",
+     key:"nr", selected: N("nr", 0)},
+    {t:"col", pad: 24, c:[
+      {t:"text", variant:"titleMedium", text:"Destination " + N("nr", 0)},
+      {t:"text", variant:"bodyMedium", text:"The rail keeps navigation reachable without a drawer."},
+    ]},
+  ]}
+]} ]}

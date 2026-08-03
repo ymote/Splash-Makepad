@@ -1,0 +1,13 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Linear - determinate"),
+  {t:"progress", variant:"linear", value: N("p1", 65), total: 100},
+  section("Linear - indeterminate"),
+  {t:"progress", variant:"linear", indeterminate: 1},
+  section("Circular - determinate"),
+  {t:"progress", variant:"circular", value: N("p1", 65), total: 100},
+  section("Circular - indeterminate"),
+  {t:"progress", variant:"circular", indeterminate: 1},
+  section("Adjust"),
+  {t:"slider", key:"p1", value: N("p1", 65), min: 0, max: 100}
+]} ]}

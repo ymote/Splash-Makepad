@@ -1,0 +1,48 @@
+// Buttons — the five M3 variants, icon buttons, and the disabled states.
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Common buttons"),
+  caption("The five Material 3 button variants."),
+  group([
+    {t:"button", variant:"elevated", label:"Elevated", key:"b_elev", tap: 1},
+    {t:"button", variant:"filled",   label:"Filled",   key:"b_fill", tap: 1},
+    {t:"button", variant:"tonal",    label:"Tonal",    key:"b_tonal", tap: 1},
+    {t:"button", variant:"outlined", label:"Outlined", key:"b_out",  tap: 1},
+    {t:"button", variant:"text",     label:"Text",     key:"b_text", tap: 1},
+  ]),
+
+  section("With icons"),
+  group([
+    {t:"button", variant:"filled",   label:"Add",   icon:"add",       key:"b_i1", tap: 1},
+    {t:"button", variant:"tonal",    label:"Share", icon:"share",     key:"b_i2", tap: 1},
+    {t:"button", variant:"outlined", label:"Save",  icon:"bookmark",  key:"b_i3", tap: 1},
+  ]),
+
+  section("Disabled"),
+  group([
+    {t:"button", variant:"elevated", label:"Elevated", enabled: 0},
+    {t:"button", variant:"filled",   label:"Filled",   enabled: 0},
+    {t:"button", variant:"tonal",    label:"Tonal",    enabled: 0},
+    {t:"button", variant:"outlined", label:"Outlined", enabled: 0},
+    {t:"button", variant:"text",     label:"Text",     enabled: 0},
+  ]),
+
+  section("Icon buttons"),
+  group([
+    {t:"iconbutton", variant:"standard", icon:"favorite",  key:"ib1", checkable: 1, on: N("ib1", 0)},
+    {t:"iconbutton", variant:"filled",   icon:"add",       key:"ib2", tap: 1},
+    {t:"iconbutton", variant:"tonal",    icon:"edit",      key:"ib3", tap: 1},
+    {t:"iconbutton", variant:"outlined", icon:"settings",  key:"ib4", tap: 1},
+  ]),
+
+  section("Segmented button"),
+  {t:"segmented", items:"Day;Week;Month", key:"seg", selected: N("seg", 0)},
+
+  section("Extended FAB / FAB sizes"),
+  group([
+    {t:"fab", variant:"small",    icon:"add", key:"f1", tap: 1},
+    {t:"fab", variant:"regular",  icon:"add", key:"f2", tap: 1},
+    {t:"fab", variant:"large",    icon:"add", key:"f3", tap: 1},
+    {t:"fab", variant:"extended", icon:"edit", label:"Compose", key:"f4", tap: 1},
+  ])
+]} ]}

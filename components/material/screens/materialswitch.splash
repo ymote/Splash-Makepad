@@ -1,0 +1,15 @@
+{t:"scroll", c:[ {t:"col", pad: 16, pady: 8, spacing: 16, c: [
+
+  section("Switch"),
+  caption("M3 switch, with and without icons."),
+  {t:"col", spacing: 0, c:[
+    {t:"switch", text:"Wi-Fi",        key:"sw1", on: N("sw1", 1)},
+    {t:"switch", text:"Bluetooth",    key:"sw2", on: N("sw2", 0)},
+    {t:"switch", text:"Aeroplane mode", key:"sw3", on: N("sw3", 0), icon:"check"},
+  ]},
+  section("Disabled"),
+  {t:"col", spacing: 0, c:[
+    {t:"switch", text:"Disabled off", enabled: 0, on: 0},
+    {t:"switch", text:"Disabled on",  enabled: 0, on: 1},
+  ]}
+]} ]}
